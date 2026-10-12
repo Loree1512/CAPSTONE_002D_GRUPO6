@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="bc-acceso" x-data="acceso" x-cloak>
+
+    <aside class="bc-acceso__panel">
+      <a href="/index.html" class="bc-marca"><img src="/buildcast-logo-dark.svg" alt="BuildCast" class="bc-logo bc-logo--grande"></a>
+
+      <div>
+        <h1 class="bc-acceso__titular">Todo proyecto<br>comienza con<br>un número.</h1>
+        <p class="bc-acceso__bajada">Entra a la plataforma y convierte la información de tu obra en un presupuesto estructurado.</p>
+      </div>
+
+      <div>
+        <ol class="bc-acceso__lista">
+          <li><i>01</i> Banco de precios unitarios versionado</li>
+          <li><i>02</i> Presupuesto por partidas: cantidad × precio unitario</li>
+          <li><i>03</i> Plazo estimado con su intervalo</li>
+        </ol>
+        <div class="bc-acceso__cuenta" style="margin-top:28px">
+          <span class="bc-placa bc-placa--grande"><img src="/ram-logo.png" alt="RAM Arquitectura y Construcción"></span>
+          <p>Cuenta de RAM Arquitectura &amp; Construcción<br>Región de Valparaíso</p>
+        </div>
+      </div>
+    </aside>
+
+    <div class="bc-acceso__form">
+      <div class="bc-acceso__caja">
+        <div>
+          <span class="bc-rotulo">Acceso empresa</span>
+          <h1>Iniciar sesión</h1>
+        </div>
+
+        <form class="bc-tarjeta bc-tarjeta--relleno bc-form" @submit.prevent="entrar()" style="gap:20px">
+          <div class="bc-campo">
+            <label for="correo">Correo corporativo</label>
+            <input class="bc-entrada" id="correo" type="email" autocomplete="username"
+                   placeholder="nombre@ramarquitectura.cl" x-model="correo">
+          </div>
+
+          <div class="bc-campo">
+            <label for="clave">Contraseña</label>
+            <input class="bc-entrada" id="clave" type="password" autocomplete="current-password"
+                   placeholder="••••••••" x-model="clave">
+          </div>
+
+          <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error" x-cloak></p>
+          <p class="bc-aviso" x-show="aviso" x-text="aviso" x-cloak></p>
+
+          <button class="bc-boton bc-boton--ancho" type="submit" :disabled="cargando"
+                  x-text="cargando ? 'Ingresando…' : 'Ingresar'"></button>
+        </form>
+
+        <p class="bc-nota">¿No llegó el correo de confirmación?
+          <button type="button" class="bc-enlace" @click="reenviar()">Reenviarlo</button>
+        </p>
+
+        <a href="/index.html" class="bc-enlace" style="color:var(--bc-gris)">← Volver al sitio</a>
+      </div>
+    </div>
+
+  </main>
+  <script type="module" src="/src/paginas/acceso.ts"></script>
+</body>
+</html>

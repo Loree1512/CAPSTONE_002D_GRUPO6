@@ -1,0 +1,1135 @@
+/* =========================================================================
+   BuildCast — sistema visual
+   Portado del mockup unificado: hueso #F9F9F7, negro #1A1A1A, acento
+   naranja #FF5E00, Space Grotesk en títulos y cifras (la familia del
+   logotipo), Manrope en cuerpo,
+   esquinas rectas y bordes hairline #E5E5E5.
+   ========================================================================= */
+
+/* Las fuentes se cargan desde el <head> de cada página, junto al estilo
+   crítico: con @import aquí el navegador debía descargar y parsear esta
+   hoja completa antes de siquiera pedirlas. */
+
+:root {
+  --bc-fondo:  #F9F9F7;
+  --bc-blanco: #FFFFFF;
+  --bc-tinta:  #1A1A1A;
+  --bc-negro:  #111111;
+  --bc-gris:   #8F8F8F;
+  --bc-linea:  #E5E5E5;
+  --bc-acento: #FF5E00;
+  --bc-acento-oscuro: #E05200;
+  --bc-acento-tenue:  #FFF0E6;
+
+  --bc-display: 'Space Grotesk', 'Helvetica Neue', system-ui, sans-serif;
+  --bc-cuerpo:  'Manrope', system-ui, sans-serif;
+
+  --bc-e1: 4px;  --bc-e2: 8px;  --bc-e3: 12px; --bc-e4: 16px;
+  --bc-e5: 20px; --bc-e6: 24px; --bc-e7: 40px; --bc-e8: 80px;
+
+  --bc-ancho: 1600px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { margin: 0; padding: 0; }
+/* `clip` recorta el desborde lateral sin crear un contenedor de scroll:
+   con `hidden` el body se vuelve scroller y deja de funcionar
+   position:sticky, que es de lo que viven las secciones de la landing. */
+html { overflow-x: clip; }
+@supports not (overflow-x: clip) { html { overflow-x: hidden; } }
+
+body {
+  background: var(--bc-fondo);
+  color: var(--bc-tinta);
+  font-family: var(--bc-cuerpo);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--bc-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: -.03em;
+  line-height: 1.16;
+  margin: 0;
+}
+p, dl, dd { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+img { display: block; max-width: 100%; }
+button, input, select { font-family: inherit; color: inherit; }
+a { color: var(--bc-tinta); text-decoration: none; }
+::selection { background: var(--bc-acento); color: #fff; }
+:focus-visible { outline: 2px solid var(--bc-acento); outline-offset: 2px; }
+[x-cloak] { display: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; }
+}
+
+/* --- Tipografía ---------------------------------------------------------- */
+
+.bc-h1 { font-size: clamp(28px, 3.1vw, 46px); }
+.bc-h2 { font-size: clamp(19px, 1.8vw, 25px); }
+
+.bc-rotulo {
+  display: block;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--bc-acento);
+  margin-bottom: var(--bc-e2);
+}
+.bc-rotulo--gris { color: var(--bc-gris); letter-spacing: .2em; }
+
+.bc-apoyo { font-size: 14px; font-weight: 500; color: var(--bc-gris); max-width: 64ch; }
+.bc-nota  { font-size: 12px; font-weight: 500; line-height: 1.55; color: var(--bc-gris); max-width: 64ch; }
+.bc-num   { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.bc-cifra {
+  font-family: var(--bc-display); font-weight: 400;
+  font-size: clamp(26px, 2.5vw, 38px); line-height: 1.05; letter-spacing: -.03em;
+}
+
+/* --- Botones ------------------------------------------------------------- */
+
+.bc-boton {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--bc-e2);
+  padding: 14px 22px;
+  background: var(--bc-tinta); color: var(--bc-fondo);
+  border: 1px solid var(--bc-tinta);
+  font-family: var(--bc-cuerpo); font-size: 11px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, border-color .3s, color .3s;
+}
+.bc-boton:hover:not(:disabled) { background: var(--bc-acento); border-color: var(--bc-acento); color: #fff; }
+.bc-boton:disabled { opacity: .45; cursor: not-allowed; }
+
+.bc-boton--linea { background: transparent; color: var(--bc-tinta); }
+.bc-boton--linea:hover:not(:disabled) { background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo); }
+
+.bc-boton--ancho { width: 100%; padding: 18px; font-size: 12px; }
+.bc-boton--menor { padding: 11px 18px; }
+
+.bc-enlace {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--bc-acento);
+}
+.bc-enlace:hover { color: var(--bc-tinta); }
+
+.bc-acciones { display: flex; gap: var(--bc-e3); flex-wrap: wrap; align-items: center; }
+
+/* --- Cabecera ------------------------------------------------------------ */
+
+.bc-barra {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--bc-fondo);
+  border-bottom: 1px solid var(--bc-linea);
+}
+.bc-barra > div {
+  max-width: var(--bc-ancho); margin: 0 auto;
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: clamp(14px, 2.4vw, 36px);
+  padding: 18px clamp(20px, 3vw, 40px);
+}
+
+.bc-marca {
+  font-family: var(--bc-display); font-weight: 700; font-size: 19px;
+  letter-spacing: .2em; text-transform: uppercase;
+  margin-right: auto;
+}
+
+.bc-nav { display: flex; gap: clamp(14px, 2vw, 28px); flex-wrap: wrap; }
+.bc-nav a {
+  font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(26, 26, 26, .6);
+  transition: color .2s ease;
+}
+.bc-nav a:hover { color: var(--bc-tinta); }
+.bc-nav a[aria-current="page"] { color: var(--bc-acento); }
+
+.bc-cuenta {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--bc-linea); background: var(--bc-blanco);
+  padding: 7px 12px;
+  font-size: 12.5px; font-weight: 600;
+}
+.bc-placa { display: inline-flex; flex: none; }
+.bc-placa img { height: 16px; width: auto; }
+.bc-placa--grande img { height: 26px; }
+
+/* --- Estructura ---------------------------------------------------------- */
+
+.bc-pagina {
+  max-width: var(--bc-ancho); margin: 0 auto;
+  padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px) var(--bc-e8);
+  display: flex; flex-direction: column; gap: clamp(20px, 2.4vw, 32px);
+}
+
+.bc-encabezado { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--bc-e6); flex-wrap: wrap; }
+
+.bc-migas { font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin-bottom: var(--bc-e2); }
+.bc-migas a { color: var(--bc-acento); }
+.bc-migas span { color: var(--bc-gris); }
+
+.bc-tarjeta { background: var(--bc-blanco); border: 1px solid var(--bc-linea); }
+.bc-tarjeta--relleno { padding: clamp(24px, 3vw, 34px); }
+
+.bc-dupla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(24px, 3vw, 36px);
+  align-items: start;
+}
+
+/* --- Indicadores --------------------------------------------------------- */
+
+.bc-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: var(--bc-e5); }
+.bc-kpi {
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  padding: var(--bc-e6);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.bc-kpi .bc-rotulo { font-size: 10px; letter-spacing: .2em; color: var(--bc-gris); margin: 0; }
+.bc-kpi .bc-nota { margin: 0; }
+
+/* --- Tablas -------------------------------------------------------------- */
+
+.bc-tabla { width: 100%; border-collapse: collapse; min-width: 720px; }
+.bc-tabla th {
+  text-align: left;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bc-linea);
+  font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--bc-gris);
+}
+.bc-tabla td { padding: 16px; border-bottom: 1px solid var(--bc-linea); font-size: 14px; font-weight: 500; }
+.bc-tabla tbody tr { cursor: pointer; transition: background .2s ease; }
+.bc-tabla tbody tr:hover td { background: var(--bc-fondo); }
+.bc-tabla tbody tr:last-child td { border-bottom: 0; }
+
+.bc-tabla__nombre { font-weight: 600; }
+.bc-tabla__suave  { font-size: 13px; color: var(--bc-gris); }
+.bc-tabla__monto  { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bc-tabla__codigo { font-family: var(--bc-display); font-size: 14px; letter-spacing: .06em; white-space: nowrap; }
+
+.bc-desplaza { overflow-x: auto; }
+
+/* --- Estados ------------------------------------------------------------- */
+
+.bc-estado {
+  display: inline-flex; padding: 5px 10px;
+  border: 1px solid var(--bc-linea);
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--bc-gris); white-space: nowrap;
+}
+.bc-estado--vigente   { border-color: var(--bc-acento); color: var(--bc-acento); background: var(--bc-acento-tenue); }
+.bc-estado--pendiente { border-color: var(--bc-tinta); color: var(--bc-tinta); }
+.bc-estado--hecho     { border-color: var(--bc-tinta); background: var(--bc-tinta); color: var(--bc-fondo); }
+
+/* --- Formularios --------------------------------------------------------- */
+
+.bc-form { display: flex; flex-direction: column; gap: var(--bc-e6); }
+.bc-rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: var(--bc-e4); }
+
+.bc-campo { display: flex; flex-direction: column; }
+.bc-campo > label {
+  font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--bc-gris); margin-bottom: var(--bc-e2);
+}
+
+.bc-entrada {
+  width: 100%;
+  background: var(--bc-fondo);
+  border: 1px solid var(--bc-linea);
+  padding: 13px;
+  font-size: 14px; font-weight: 600; color: var(--bc-tinta);
+  transition: border-color .2s ease;
+}
+.bc-entrada::placeholder { color: var(--bc-gris); font-weight: 500; }
+.bc-entrada:focus { outline: none; border-color: var(--bc-acento); }
+.bc-entrada[aria-invalid="true"] { border-color: var(--bc-acento); background: var(--bc-acento-tenue); }
+.bc-entrada--num { font-family: var(--bc-display); font-size: 18px; font-weight: 400; letter-spacing: .02em; }
+
+select.bc-entrada {
+  appearance: none; padding-right: var(--bc-e7);
+  background-image: linear-gradient(45deg, transparent 50%, var(--bc-tinta) 50%),
+                    linear-gradient(135deg, var(--bc-tinta) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 21px, calc(100% - 15px) 21px;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+
+.bc-opciones { display: flex; flex-wrap: wrap; gap: 10px; }
+.bc-opcion {
+  padding: 12px 16px;
+  border: 1px solid var(--bc-linea); background: var(--bc-blanco);
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--bc-gris); cursor: pointer;
+  transition: background .25s, color .25s, border-color .25s;
+}
+.bc-opcion:hover { border-color: var(--bc-tinta); color: var(--bc-tinta); }
+.bc-opcion[aria-pressed="true"] { background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo); }
+
+.bc-error { font-size: 12px; font-weight: 700; color: var(--bc-acento); margin-top: 6px; }
+
+.bc-aviso {
+  padding: var(--bc-e3) var(--bc-e4);
+  background: var(--bc-blanco);
+  border: 1px solid var(--bc-linea); border-left: 3px solid var(--bc-tinta);
+  font-size: 13px; font-weight: 500;
+}
+.bc-aviso--error { border-left-color: var(--bc-acento); border-color: #FFD9C2; background: var(--bc-acento-tenue); }
+
+/* --- Panel oscuro de resultado ------------------------------------------- */
+
+.bc-resultado {
+  background: var(--bc-negro); color: var(--bc-fondo);
+  padding: clamp(24px, 3vw, 34px);
+  display: flex; flex-direction: column; gap: var(--bc-e4);
+}
+.bc-resultado .bc-rotulo { font-size: 10px; letter-spacing: .22em; color: var(--bc-acento); margin: 0; }
+.bc-resultado__cifra {
+  font-family: var(--bc-display); font-weight: 400;
+  font-size: clamp(38px, 4.4vw, 62px); line-height: .98; letter-spacing: -.03em;
+}
+.bc-resultado__resumen { font-size: 12.5px; font-weight: 500; color: rgba(249, 249, 247, .6); }
+.bc-resultado__fila {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--bc-e3);
+  padding: 12px 0; border-top: 1px solid rgba(249, 249, 247, .14);
+  font-size: 13px; font-weight: 500;
+}
+.bc-resultado__fila span { color: rgba(249, 249, 247, .65); }
+.bc-resultado__fila b { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.bc-resultado__nota { font-size: 11.5px; font-weight: 500; line-height: 1.55; color: rgba(249, 249, 247, .45); }
+
+/* --- Estado vacío -------------------------------------------------------- */
+
+.bc-vacio {
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  padding: clamp(40px, 5vw, 72px) clamp(24px, 3vw, 40px);
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--bc-e4);
+}
+
+/* --- Acceso -------------------------------------------------------------- */
+
+.bc-acceso { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); min-height: 100vh; }
+
+.bc-acceso__panel {
+  background: var(--bc-negro); color: var(--bc-fondo);
+  padding: clamp(40px, 5vw, 64px) clamp(28px, 4vw, 56px);
+  display: flex; flex-direction: column; justify-content: space-between; gap: var(--bc-e7);
+}
+.bc-acceso__panel .bc-marca { color: var(--bc-fondo); font-size: 20px; margin: 0; }
+
+.bc-acceso__titular {
+  font-size: clamp(38px, 5.4vw, 84px); line-height: .9; letter-spacing: -.04em; font-weight: 600;
+}
+.bc-acceso__bajada {
+  margin-top: 28px; font-size: clamp(15px, 1.2vw, 19px); font-weight: 500; line-height: 1.6;
+  color: rgba(249, 249, 247, .65); max-width: 440px;
+}
+
+.bc-acceso__lista li {
+  display: flex; gap: var(--bc-e5); align-items: baseline;
+  padding: var(--bc-e4) 0;
+  border-top: 1px solid rgba(249, 249, 247, .16);
+  font-size: 14px; font-weight: 500;
+}
+.bc-acceso__lista li:last-child { border-bottom: 1px solid rgba(249, 249, 247, .16); }
+.bc-acceso__lista i {
+  font-style: normal; font-family: var(--bc-display); font-size: 13px;
+  letter-spacing: .12em; color: var(--bc-acento); flex: none;
+}
+
+.bc-acceso__cuenta { display: flex; align-items: center; gap: var(--bc-e3); }
+.bc-acceso__cuenta p { font-size: 12px; font-weight: 500; color: rgba(249, 249, 247, .6); line-height: 1.5; }
+
+.bc-acceso__form { display: grid; place-items: center; padding: clamp(40px, 6vw, 80px) clamp(24px, 4vw, 48px); }
+.bc-acceso__caja { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 28px; }
+.bc-acceso__caja h1 { font-size: clamp(32px, 3.4vw, 50px); line-height: 1.16; }
+
+@media (max-width: 720px) {
+  .bc-barra > div { gap: var(--bc-e4); }
+  .bc-marca { font-size: 17px; }
+  .bc-cuenta span:not(.bc-placa) { display: none; }
+}
+
+/* --- Landing ------------------------------------------------------------- */
+
+.bc-landing { overflow-x: clip; }
+@supports not (overflow-x: clip) { .bc-landing { overflow-x: hidden; } }
+.bc-landing h1, .bc-landing h2, .bc-landing h3 { text-transform: none; }
+.bc-landing a { transition: color .3s ease; }
+
+/* Marco de fotografía: si existe /images/<id>.jpg se muestra;
+   si no, queda el rótulo de qué imagen corresponde. */
+.bc-foto {
+  position: relative;
+  background: var(--bc-linea);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.bc-foto img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.bc-foto span {
+  position: relative; z-index: 1;
+  font-family: var(--bc-display); font-size: 12px;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--bc-gris); text-align: center; padding: 16px;
+}
+.bc-foto img[src]:not([style*="display: none"]) ~ span { display: none; }
+
+@keyframes bc-scan { 0% { top: 0 } 100% { top: 100% } }
+@keyframes bc-blink { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
+
+/* --- Banco de precios ---------------------------------------------------- */
+
+.bc-filtros { display: flex; gap: var(--bc-e4); flex-wrap: wrap; align-items: flex-end; }
+.bc-filtros .bc-opcion { min-height: 44px; }
+
+.bc-tabla--banco td { padding: 10px 16px; }
+
+.bc-fila-categoria td {
+  background: var(--bc-fondo);
+  font-family: var(--bc-display); font-size: 12px;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--bc-tinta);
+  padding: 12px 16px;
+}
+.bc-fila-categoria { cursor: default; }
+.bc-tabla tbody tr.bc-fila-categoria:hover td { background: var(--bc-fondo); }
+
+/* Campo editable dentro de la tabla */
+.bc-entrada--celda {
+  min-height: 36px; padding: 6px 10px;
+  background: transparent; border-color: transparent;
+  text-align: right; font-variant-numeric: tabular-nums;
+  font-family: var(--bc-display); font-size: 15px; font-weight: 400;
+}
+.bc-entrada--celda:hover { border-color: var(--bc-linea); background: var(--bc-blanco); }
+.bc-entrada--celda:focus { border-color: var(--bc-acento); background: var(--bc-blanco); }
+.bc-entrada--celda::placeholder { font-family: var(--bc-cuerpo); color: var(--bc-gris); }
+
+.bc-enlace--baja {
+  display: block; margin-top: 6px;
+  font-size: 10px; letter-spacing: .12em; color: var(--bc-gris);
+}
+.bc-enlace--baja:hover { color: var(--bc-acento); }
+
+/* --- Capa modal ---------------------------------------------------------- */
+
+.bc-capa {
+  position: fixed; inset: 0; z-index: 60;
+  display: grid; place-items: center;
+  padding: var(--bc-e5);
+  background: rgba(17, 17, 17, .55);
+  overflow-y: auto;
+}
+
+.bc-modal {
+  width: min(520px, 100%);
+  background: var(--bc-blanco);
+  border: 1px solid var(--bc-linea);
+  padding: clamp(24px, 3vw, 34px);
+}
+
+/* --- Estimación ---------------------------------------------------------- */
+
+.bc-resultados { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--bc-e5); }
+
+.bc-resultado--claro {
+  background: var(--bc-blanco);
+  color: var(--bc-tinta);
+  border: 1px solid var(--bc-linea);
+}
+.bc-resultado--claro .bc-resultado__resumen { color: var(--bc-gris); }
+.bc-resultado--claro .bc-resultado__fila { border-top-color: var(--bc-linea); }
+.bc-resultado--claro .bc-resultado__fila span { color: var(--bc-gris); }
+
+.bc-aviso--pendiente { border-left-color: var(--bc-acento); background: var(--bc-acento-tenue); border-color: #FFD9C2; }
+
+/* Pestañas */
+.bc-pestanas { display: flex; gap: var(--bc-e5); border-bottom: 1px solid var(--bc-linea); flex-wrap: wrap; }
+.bc-pestana {
+  background: none; border: 0; padding: 0 0 12px; cursor: pointer;
+  font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--bc-gris);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .2s ease, border-color .2s ease;
+}
+.bc-pestana:hover { color: var(--bc-tinta); }
+.bc-pestana[aria-selected="true"] { color: var(--bc-tinta); border-bottom-color: var(--bc-acento); }
+
+/* Detalle de partidas dentro de un capítulo */
+.bc-fila-detalle td { background: var(--bc-fondo); font-weight: 400; }
+.bc-fila-detalle .bc-tabla__codigo { color: var(--bc-gris); }
+.bc-tabla tbody tr.bc-fila-detalle:hover td { background: var(--bc-fondo); }
+
+.bc-resumen__fila--total {
+  border-top: 2px solid var(--bc-tinta); margin-top: 4px; padding-top: 14px;
+  font-size: 15px;
+}
+.bc-resumen__fila--total b { font-family: var(--bc-display); font-size: 22px; font-weight: 500; }
+
+/* Cronograma */
+.bc-etapa { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(0, 2fr); gap: var(--bc-e5); align-items: center; padding: 14px 0; border-top: 1px solid var(--bc-linea); }
+.bc-etapa:first-of-type { border-top: 0; }
+.bc-etapa__texto { display: flex; flex-direction: column; gap: 2px; }
+.bc-etapa__nombre { font-size: 14px; font-weight: 600; }
+.bc-etapa__barra { height: 10px; background: var(--bc-fondo); border: 1px solid var(--bc-linea); }
+.bc-etapa__relleno { height: 100%; background: var(--bc-tinta); }
+.bc-etapa:nth-child(odd) .bc-etapa__relleno { background: var(--bc-acento); }
+
+@media (max-width: 720px) {
+  .bc-etapa { grid-template-columns: 1fr; gap: var(--bc-e2); }
+}
+
+@media print {
+  .bc-barra, .bc-pestanas, .bc-acciones, .bc-capa { display: none !important; }
+  body { background: #fff; }
+  .bc-tarjeta, .bc-resultado { break-inside: avoid; }
+}
+
+/* --- Documento de entrega ------------------------------------------------ */
+
+.bc-fondo-hoja { background: var(--bc-fondo); }
+
+.bc-cinta {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--bc-e4);
+  max-width: 900px; margin: 0 auto; padding: 20px clamp(16px, 3vw, 24px);
+}
+
+.bc-hoja {
+  max-width: 900px; margin: 0 auto 80px;
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  padding: clamp(28px, 5vw, 64px);
+  display: flex; flex-direction: column; gap: clamp(28px, 4vw, 44px);
+}
+
+.bc-hoja__cabecera {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: var(--bc-e5);
+  padding-bottom: var(--bc-e5); border-bottom: 2px solid var(--bc-tinta);
+  flex-wrap: wrap;
+}
+
+.bc-hoja__folio { display: flex; flex-wrap: wrap; gap: var(--bc-e7); }
+.bc-hoja__folio b { display: block; font-family: var(--bc-display); font-size: 18px; font-weight: 500; }
+
+.bc-hoja__cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--bc-e5); }
+.bc-hoja__cifras .bc-cifra { font-size: 32px; margin: 8px 0 4px; }
+.bc-hoja h2 { margin-bottom: var(--bc-e4); }
+
+.bc-tabla--ficha td { padding: 10px 0; font-weight: 500; }
+.bc-tabla--ficha td:first-child { color: var(--bc-gris); width: 45%; font-weight: 400; }
+
+.bc-tabla--cierre { margin-top: var(--bc-e5); }
+.bc-tabla--cierre td { padding: 10px 0; }
+.bc-tabla__total td { border-top: 2px solid var(--bc-tinta); border-bottom: 0; font-weight: 700; padding-top: 14px; }
+.bc-tabla__total .bc-tabla__monto { font-family: var(--bc-display); font-size: 22px; font-weight: 500; }
+
+.bc-hoja__alcance { border-top: 1px solid var(--bc-linea); padding-top: var(--bc-e5); display: flex; flex-direction: column; gap: 12px; }
+
+@media print {
+  .bc-cinta { display: none !important; }
+  .bc-fondo-hoja { background: #fff; }
+  .bc-hoja { border: 0; margin: 0; padding: 0; max-width: none; }
+  .bc-hoja section { break-inside: avoid; }
+}
+
+/* --- Landing: móvil ------------------------------------------------------ */
+/* El prototipo fue diseñado para pantalla ancha: secciones de 300 a 600vh
+   con capas fijadas y tipografías de hasta 190px. En un teléfono eso
+   obliga a scrollear seis pantallas por idea y corta los titulares.
+   Aquí las secuencias pasan a flujo normal y la escala tipográfica baja. */
+
+@media (max-width: 760px) {
+  /* Secuencias fijadas → bloques apilados */
+  .bc-landing [data-seq] { height: auto !important; overflow: visible !important; }
+  .bc-landing [data-seq] > div { position: static !important; height: auto !important; display: block !important; }
+  .bc-landing [data-seq-item] {
+    position: static !important;
+    opacity: 1 !important;
+    transform: none !important;
+    padding: 40px clamp(20px, 5vw, 28px) !important;
+    width: auto !important;
+    inset: auto !important;
+  }
+  .bc-landing [data-seq-bar] { display: none; }
+  .bc-landing [data-hero] { transform: none !important; opacity: 1 !important; }
+  .bc-landing [data-parallax] { transform: none !important; }
+  .bc-landing [data-cross-out], .bc-landing [data-cross-in] { opacity: 1 !important; }
+  .bc-landing [data-cross-scale] { transform: none !important; }
+
+  /* Escala tipográfica del relato */
+  .bc-landing h1 { font-size: clamp(34px, 11vw, 54px) !important; line-height: .96 !important; }
+  .bc-landing h2 { font-size: clamp(26px, 8.4vw, 42px) !important; line-height: 1.02 !important; }
+  .bc-landing h3 { font-size: clamp(19px, 5.6vw, 28px) !important; }
+  .bc-landing p  { font-size: 15px !important; }
+  .bc-landing [data-chaos] { font-size: 13px !important; }
+
+  /* Cabecera: solo marca y acceso */
+  .bc-landing [data-navbar] { padding: 14px 20px !important; background: rgba(249,249,247,.94); backdrop-filter: blur(10px); }
+  .bc-landing [data-navbar] [data-chapter] { display: none; }
+
+  /* Alturas de sección y marcos de imagen */
+  .bc-landing section { padding-left: 20px !important; padding-right: 20px !important; }
+  .bc-landing section > div { padding-left: 0 !important; padding-right: 0 !important; }
+  .bc-landing .bc-foto { min-height: 220px; }
+  .bc-landing [style*="height:100vh"] { height: auto !important; min-height: 92vh !important; }
+
+  /* Tablas de la maqueta: desplazamiento propio en lugar de desbordar */
+  .bc-landing table { font-size: 12px !important; }
+}
+
+/* Pantallas medianas: baja el pico de la escala sin tocar el layout */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .bc-landing h1 { font-size: clamp(48px, 8vw, 86px) !important; }
+  .bc-landing h2 { font-size: clamp(32px, 6vw, 64px) !important; }
+}
+
+/* --- Aplicación: móvil --------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .bc-barra > div { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .bc-barra > div::-webkit-scrollbar { display: none; }
+  .bc-nav { flex-wrap: nowrap; }
+  .bc-marca { font-size: 15px; letter-spacing: .14em; }
+  .bc-h1 { font-size: clamp(28px, 9vw, 40px); }
+  .bc-cifra { font-size: 30px; }
+  .bc-resultado__cifra { font-size: clamp(32px, 11vw, 46px); }
+  .bc-kpis { gap: 12px; }
+  .bc-kpi { padding: 18px; }
+  .bc-tarjeta--relleno { padding: 20px 16px; }
+  .bc-boton { padding: 13px 18px; }
+  .bc-acciones .bc-boton { flex: 1 1 auto; }
+  .bc-pestanas { gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  .bc-pestanas::-webkit-scrollbar { display: none; }
+  .bc-pestana { white-space: nowrap; }
+  .bc-hoja__folio { gap: 20px; }
+  .bc-entrada { font-size: 16px; }   /* evita el zoom automático de iOS */
+}
+
+/* Rejillas de columnas fijas de la maqueta: en móvil se vuelven una lista */
+@media (max-width: 760px) {
+  .bc-landing [style*="grid-template-columns:90px"] {
+    grid-template-columns: 1fr auto !important;
+    gap: 2px 10px !important;
+    font-size: 12px !important;
+  }
+  .bc-landing [style*="grid-template-columns:90px"] > *:nth-child(3),
+  .bc-landing [style*="grid-template-columns:90px"] > *:nth-child(4) { display: none !important; }
+  .bc-landing [style*="grid-template-columns:minmax(0,1fr) 160px"] { grid-template-columns: 1fr !important; }
+  .bc-landing [style*="width:1200px"], .bc-landing [style*="width:960px"],
+  .bc-landing [style*="width:900px"] { width: 100% !important; }
+  .bc-landing [style*="position:absolute"] { max-width: 100%; }
+}
+
+
+/* --- Landing sin capas fijadas ------------------------------------------
+   Este es el modo que ve un teléfono, y también el de respaldo si el
+   script no llega a iniciar. Las capas del prototipo son titulares
+   superpuestos con posición absoluta que se cruzan según el scroll; aquí
+   se convierten en bloques que se leen uno tras otro. */
+
+.bc-landing:not(.bc-animada) [data-seq] { height: auto !important; }
+.bc-landing:not(.bc-animada) [data-seq] > div {
+  position: static !important;
+  height: auto !important;
+  overflow: visible !important;
+  /* El contenedor fijado alinea las capas en fila; sin capas, en fila
+     los bloques se pisan entre sí. */
+  display: block !important;
+  padding-block: clamp(48px, 9vw, 96px) !important;
+  padding-inline: clamp(20px, 4vw, 48px) !important;
+}
+
+/* Nada posicionado en absoluto: si no hay capas, no hay superposición */
+.bc-landing:not(.bc-animada) [data-seq] [style*="position:absolute"] {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+}
+
+/* El contenedor que alineaba los titulares en fila pasa a columna */
+.bc-landing:not(.bc-animada) [data-seq] [style*="display:flex"][style*="max-width:960px"],
+.bc-landing:not(.bc-animada) [data-seq] [style*="height:clamp(180px"] {
+  display: block !important;
+  height: auto !important;
+  max-width: none !important;
+}
+
+.bc-landing:not(.bc-animada) [data-seq-item] {
+  opacity: 1 !important;
+  transform: none !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  margin: 0 auto clamp(36px, 6vw, 64px) !important;
+  padding-bottom: clamp(28px, 5vw, 48px) !important;
+  border-bottom: 1px solid currentColor;
+  opacity: 1;
+}
+.bc-landing:not(.bc-animada) [data-seq-item] { border-bottom-color: color-mix(in srgb, currentColor 22%, transparent); }
+.bc-landing:not(.bc-animada) [data-seq-item]:last-child {
+  margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: 0;
+}
+
+/* Los pares «palabra tachada → palabra nueva» conservan su fila */
+.bc-landing:not(.bc-animada) [data-seq-item] > span { display: inline-block !important; }
+
+/* Los titulares de 130px solo funcionan ocupando la pantalla completa */
+.bc-landing:not(.bc-animada) [data-seq-item] h2,
+.bc-landing:not(.bc-animada) [data-seq-item] > span {
+  font-size: clamp(28px, 7.5vw, 58px) !important;
+}
+.bc-landing:not(.bc-animada) [data-seq-item] h3 { font-size: clamp(22px, 6vw, 38px) !important; }
+
+/* Las palabras dispersas son decoración de la capa fijada */
+.bc-landing:not(.bc-animada) [data-chaos] { display: none !important; }
+
+.bc-landing:not(.bc-js) [data-reveal] { opacity: 1 !important; transform: none !important; }
+.bc-landing:not(.bc-animada) [data-cross-out],
+.bc-landing:not(.bc-animada) [data-cross-in] { opacity: 1 !important; }
+.bc-landing:not(.bc-animada) [data-cross-scale] { transform: none !important; }
+.bc-landing:not(.bc-animada) [data-hero] { transform: none !important; opacity: 1 !important; }
+.bc-landing:not(.bc-animada) [data-seq-bar] { display: none !important; }
+
+/* --- Menú de la landing -------------------------------------------------- */
+
+.bc-hamburguesa {
+  display: none;
+  flex-direction: column; justify-content: center; gap: 5px;
+  width: 44px; height: 44px; padding: 0;
+  background: transparent; border: 1px solid var(--bc-linea);
+  cursor: pointer;
+}
+.bc-hamburguesa span {
+  display: block; width: 20px; height: 2px; margin: 0 auto;
+  background: var(--bc-tinta);
+  transition: transform .3s ease, opacity .2s ease;
+}
+.bc-hamburguesa[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.bc-hamburguesa[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.bc-hamburguesa[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Bajo 1024px la barra no da para cinco elementos en línea: el botón de
+   acceso terminaba cayendo bajo los enlaces. Pasa a menú desplegable. */
+@media (max-width: 1024px) {
+  .bc-hamburguesa { display: flex; }
+
+  .bc-landing [data-navbar] { background: rgba(249,249,247,.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--bc-linea); }
+
+  .bc-menu {
+    position: absolute; top: 100%; left: 0; right: 0;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    background: var(--bc-fondo);
+    border-bottom: 1px solid var(--bc-linea);
+    padding: 8px clamp(20px, 4vw, 48px) 20px;
+    display: none !important;
+  }
+  .bc-menu[data-abierto] { display: flex !important; }
+  .bc-menu a {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--bc-linea);
+    font-size: 13px;
+  }
+  .bc-menu__entrar { width: 100%; margin-top: 16px; }
+
+  .bc-landing [data-chapter] { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-hamburguesa span { transition: none; }
+}
+
+
+/* =========================================================================
+   Presupuesto editable por partidas
+   Pantalla de estimación, plantillas y modales asociados.
+   ========================================================================= */
+
+/* --- Disposición --------------------------------------------------------- */
+
+.bc-presupuesto {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: clamp(20px, 2.4vw, 32px);
+  align-items: start;
+}
+.bc-presupuesto__tabla { min-width: 0; display: flex; flex-direction: column; gap: var(--bc-e4); }
+.bc-presupuesto__lateral { display: flex; flex-direction: column; gap: var(--bc-e5); position: sticky; top: 88px; }
+
+@media (max-width: 1100px) {
+  .bc-presupuesto { grid-template-columns: 1fr; }
+  .bc-presupuesto__lateral { position: static; }
+}
+
+/* --- Tabla de partidas --------------------------------------------------- */
+
+.bc-tabla--partidas { min-width: 760px; }
+.bc-tabla--partidas td { padding: 10px 12px; vertical-align: middle; }
+.bc-tabla--partidas tbody tr { cursor: default; }
+.bc-tabla--partidas tbody tr:hover td { background: var(--bc-fondo); }
+
+.bc-col-unidad    { width: 84px; }
+.bc-col-cantidad  { width: 130px; }
+.bc-col-precio    { width: 190px; }
+.bc-col-subtotal  { width: 160px; }
+.bc-col-acciones  { width: 104px; }
+
+/* Fila de capítulo: separa visualmente cada grupo del itemizado */
+.bc-fila-capitulo td {
+  background: var(--bc-fondo);
+  border-top: 1px solid var(--bc-linea-fuerte, #B9C7D8);
+  border-top-color: var(--bc-tinta);
+  font-family: var(--bc-display);
+  font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
+  padding: 12px !important;
+}
+.bc-fila-capitulo__codigo { color: var(--bc-gris); margin-right: 10px; }
+.bc-fila-capitulo__monto {
+  font-family: var(--bc-display); font-weight: 500; letter-spacing: 0;
+  font-variant-numeric: tabular-nums; text-transform: none;
+}
+
+/* Fila de suma al pie de un bloque */
+.bc-fila-suma td {
+  border-top: 2px solid var(--bc-tinta);
+  border-bottom: 0;
+  font-weight: 700;
+  padding-top: 14px;
+}
+
+/* Fila en proceso de guardado */
+.bc-fila-guardando td { background: var(--bc-acento-tenue) !important; }
+
+/* Celda de la partida: nombre editable más su procedencia */
+.bc-partida { min-width: 260px; }
+.bc-partida__nombre {
+  display: block; width: 100%; text-align: left;
+  background: none; border: 1px solid transparent;
+  padding: 6px 8px; margin-left: -8px;
+  font-size: 14px; font-weight: 600; color: var(--bc-tinta);
+  cursor: text;
+  transition: border-color .2s ease, background .2s ease;
+}
+.bc-partida__nombre:hover { border-color: var(--bc-linea); background: var(--bc-blanco); }
+.bc-partida__meta {
+  display: block; margin-top: 2px;
+  font-size: 11.5px; color: var(--bc-gris);
+}
+
+/* Origen del precio: del banco, particular del proyecto o propio */
+.bc-precio-origen {
+  display: flex; align-items: baseline; justify-content: flex-end; gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  font-size: 11px; letter-spacing: .04em; color: var(--bc-gris);
+  text-align: right;
+}
+.bc-precio-origen--particular { color: var(--bc-acento); }
+.bc-precio-origen .bc-enlace { font-size: 10px; letter-spacing: .1em; }
+
+/* Valor no editable dentro de una celda, alineado con los campos */
+.bc-celda-linea { display: block; padding: 6px 2px; font-size: 14px; }
+.bc-celda-linea--derecha { text-align: right; }
+
+/* Campo de texto dentro de la tabla */
+.bc-entrada--texto {
+  font-family: var(--bc-cuerpo); font-size: 14px; font-weight: 600;
+  text-align: left; letter-spacing: 0;
+}
+
+/* --- Botones de icono ---------------------------------------------------- */
+
+.bc-tabla__acciones {
+  display: flex; align-items: center; justify-content: flex-end; gap: 2px;
+  padding: 0;
+}
+
+.bc-icono {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; padding: 0;
+  background: transparent; border: 1px solid transparent;
+  color: var(--bc-gris); font-size: 14px; line-height: 1;
+  cursor: pointer;
+  transition: color .2s ease, border-color .2s ease, background .2s ease;
+}
+.bc-icono:hover:not(:disabled) { color: var(--bc-tinta); border-color: var(--bc-linea); background: var(--bc-blanco); }
+.bc-icono:disabled { opacity: .3; cursor: not-allowed; }
+.bc-icono--quitar:hover:not(:disabled) { color: var(--bc-acento); border-color: var(--bc-acento); }
+
+/* --- Listas de selección ------------------------------------------------- */
+
+.bc-lista { display: flex; flex-direction: column; max-height: 360px; overflow-y: auto; }
+
+.bc-lista__fila {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--bc-e4);
+  padding: 12px 0;
+  border-top: 1px solid var(--bc-linea);
+  font-size: 13.5px;
+}
+.bc-lista__fila:first-child { border-top: 0; }
+.bc-lista__fila b { font-weight: 600; }
+.bc-lista__fila--amplia { padding: 16px clamp(16px, 2vw, 24px); }
+
+/* --- Casilla de verificación --------------------------------------------- */
+
+.bc-casilla {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 13.5px; cursor: pointer;
+}
+.bc-casilla input {
+  appearance: none;
+  width: 18px; height: 18px; margin: 1px 0 0; flex: none;
+  border: 1px solid var(--bc-linea-fuerte, #B9C7D8);
+  border-color: var(--bc-gris);
+  background: var(--bc-blanco);
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+.bc-casilla input:checked {
+  background: var(--bc-tinta); border-color: var(--bc-tinta);
+  background-image: linear-gradient(45deg, transparent 52%, #F9F9F7 52%, #F9F9F7 60%, transparent 60%),
+                    linear-gradient(-45deg, transparent 52%, #F9F9F7 52%, #F9F9F7 60%, transparent 60%);
+  background-size: 11px 11px, 11px 11px;
+  background-position: 1px 4px, 6px 4px;
+  background-repeat: no-repeat;
+}
+.bc-casilla input:focus-visible { outline: 2px solid var(--bc-acento); outline-offset: 2px; }
+
+/* --- Plantillas ---------------------------------------------------------- */
+
+.bc-plantilla { display: flex; flex-direction: column; gap: var(--bc-e3); }
+.bc-plantilla__nombre { font-family: var(--bc-display); font-size: 18px; font-weight: 500; }
+
+/* --- Documento: detalle de partidas -------------------------------------- */
+
+.bc-tabla--detalle { font-size: 13px; }
+.bc-tabla--detalle td { padding: 8px 10px; }
+.bc-tabla--detalle td:first-child, .bc-tabla--detalle th:first-child { padding-left: 0; }
+.bc-tabla--detalle .bc-fila-categoria td {
+  font-family: var(--bc-display); font-size: 11px;
+  letter-spacing: .16em; text-transform: uppercase;
+  background: var(--bc-fondo);
+}
+
+/* --- Modal ancho --------------------------------------------------------- */
+
+.bc-modal--ancho { width: min(760px, 100%); }
+
+/* --- Utilidades ---------------------------------------------------------- */
+
+/* Texto solo para lectores de pantalla: encabezados de columna sin rótulo */
+.bc-oculto {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%);
+  white-space: nowrap; border: 0;
+}
+
+.bc-ayuda { font-size: 12px; color: var(--bc-gris); margin-top: 4px; }
+
+@media (max-width: 600px) {
+  .bc-lista__fila { flex-wrap: wrap; }
+  .bc-precio-origen { justify-content: flex-start; text-align: left; }
+}
+
+/* --- Esqueleto de carga --------------------------------------------------
+   También vive en el estilo crítico de cada página, para que aparezca antes
+   de que llegue esta hoja. Se repite aquí por si ese bloque se quita. */
+
+.bc-esqueleto {
+  max-width: var(--bc-ancho);
+  margin: 0 auto;
+  padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+  display: flex; flex-direction: column; gap: 20px;
+}
+.bc-esqueleto span {
+  display: block;
+  background: linear-gradient(90deg, var(--bc-linea) 0%, #EFF0ED 50%, var(--bc-linea) 100%);
+  background-size: 200% 100%;
+  animation: bc-latido 1.4s ease-in-out infinite;
+}
+.bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+.bc-esqueleto span:nth-child(2) { height: 120px; }
+.bc-esqueleto span:nth-child(3) { height: 280px; }
+
+@keyframes bc-latido {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+main:not([x-cloak]) ~ .bc-esqueleto,
+.bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .bc-esqueleto span { animation: none; } }
+
+
+
+/* =========================================================================
+   Landing · capas fijadas y escala por altura
+   Los tamaños del prototipo están escritos en estilos en línea y se
+   dimensionaron para pantallas altas: hasta 190px de titular y 900px de
+   marco de imagen. En una ventana común el bloque no cabe dentro de la
+   capa y se corta. Aquí se reescalan contra la altura disponible (vh),
+   de modo que el texto crece con la ventana en vez de saltar entre dos
+   tamaños fijos. Se apuntan por el valor de su estilo en línea.
+   ========================================================================= */
+
+/* La cabecera es fija: las capas empiezan debajo */
+.bc-landing.bc-animada [data-seq] [data-seq-item][style*="inset:0"] {
+  top: clamp(68px, 9vh, 92px) !important;
+}
+.bc-landing.bc-animada [data-seq] > div {
+  padding-top: clamp(68px, 9vh, 92px);
+  box-sizing: border-box;
+}
+
+/* Rótulos de sección: 13px con mucho tracking se perdían en pantalla */
+.bc-landing [style*="letter-spacing:.3em"] {
+  font-size: clamp(14px, 1.7vh, 17px) !important;
+  letter-spacing: .22em !important;
+  font-weight: 600 !important;
+}
+
+@media (min-width: 761px) {
+  .bc-landing [style*="font-size:clamp(84px,12vw,190px)"],
+  .bc-landing [style*="font-size:clamp(46px,10.5vw,190px)"],
+  .bc-landing [style*="font-size:clamp(46px,9vw,150px)"],
+  .bc-landing [style*="font-size:clamp(44px,9vw,150px)"] { font-size: clamp(38px, 11.5vh, 142px) !important; }
+
+  .bc-landing [style*="font-size:clamp(56px,8vw,120px)"],
+  .bc-landing [style*="font-size:clamp(40px,8vw,130px)"],
+  .bc-landing [style*="font-size:clamp(48px,7vw,110px)"],
+  .bc-landing [style*="font-size:clamp(38px,6vw,100px)"],
+  .bc-landing [style*="font-size:clamp(38px,7vw,120px)"],
+  .bc-landing [style*="font-size:clamp(38px,7vw,110px)"],
+  .bc-landing [style*="font-size:clamp(34px,6.5vw,110px)"],
+  .bc-landing [style*="font-size:clamp(38px,6.5vw,110px)"],
+  .bc-landing [style*="font-size:clamp(38px,7.5vw,125px)"] { font-size: clamp(28px, 7.8vh, 94px) !important; }
+
+  .bc-landing [style*="font-size:clamp(36px,5vw,76px)"],
+  .bc-landing [style*="font-size:clamp(34px,6vw,96px)"],
+  .bc-landing [style*="font-size:clamp(36px,5.5vw,88px)"] { font-size: clamp(24px, 5.6vh, 70px) !important; }
+
+  .bc-landing [style*="font-size:clamp(28px,5vw,64px)"] { font-size: clamp(18px, 3.8vh, 46px) !important; }
+
+  .bc-landing [style*="height:clamp(200px,50vh,560px)"],
+  .bc-landing [style*="height:clamp(340px,70vh,800px)"],
+  .bc-landing [style*="height:clamp(420px,78vh,900px)"],
+  .bc-landing [style*="height:clamp(280px,52vh,620px)"],
+  .bc-landing [style*="height:clamp(320px,60vh,760px)"],
+  .bc-landing [style*="height:clamp(280px,50vh,620px)"],
+  .bc-landing [style*="height:clamp(200px,30vh,320px)"] { height: clamp(170px, 44vh, 620px) !important; }
+
+  .bc-landing [data-seq-item] p { font-size: clamp(15px, 2.3vh, 20px) !important; }
+  .bc-landing [data-seq-item] { overflow: hidden; }
+}
+
+
+/* --- Ritmo de las secciones fijadas --------------------------------------
+   «¿Y si el proceso…» y «Conoce BuildCast» ocupaban dos pantallas enteras
+   de scroll para dos frases. Se acorta el recorrido fijado: el mensaje
+   llega antes y la página deja de sentirse larga en ese tramo. */
+
+@media (min-width: 761px) {
+  .bc-landing [data-seq="cambio"] { height: 160vh !important; }
+  .bc-landing [data-seq="problema"] { height: 240vh !important; }
+}
+
+
+/* --- Logotipo ------------------------------------------------------------
+   El logotipo es un SVG: escala sin perder nitidez y lleva su propio
+   color. La versión clara (buildcast-logo-dark.svg) va sobre fondos
+   oscuros; el ícono con placa negra sirve de favicon y de ícono de app. */
+
+.bc-logo { height: 26px; width: auto; display: block; }
+.bc-logo--grande { height: 32px; }
+
+/* El enlace de marca ya no lleva texto: se neutraliza su tipografía */
+.bc-marca { display: inline-flex; align-items: center; line-height: 0; }
+
+/* En la cabecera de la landing el logotipo sustituye al texto de 22px */
+.bc-landing [data-navbar] .bc-logo { height: 30px; }
+
+@media (max-width: 760px) {
+  .bc-logo { height: 22px; }
+  .bc-logo--grande { height: 26px; }
+  .bc-landing [data-navbar] .bc-logo { height: 24px; }
+}
+
+/* En el documento impreso el logotipo encabeza la hoja */
+@media print {
+  .bc-logo { height: 30px; }
+}
+
+
+/* --- Ajustes de la tipografía de marca -----------------------------------
+   Space Grotesk, la familia del logotipo, reemplaza a Oswald en los
+   títulos. Al no ser condensada, los titulares grandes necesitan un
+   tracking más cerrado para no verse sueltos. */
+
+.bc-display, .bc-h1, .bc-titulo, .bc-titulo-l,
+.bc-landing h1, .bc-landing h2 { letter-spacing: -.04em; }
+
+.bc-cifra, .bc-resultado__cifra { letter-spacing: -.035em; font-feature-settings: "tnum" 1; }
+
+/* Los rótulos en mayúsculas pierden algo de separación: la familia ya es
+   más ancha y el tracking anterior los desarmaba */
+.bc-rotulo, .bc-tabla th, .bc-nav a, .bc-boton { letter-spacing: .14em; }
+.bc-marca { letter-spacing: normal; }
+
+
+/* La frase más larga de la sección del problema no cabe a tamaño pleno
+   con una tipografía no condensada: se limita por ancho de ventana. */
+.bc-landing [data-seq="problema"] [data-seq-item] { font-size: min(7.4vw, 94px) !important; }
+.bc-landing [data-seq="problema"] h2[style*="font-size:13px"] { font-size: clamp(14px, 1.7vh, 17px) !important; }
+
+/* Los titulares de línea larga («Presupuestar no debería serlo.») se topan
+   también por ancho, no solo por altura: con una tipografía no condensada
+   una línea de treinta caracteres desborda antes que la altura. */
+/* Solo las capas y los titulares de sección, nunca los rótulos pequeños */
+.bc-landing h2:not([style*="letter-spacing:.3em"]):not([style*="font-size:13px"]) {
+  font-size: min(5.6vw, 94px);
+}
+.bc-landing [data-seq-item] h2,
+.bc-landing h2[data-seq-item] { font-size: min(7.4vw, 94px) !important; }
+
+/* Los rótulos de sección conservan su tamaño pase lo que pase */
+.bc-landing [style*="letter-spacing:.3em"],
+.bc-landing h2[style*="font-size:13px"] {
+  font-size: clamp(14px, 1.7vh, 17px) !important;
+  letter-spacing: .22em !important;
+  font-weight: 600 !important;
+}
+
+/* Si una línea no cabe, que doble: nunca que desborde la pantalla */
+.bc-landing h1, .bc-landing h2, .bc-landing h3 { overflow-wrap: break-word; }
+
+
+/* --- Cabeceras de tabla alineadas con sus columnas -----------------------
+   `.bc-tabla th` fija la alineación a la izquierda y ganaba por
+   especificidad a `.bc-num`, así que los encabezados de las columnas
+   numéricas quedaban desalineados respecto de las cifras. */
+
+.bc-tabla th.bc-num { text-align: right; }
+.bc-tabla th.bc-num,
+.bc-tabla td.bc-num,
+.bc-tabla td.bc-tabla__monto { padding-right: var(--bc-e4); }
+.bc-tabla th:last-child, .bc-tabla td:last-child { padding-right: 0; }
+
+/* --- Campos de rejilla alineados ----------------------------------------
+   En configuración, «Hormigón armado» entra en una línea y «Albañilería
+   confinada» en dos, de modo que sus campos quedaban a distinta altura.
+   La etiqueta reserva el alto de dos líneas para que todos coincidan. */
+
+.bc-rejilla .bc-campo { align-self: stretch; }
+.bc-rejilla .bc-campo > label {
+  display: flex; align-items: flex-end;
+  min-height: 2.8em;
+}

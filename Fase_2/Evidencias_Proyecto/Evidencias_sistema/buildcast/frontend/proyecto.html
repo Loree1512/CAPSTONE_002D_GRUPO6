@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Proyecto · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body x-data="formularioProyecto" x-init="iniciar()">
+
+  <header class="bc-barra">
+    <div>
+      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <nav class="bc-nav">
+        <a href="/panel.html">Panel</a>
+        <a href="/proyectos.html" aria-current="page">Proyectos</a>
+        <a href="/precios.html">Banco de precios</a>
+        <a href="/plantillas.html">Plantillas</a>
+        <a href="/configuracion.html">Configuración</a>
+      </nav>
+      <span class="bc-cuenta">
+        <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
+        <span>RAM Arquitectura &amp; Construcción</span>
+      </span>
+      <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="salir()">Salir</button>
+    </div>
+  </header>
+
+  <main class="bc-pagina" x-cloak>
+
+    <div class="bc-encabezado">
+      <div>
+        <p class="bc-migas"><a href="/proyectos.html">Proyectos</a><span x-text="edicion ? ' / Editar' : ' / Nuevo'"></span></p>
+        <h1 class="bc-h1" x-text="titulo"></h1>
+      </div>
+    </div>
+
+    <p class="bc-apoyo" x-show="cargando">Cargando el proyecto…</p>
+
+    <div class="bc-dupla" x-show="!cargando">
+
+      <form class="bc-tarjeta bc-tarjeta--relleno bc-form" @submit.prevent="guardar()">
+        <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+        <p class="bc-aviso" x-show="edicion">Si cambian datos del proyecto, la estimación vigente queda marcada para recalcular. Las partidas del presupuesto no se modifican.</p>
+
+        <div class="bc-campo">
+          <label for="nombre">Nombre del proyecto</label>
+          <input class="bc-entrada" id="nombre" x-model="datos.nombre" placeholder="Casa Bravo"
+                 :aria-invalid="errores.nombre ? 'true' : 'false'">
+          <p class="bc-error" x-show="errores.nombre" x-text="errores.nombre"></p>
+        </div>
+
+        <div class="bc-rejilla">
+          <div class="bc-campo">
+            <label for="superficie">Superficie (m²)</label>
+            <input class="bc-entrada bc-entrada--num" id="superficie" type="number" min="1" step="1"
+                   x-model.number="datos.superficie_m2" :aria-invalid="errores.superficie_m2 ? 'true' : 'false'">
+            <p class="bc-error" x-show="errores.superficie_m2" x-text="errores.superficie_m2"></p>
+          </div>
+          <div class="bc-campo">
+            <label for="pisos">Pisos</label>
+            <input class="bc-entrada bc-entrada--num" id="pisos" type="number" min="1" step="1"
+                   x-model.number="datos.pisos" :aria-invalid="errores.pisos ? 'true' : 'false'">
+            <p class="bc-error" x-show="errores.pisos" x-text="errores.pisos"></p>
+          </div>
+          <div class="bc-campo">
+            <label for="comuna">Comuna</label>
+            <select class="bc-entrada" id="comuna" x-model="datos.comuna">
+              <template x-for="c in comunas" :key="c"><option :value="c" x-text="c"></option></template>
+            </select>
+          </div>
+        </div>
+
+        <div class="bc-campo">
+          <label>Tipo de obra</label>
+          <div class="bc-opciones">
+            <template x-for="t in tipos" :key="t">
+              <button type="button" class="bc-opcion" :aria-pressed="datos.tipo_obra === t"
+                      @click="datos.tipo_obra = t" x-text="t"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="bc-campo">
+          <label>Materialidad predominante</label>
+          <div class="bc-opciones">
+            <template x-for="m in materiales" :key="m">
+              <button type="button" class="bc-opcion" :aria-pressed="datos.material === m"
+                      @click="datos.material = m" x-text="m"></button>
+            </template>
+          </div>
+        </div>
+
+        <div class="bc-campo">
+          <label>Estándar de terminaciones</label>
+          <div class="bc-opciones">
+            <template x-for="e in estandares" :key="e.valor">
+              <button type="button" class="bc-opcion" :aria-pressed="datos.estandar_terminaciones === e.valor"
+                      @click="datos.estandar_terminaciones = e.valor" x-text="e.etiqueta"></button>
+            </template>
+          </div>
+        </div>
+
+        <p class="bc-nota">Al crear el proyecto, sus partidas iniciales salen de la plantilla de su tipo de obra y materialidad. El costo se calcula con la cantidad y el precio unitario de cada partida; el plazo, con una regla paramétrica provisional.</p>
+
+        <div class="bc-acciones">
+          <button class="bc-boton" type="submit" :disabled="guardando"
+                  x-text="guardando ? 'Guardando…' : 'Guardar proyecto'"></button>
+          <button class="bc-boton bc-boton--linea" type="button" @click="volver()">Cancelar</button>
+        </div>
+      </form>
+
+      <aside class="bc-resultado" x-show="!edicion">
+        <span class="bc-rotulo">Datos de la obra</span>
+        <span class="bc-resultado__cifra" x-text="datos.superficie_m2 ? datos.superficie_m2 + ' m²' : '—'"></span>
+        <span class="bc-resultado__resumen"
+              x-text="(datos.tipo_obra || '—') + ' · ' + (datos.pisos || 1) + ' piso(s) · terminación ' + etiquetaEstandar().toLowerCase()"></span>
+
+        <div style="display:flex;flex-direction:column;margin-top:4px">
+          <div class="bc-resultado__fila"><span>Comuna</span><b x-text="datos.comuna || '—'"></b></div>
+          <div class="bc-resultado__fila"><span>Materialidad</span><b x-text="datos.material || '—'"></b></div>
+          <div class="bc-resultado__fila"><span>Partidas iniciales</span><b>Según plantilla</b></div>
+          <div class="bc-resultado__fila"><span>Costo y plazo</span><b>En la estimación</b></div>
+        </div>
+
+        <p class="bc-resultado__nota">Estimación preliminar referencial, sin valor contractual.</p>
+      </aside>
+
+      <aside class="bc-tarjeta bc-tarjeta--relleno" id="cierre-obra" x-show="edicion">
+        <span class="bc-rotulo">Cierre de obra</span>
+        <p class="bc-nota" style="margin:8px 0 16px">Al registrar las fechas reales, el proyecto pasa a alimentar el conjunto de datos con que se entrenará el modelo de plazo.</p>
+
+        <div class="bc-form">
+          <div class="bc-campo">
+            <label for="inicio">Fecha de inicio real</label>
+            <input class="bc-entrada" id="inicio" type="date" x-model="cierre.fecha_inicio_real">
+          </div>
+          <div class="bc-campo">
+            <label for="termino">Fecha de recepción final</label>
+            <input class="bc-entrada" id="termino" type="date" x-model="cierre.fecha_termino_real">
+          </div>
+          <div class="bc-campo">
+            <label for="costo-real">Costo real ejecutado · CLP</label>
+            <input class="bc-entrada bc-entrada--num" id="costo-real" type="number" min="0" step="1000"
+                   x-model.number="cierre.costo_real">
+          </div>
+          <p class="bc-nota" x-show="plazoReal" x-text="'Plazo real: ' + plazoReal + ' días'"></p>
+          <button type="button" class="bc-boton" @click="guardarCierre()" x-text="guardandoCierre ? 'Guardando…' : 'Registrar cierre'"></button>
+          <p class="bc-nota" x-show="cierreGuardado" x-cloak>Cierre registrado.</p>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+  <div class="bc-esqueleto" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+  <script type="module" src="/src/paginas/proyecto.ts"></script>
+</body>
+</html>

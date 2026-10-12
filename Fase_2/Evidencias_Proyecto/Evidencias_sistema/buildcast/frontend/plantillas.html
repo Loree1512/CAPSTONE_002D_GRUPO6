@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plantillas · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body x-data="plantillas" x-init="cargar()">
+
+  <header class="bc-barra">
+    <div>
+      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <nav class="bc-nav">
+        <a href="/panel.html">Panel</a>
+        <a href="/proyectos.html">Proyectos</a>
+        <a href="/precios.html">Banco de precios</a>
+        <a href="/plantillas.html" aria-current="page">Plantillas</a>
+        <a href="/configuracion.html">Configuración</a>
+      </nav>
+      <span class="bc-cuenta">
+        <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
+        <span>RAM Arquitectura &amp; Construcción</span>
+      </span>
+      <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="salir()">Salir</button>
+    </div>
+  </header>
+
+  <main class="bc-pagina" x-cloak>
+
+    <!-- Listado -->
+    <template x-if="!seleccionada">
+      <div style="display:flex;flex-direction:column;gap:clamp(20px,2.4vw,32px)">
+        <div class="bc-encabezado">
+          <div>
+            <span class="bc-rotulo">Administración</span>
+            <h1 class="bc-h1">Plantillas de presupuesto</h1>
+            <p class="bc-apoyo" style="margin-top:6px">Cada plantilla propone las partidas iniciales de un proyecto según su tipo de obra y materialidad. Al crear un proyecto se copian; después se pueden ajustar libremente y cambiar la plantilla no altera proyectos ya creados.</p>
+          </div>
+          <div class="bc-acciones">
+            <button type="button" class="bc-boton" @click="abrirNueva()">+ Nueva plantilla</button>
+          </div>
+        </div>
+
+        <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+        <p class="bc-apoyo" x-show="cargando">Cargando plantillas…</p>
+
+        <div class="bc-tarjeta" x-show="!cargando && plantillas.length > 0">
+          <template x-for="p in ordenadas" :key="p.id">
+            <div class="bc-lista__fila bc-lista__fila--amplia">
+              <div>
+                <b x-text="p.tipo_obra + ' · ' + p.materialidad"></b>
+                <span class="bc-nota" style="display:block"
+                      x-text="(p.cantidad_partidas ? p.cantidad_partidas + ' partida(s)' : 'Sin partidas configuradas')
+                        + (p.nombre !== p.tipo_obra + ' · ' + p.materialidad ? ' · ' + p.nombre : '')"></span>
+              </div>
+              <div class="bc-acciones">
+                <span class="bc-estado" x-show="!p.vigente">Inactiva</span>
+                <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="abrir(p)">Editar</button>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <div class="bc-vacio" x-show="!cargando && plantillas.length === 0 && !error">
+          <span class="bc-rotulo">Sin plantillas</span>
+          <h2 class="bc-h2">Todavía no hay plantillas</h2>
+          <p class="bc-apoyo">Crea una para proponer partidas iniciales a los proyectos nuevos.</p>
+        </div>
+      </div>
+    </template>
+
+    <!-- Detalle -->
+    <template x-if="seleccionada">
+      <div style="display:flex;flex-direction:column;gap:clamp(20px,2.4vw,32px)">
+        <div class="bc-encabezado">
+          <div>
+            <p class="bc-migas"><button type="button" class="bc-enlace" @click="volver()">← Plantillas</button></p>
+            <h1 class="bc-h1" x-text="seleccionada.tipo_obra + ' · ' + seleccionada.materialidad"></h1>
+          </div>
+        </div>
+
+        <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+        <p class="bc-aviso" x-show="mensaje && !error" x-text="mensaje"></p>
+
+        <div class="bc-dupla">
+          <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+            <div class="bc-tarjeta bc-desplaza">
+              <table class="bc-tabla bc-tabla--banco bc-tabla--partidas" x-show="lista.length > 0">
+                <thead>
+                  <tr>
+                    <th style="width:48px">#</th>
+                    <th>Partida</th>
+                    <th style="width:80px">Unidad</th>
+                    <th class="bc-num" style="width:160px">Cantidad sugerida</th>
+                    <th style="width:120px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="(f, i) in lista" :key="f.partida_id">
+                    <tr>
+                      <td class="bc-tabla__codigo" x-text="i + 1"></td>
+                      <td>
+                        <span class="bc-tabla__nombre" x-text="f.nombre"></span>
+                        <span class="bc-nota" style="display:block"
+                              x-text="f.codigo + ' · ' + nombreCategoria(f.categoria_id) + (f.vigente ? '' : ' · dada de baja: no se propone')"></span>
+                      </td>
+                      <td class="bc-tabla__suave" x-text="f.unidad"></td>
+                      <td class="bc-num">
+                        <input class="bc-entrada bc-entrada--celda" type="number" min="0" step="any"
+                               :value="f.cantidad_sugerida" placeholder="Por definir"
+                               :aria-label="'Cantidad sugerida de ' + f.nombre"
+                               @change="cambiarCantidad(f, $event.target.value)">
+                      </td>
+                      <td class="bc-tabla__acciones">
+                        <button type="button" class="bc-enlace" aria-label="Subir" :disabled="i === 0" @click="mover(i, -1)">↑</button>
+                        <button type="button" class="bc-enlace" aria-label="Bajar" :disabled="i === lista.length - 1" @click="mover(i, 1)">↓</button>
+                        <button type="button" class="bc-enlace bc-enlace--baja" @click="quitar(i)">Quitar</button>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+
+              <div class="bc-vacio" x-show="lista.length === 0" style="border:0">
+                <span class="bc-rotulo">Sin partidas configuradas</span>
+                <p class="bc-apoyo">Agrega partidas del catálogo. Los proyectos nuevos de esta combinación partirán con ellas.</p>
+              </div>
+            </div>
+
+            <div class="bc-acciones">
+              <button type="button" class="bc-boton" :disabled="!cambios || guardando" @click="guardarPartidas()"
+                      x-text="guardando ? 'Guardando…' : 'Guardar partidas'"></button>
+              <span class="bc-nota" x-show="cambios">Hay cambios sin guardar.</span>
+            </div>
+            <p class="bc-nota">La cantidad sugerida es opcional: úsala para partidas fijas, por ejemplo 1 gl. Si queda vacía, la cantidad se define en cada proyecto.</p>
+          </div>
+
+          <aside style="display:flex;flex-direction:column;gap:20px">
+            <div class="bc-tarjeta bc-tarjeta--relleno">
+              <span class="bc-rotulo">Agregar del catálogo</span>
+              <div class="bc-campo" style="margin:16px 0 12px">
+                <label for="buscar">Buscar partida</label>
+                <input class="bc-entrada" id="buscar" type="search" placeholder="Nombre o código" x-model="busqueda">
+              </div>
+              <div class="bc-lista">
+                <template x-for="f in resultados" :key="f.id">
+                  <div class="bc-lista__fila">
+                    <div>
+                      <b x-text="f.codigo + ' · ' + f.nombre"></b>
+                      <span class="bc-nota" style="display:block;padding:0" x-text="f.unidad"></span>
+                    </div>
+                    <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="agregar(f)">Agregar</button>
+                  </div>
+                </template>
+                <p class="bc-nota" x-show="resultados.length === 0">No hay más partidas que coincidan.</p>
+              </div>
+            </div>
+
+            <div class="bc-tarjeta bc-tarjeta--relleno">
+              <span class="bc-rotulo">Datos de la plantilla</span>
+              <div class="bc-form" style="margin-top:16px">
+                <div class="bc-campo">
+                  <label for="pl-nombre">Nombre</label>
+                  <input class="bc-entrada" id="pl-nombre" x-model="datos.nombre">
+                </div>
+                <div class="bc-campo">
+                  <label for="pl-tipo">Tipo de obra</label>
+                  <select class="bc-entrada" id="pl-tipo" x-model="datos.tipo_obra">
+                    <template x-for="t in tipos" :key="t"><option :value="t" x-text="t"></option></template>
+                  </select>
+                </div>
+                <div class="bc-campo">
+                  <label for="pl-material">Materialidad</label>
+                  <select class="bc-entrada" id="pl-material" x-model="datos.materialidad">
+                    <template x-for="m in materiales" :key="m"><option :value="m" x-text="m"></option></template>
+                  </select>
+                </div>
+                <label class="bc-casilla">
+                  <input type="checkbox" x-model="datos.vigente">
+                  <span>Activa: se aplica a los proyectos nuevos</span>
+                </label>
+                <button type="button" class="bc-boton bc-boton--linea" :disabled="guardando" @click="guardarDatos()">Guardar datos</button>
+              </div>
+              <p class="bc-nota" style="margin-top:12px">Solo puede haber una plantilla activa por tipo de obra y materialidad.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </template>
+
+  </main>
+  <div class="bc-esqueleto" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+
+  <!-- Nueva plantilla -->
+  <div class="bc-capa" x-show="formNueva" @click.self="formNueva = false" x-cloak>
+    <div class="bc-modal">
+      <span class="bc-rotulo">Plantillas</span>
+      <h2 class="bc-h2" style="margin-bottom:20px">Nueva plantilla</h2>
+      <div class="bc-form">
+        <div class="bc-campo">
+          <label for="np-tipo">Tipo de obra</label>
+          <select class="bc-entrada" id="np-tipo" x-model="nueva.tipo_obra">
+            <template x-for="t in tipos" :key="t"><option :value="t" x-text="t"></option></template>
+          </select>
+        </div>
+        <div class="bc-campo">
+          <label for="np-material">Materialidad</label>
+          <select class="bc-entrada" id="np-material" x-model="nueva.materialidad">
+            <template x-for="m in materiales" :key="m"><option :value="m" x-text="m"></option></template>
+          </select>
+        </div>
+        <div class="bc-campo">
+          <label for="np-nombre">Nombre (opcional)</label>
+          <input class="bc-entrada" id="np-nombre" x-model="nueva.nombre" :placeholder="nueva.tipo_obra + ' · ' + nueva.materialidad">
+        </div>
+        <p class="bc-error" x-show="errorNueva" x-text="errorNueva"></p>
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" @click="crear()">Crear plantilla</button>
+          <button type="button" class="bc-boton bc-boton--linea" @click="formNueva = false">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/paginas/plantillas.ts"></script>
+</body>
+</html>

@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body x-data="panel" x-init="cargar()">
+
+  <header class="bc-barra">
+    <div>
+      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <nav class="bc-nav">
+        <a href="/panel.html" aria-current="page">Panel</a>
+        <a href="/proyectos.html">Proyectos</a>
+        <a href="/precios.html">Banco de precios</a>
+        <a href="/plantillas.html">Plantillas</a>
+        <a href="/configuracion.html">Configuración</a>
+      </nav>
+      <span class="bc-cuenta">
+        <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
+        <span>RAM Arquitectura &amp; Construcción</span>
+      </span>
+      <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="salir()">Salir</button>
+    </div>
+  </header>
+
+  <main class="bc-pagina" x-cloak>
+
+    <div class="bc-encabezado">
+      <div>
+        <span class="bc-rotulo">Panel de la oficina</span>
+        <h1 class="bc-h1">Estado de la cartera</h1>
+      </div>
+      <div class="bc-acciones">
+        <a href="/proyecto.html" class="bc-boton">+ Nuevo proyecto</a>
+      </div>
+    </div>
+
+    <p class="bc-apoyo" x-show="cargando">Cargando…</p>
+    <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+
+    <div class="bc-kpis" x-show="!cargando">
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Proyectos</span>
+        <span class="bc-cifra" x-text="proyectos.length"></span>
+        <span class="bc-nota" x-text="sinEstimar + ' sin estimar · ' + porRecalcular + ' por recalcular'"></span>
+      </div>
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Monto de la cartera</span>
+        <span class="bc-cifra" x-text="pesos(montoCartera)"></span>
+        <span class="bc-nota">CLP neto · suma de estimaciones vigentes</span>
+      </div>
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Superficie acumulada</span>
+        <span class="bc-cifra" x-text="superficie(superficieCartera)"></span>
+        <span class="bc-nota">Metros cuadrados edificados</span>
+      </div>
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Banco de precios</span>
+        <span class="bc-cifra" x-text="versionBanco"></span>
+        <span class="bc-nota" x-text="sinPrecio === 0 ? 'Todas las partidas con precio' : sinPrecio + ' partidas sin precio'"></span>
+      </div>
+    </div>
+
+    <!-- Avisos que piden acción -->
+    <div style="display:flex;flex-direction:column;gap:12px" x-show="!cargando">
+      <p class="bc-aviso bc-aviso--pendiente" x-show="bancoReferencial">
+        El banco vigente usa <strong>precios referenciales de mercado</strong>. Reemplazarlos por los valores de RAM
+        es lo que convierte la estimación en una cifra defendible.
+        <a href="/precios.html" class="bc-enlace" style="margin-left:8px">Ir al banco</a>
+      </p>
+      <p class="bc-aviso bc-aviso--pendiente" x-show="porRecalcular > 0">
+        Hay <span x-text="porRecalcular"></span> proyecto(s) por recalcular: cambiaron sus datos o la versión de precios vigente
+        después de emitida la estimación. No suman al monto de la cartera.
+      </p>
+      <p class="bc-aviso">
+        El plazo se entrega con una regla paramétrica provisional. El modelo predictivo se entrena cuando el conjunto
+        de obras ejecutadas alcance el volumen necesario.
+      </p>
+    </div>
+
+    <!-- Últimos proyectos -->
+    <div x-show="!cargando && proyectos.length > 0" style="display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+        <h2 class="bc-h2">Últimos proyectos</h2>
+        <a href="/proyectos.html" class="bc-enlace">Ver todos</a>
+      </div>
+      <div class="bc-tarjeta bc-desplaza">
+        <table class="bc-tabla">
+          <thead>
+            <tr>
+              <th>Proyecto</th><th>Comuna</th>
+              <th class="bc-num">Superficie</th><th class="bc-num">Costo estimado</th>
+              <th class="bc-num">Plazo</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="p in recientes" :key="p.id">
+              <tr @click="abrir(p)">
+                <td class="bc-tabla__nombre" x-text="p.nombre"></td>
+                <td class="bc-tabla__suave" x-text="p.comuna"></td>
+                <td class="bc-num" x-text="superficie(p.superficie_m2)"></td>
+                <td class="bc-tabla__monto" x-text="pesos(p.costo_total)"></td>
+                <td class="bc-num" x-text="dias(p.plazo_dias)"></td>
+                <td><span class="bc-estado" :class="claseEstado(p)" x-text="etiquetaEstado(p)"></span></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bc-vacio" x-show="!cargando && proyectos.length === 0">
+      <span class="bc-rotulo">Cartera vacía</span>
+      <h2 class="bc-h2">Todavía no hay proyectos</h2>
+      <p class="bc-apoyo">Registra el primero con seis datos de la obra y BuildCast calcula su costo y su plazo.</p>
+      <a href="/proyecto.html" class="bc-boton">Crear el primero</a>
+    </div>
+
+  </main>
+  <div class="bc-esqueleto" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+  <script type="module" src="/src/paginas/panel.ts"></script>
+</body>
+</html>

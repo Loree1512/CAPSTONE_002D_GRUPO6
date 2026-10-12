@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuración · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body x-data="configuracion" x-init="iniciar()">
+
+  <header class="bc-barra">
+    <div>
+      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <nav class="bc-nav">
+        <a href="/panel.html">Panel</a>
+        <a href="/proyectos.html">Proyectos</a>
+        <a href="/precios.html">Banco de precios</a>
+        <a href="/plantillas.html">Plantillas</a>
+        <a href="/configuracion.html" aria-current="page">Configuración</a>
+      </nav>
+      <span class="bc-cuenta">
+        <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
+        <span>RAM Arquitectura &amp; Construcción</span>
+      </span>
+      <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="salir()">Salir</button>
+    </div>
+  </header>
+
+  <main class="bc-pagina" x-cloak>
+
+    <div class="bc-encabezado">
+      <div>
+        <span class="bc-rotulo">Administración</span>
+        <h1 class="bc-h1">Configuración del cálculo</h1>
+        <p class="bc-apoyo" style="margin-top:6px">Los coeficientes viven aquí y no en el código. Cualquier cambio se aplica a las estimaciones que se calculen desde ahora; las ya emitidas conservan los valores con que fueron hechas.</p>
+      </div>
+      <div class="bc-acciones" x-show="listo">
+        <button type="button" class="bc-boton bc-boton--linea" :disabled="guardando" @click="restaurar()">Restaurar valores de fábrica</button>
+        <button type="button" class="bc-boton" :disabled="guardando" @click="guardar()"
+                x-text="guardando ? 'Guardando…' : 'Guardar cambios'"></button>
+      </div>
+    </div>
+
+    <p class="bc-apoyo" x-show="cargando">Cargando la configuración…</p>
+    <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+    <p class="bc-aviso" x-show="guardado" x-cloak>Configuración guardada.</p>
+
+    <div class="bc-dupla" x-show="listo">
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Factores por comuna</span>
+          <p class="bc-nota" style="margin:6px 0 16px">Recogen acceso, fletes y disponibilidad de mano de obra. 1,00 es la referencia. Se aplican solo cuando la estimación tiene activados los factores.</p>
+          <div class="bc-rejilla">
+            <template x-for="c in comunas" :key="c">
+              <div class="bc-campo">
+                <label :for="'com-' + c" x-text="c"></label>
+                <input class="bc-entrada bc-entrada--num" :id="'com-' + c" type="number" step="0.01" min="0.5" max="2"
+                       x-model.number="config.factoresComuna[c]">
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Factores por materialidad</span>
+          <p class="bc-nota" style="margin:6px 0 16px">Hoy no se aplican al costo: la materialidad elige la plantilla de partidas. Se conservan para uso posterior.</p>
+          <div class="bc-rejilla">
+            <template x-for="m in materiales" :key="m">
+              <div class="bc-campo">
+                <label :for="'mat-' + m" x-text="m"></label>
+                <input class="bc-entrada bc-entrada--num" :id="'mat-' + m" type="number" step="0.01" min="0.5" max="2"
+                       x-model.number="config.factoresMaterial[m]">
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Factores por número de pisos</span>
+          <p class="bc-nota" style="margin:6px 0 16px">Tramos aplicados a toda la obra, solo cuando la estimación tiene activados los factores.</p>
+          <div class="bc-rejilla">
+            <template x-for="(t, i) in config.tramosPisos" :key="i">
+              <div class="bc-campo">
+                <label x-text="t.desde === t.hasta ? t.desde + ' piso' : t.desde + ' a ' + (t.hasta > 90 ? 'más' : t.hasta) + ' pisos'"></label>
+                <input class="bc-entrada bc-entrada--num" type="number" step="0.01" min="0.5" max="2"
+                       x-model.number="t.factor">
+              </div>
+            </template>
+          </div>
+        </div>
+
+      </div>
+
+      <aside style="display:flex;flex-direction:column;gap:20px">
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Mano de obra</span>
+          <div class="bc-campo" style="margin-top:16px">
+            <label for="hh">Valor de la hora hombre · CLP</label>
+            <input class="bc-entrada bc-entrada--num" id="hh" type="number" step="100" min="0"
+                   x-model.number="config.valorHoraHombre">
+            <p class="bc-ayuda" x-text="'Jornada de ' + pesos(config.valorHoraHombre * 8) + ' en 8 horas'"></p>
+          </div>
+          <p class="bc-nota" style="margin-top:16px">Referencial: hoy no entra al cálculo. La mano de obra se presupuesta como una partida más del proyecto (cantidad × precio).</p>
+        </div>
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Ajustes comerciales por defecto</span>
+          <div class="bc-form" style="margin-top:16px">
+            <div class="bc-campo">
+              <label for="gg">Gastos generales · %</label>
+              <input class="bc-entrada bc-entrada--num" id="gg" type="number" step="0.5" min="0" :max="limiteGg"
+                     x-model.number="config.gastosGeneralesPct">
+            </div>
+            <div class="bc-campo">
+              <label for="ut">Utilidad · %</label>
+              <input class="bc-entrada bc-entrada--num" id="ut" type="number" step="0.5" min="0" :max="limiteUtilidad"
+                     x-model.number="config.utilidadPct">
+            </div>
+          </div>
+          <p class="bc-nota" style="margin-top:16px">Ambos se calculan sobre el costo directo. Son el punto de partida de cada estimación; se pueden cambiar caso a caso sin tocar esta configuración.</p>
+        </div>
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Estándar de terminaciones</span>
+          <div class="bc-rejilla" style="margin-top:16px">
+            <template x-for="e in estandares" :key="e.valor">
+              <div class="bc-campo">
+                <label :for="'est-' + e.valor" x-text="e.etiqueta"></label>
+                <input class="bc-entrada bc-entrada--num" :id="'est-' + e.valor" type="number" step="0.01" min="0.5" max="2"
+                       x-model.number="config.factoresEstandar[e.valor]">
+              </div>
+            </template>
+          </div>
+          <p class="bc-nota" style="margin-top:16px">Hoy no se aplican al costo. Se conservan para uso posterior.</p>
+        </div>
+
+        <div class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Modelo de plazo</span>
+          <div style="margin-top:16px">
+            <div class="bc-resumen__fila"><span>Método vigente</span><b>Regla paramétrica</b></div>
+            <div class="bc-resumen__fila"><span>Versión del modelo</span><b>Sin entrenar</b></div>
+            <div class="bc-resumen__fila"><span>Métricas de error</span><b>Pendientes</b></div>
+          </div>
+          <p class="bc-nota" style="margin-top:16px">No se declara ninguna métrica hasta que exista evaluación sobre datos no usados en el entrenamiento.</p>
+        </div>
+
+      </aside>
+    </div>
+
+  </main>
+  <div class="bc-esqueleto" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+  <script type="module" src="/src/paginas/configuracion.ts"></script>
+</body>
+</html>

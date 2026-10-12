@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Documento de estimación · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body class="bc-fondo-hoja" x-data="documento" x-init="iniciar()">
+
+  <div class="bc-cinta" x-cloak>
+    <a class="bc-enlace" :href="proyectoId ? '/estimacion.html?id=' + proyectoId : '/proyectos.html'">← Volver a la estimación</a>
+    <button type="button" class="bc-boton bc-boton--menor" @click="imprimir()">Imprimir o guardar en PDF</button>
+  </div>
+
+  <p class="bc-apoyo" style="padding:24px" x-show="cargando">Preparando el documento…</p>
+  <p class="bc-aviso bc-aviso--error" style="margin:24px" x-cloak x-show="error" x-text="error"></p>
+
+  <template x-if="proyecto && presupuesto">
+    <article class="bc-hoja">
+
+      <header class="bc-hoja__cabecera">
+        <div>
+          <img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo bc-logo--grande">
+          <p class="bc-nota" style="margin-top:6px">Estimación preliminar de costo y plazo de construcción</p>
+        </div>
+        <div style="text-align:right">
+          <span class="bc-placa bc-placa--grande"><img src="/ram-logo.png" alt="RAM Arquitectura y Construcción"></span>
+          <p class="bc-nota" style="margin-top:8px">RAM Arquitectura &amp; Construcción<br>Región de Valparaíso</p>
+        </div>
+      </header>
+
+      <div class="bc-hoja__folio">
+        <div><span class="bc-rotulo bc-rotulo--gris">Folio</span><b x-text="folio"></b></div>
+        <div><span class="bc-rotulo bc-rotulo--gris">Fecha de emisión</span><b x-text="fecha"></b></div>
+        <div><span class="bc-rotulo bc-rotulo--gris">Banco de precios</span><b x-text="versionBanco"></b></div>
+      </div>
+
+      <section>
+        <h2 class="bc-h2">Antecedentes de la obra</h2>
+        <table class="bc-tabla bc-tabla--ficha">
+          <tbody>
+            <tr><td>Proyecto</td><td x-text="proyecto.nombre"></td></tr>
+            <tr><td>Comuna</td><td x-text="proyecto.comuna"></td></tr>
+            <tr><td>Tipo de obra</td><td x-text="proyecto.tipo_obra"></td></tr>
+            <tr><td>Materialidad predominante</td><td x-text="proyecto.material"></td></tr>
+            <tr><td>Superficie edificada</td><td x-text="numero(proyecto.superficie_m2) + ' m²'"></td></tr>
+            <tr><td>Número de pisos</td><td x-text="proyecto.pisos"></td></tr>
+            <tr><td>Estándar de terminaciones</td><td x-text="etiquetaEstandar"></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2 class="bc-h2">Resultado de la estimación</h2>
+        <div class="bc-hoja__cifras">
+          <div>
+            <span class="bc-rotulo bc-rotulo--gris">Costo total estimado</span>
+            <span class="bc-cifra" x-text="pesos(presupuesto.total)"></span>
+            <span class="bc-nota">CLP neto, sin IVA</span>
+          </div>
+          <div>
+            <span class="bc-rotulo bc-rotulo--gris">Costo por m²</span>
+            <span class="bc-cifra" x-text="pesos(presupuesto.costoM2)"></span>
+            <span class="bc-nota" x-text="'Sobre ' + numero(proyecto.superficie_m2) + ' m² edificados'"></span>
+          </div>
+          <div>
+            <span class="bc-rotulo bc-rotulo--gris">Plazo de construcción</span>
+            <span class="bc-cifra"><span x-text="presupuesto.plazoDias"></span> días</span>
+            <span class="bc-nota">Intervalo de <span x-text="presupuesto.plazoMin"></span> a <span x-text="presupuesto.plazoMax"></span> días</span>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="bc-h2">Desglose del costo directo</h2>
+        <table class="bc-tabla">
+          <thead>
+            <tr><th style="width:60px">Cap.</th><th>Capítulo</th><th class="bc-num">Incidencia</th><th class="bc-num">Subtotal</th></tr>
+          </thead>
+          <tbody>
+            <template x-for="c in presupuesto.capitulos" :key="c.codigo">
+              <tr>
+                <td class="bc-tabla__codigo" x-text="c.codigo"></td>
+                <td x-text="c.nombre"></td>
+                <td class="bc-num" x-text="c.incidencia.toFixed(1) + ' %'"></td>
+                <td class="bc-tabla__monto" x-text="pesos(c.subtotal)"></td>
+              </tr>
+            </template>
+          </tbody>
+          <tfoot>
+            <tr><td></td><td>Costo directo</td><td class="bc-num">100 %</td><td class="bc-tabla__monto" x-text="pesos(presupuesto.costoDirecto)"></td></tr>
+          </tfoot>
+        </table>
+
+        <table class="bc-tabla bc-tabla--cierre">
+          <tbody>
+            <tr x-show="presupuesto.aplicarFactores">
+              <td x-text="'Suma de partidas · factor ' + factor(presupuesto.factores.ajuste)"></td>
+              <td class="bc-tabla__monto" x-text="pesos(presupuesto.costoDirectoBase)"></td>
+            </tr>
+            <tr><td>Costo directo</td><td class="bc-tabla__monto" x-text="pesos(presupuesto.costoDirecto)"></td></tr>
+            <tr><td x-text="'Gastos generales (' + presupuesto.gastosGeneralesPct + '%)'"></td><td class="bc-tabla__monto" x-text="pesos(presupuesto.gastosGenerales)"></td></tr>
+            <tr><td x-text="'Utilidad (' + presupuesto.utilidadPct + '%)'"></td><td class="bc-tabla__monto" x-text="pesos(presupuesto.utilidad)"></td></tr>
+            <tr class="bc-tabla__total"><td>Total estimado</td><td class="bc-tabla__monto" x-text="pesos(presupuesto.total)"></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2 class="bc-h2">Detalle de partidas</h2>
+        <table class="bc-tabla bc-tabla--detalle">
+          <thead>
+            <tr><th>Partida</th><th style="width:70px">Unidad</th><th class="bc-num">Cantidad</th><th class="bc-num">Precio unitario</th><th class="bc-num">Subtotal</th></tr>
+          </thead>
+          <template x-for="c in presupuesto.capitulos" :key="c.codigo">
+            <tbody>
+              <tr class="bc-fila-categoria"><td colspan="5" x-text="c.codigo + ' · ' + c.nombre"></td></tr>
+              <template x-for="(l, i) in c.lineas" :key="c.codigo + '-' + i">
+                <tr>
+                  <td x-text="l.nombre"></td>
+                  <td class="bc-tabla__suave" x-text="l.unidad"></td>
+                  <td class="bc-num" x-text="numero(l.cantidad)"></td>
+                  <td class="bc-num" x-text="pesos(l.precioUnitario)"></td>
+                  <td class="bc-num" x-text="pesos(l.subtotalBase)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </template>
+        </table>
+      </section>
+
+      <section class="bc-hoja__alcance">
+        <h2 class="bc-h2">Alcance y advertencias</h2>
+        <p class="bc-apoyo">Este documento entrega una <strong>estimación preliminar referencial</strong>, elaborada con las partidas del proyecto, las cantidades definidas para esta obra y los precios unitarios del banco de precios o particulares del proyecto. No reemplaza el estudio de especialidades y no tiene valor contractual.</p>
+        <p class="bc-apoyo">Los gastos generales y la utilidad se calculan como porcentaje del costo directo.</p>
+        <p class="bc-apoyo">Los valores son netos, en pesos chilenos, sin IVA. No incluyen terreno, permisos municipales, aportes, proyectos de especialidades ni derechos de edificación.</p>
+        <p class="bc-apoyo">El plazo se obtiene mediante una regla paramétrica provisional. Las métricas del modelo predictivo se encuentran pendientes de validación y, por lo tanto, no se declara precisión alguna sobre esa cifra.</p>
+        <p class="bc-nota" x-text="'Emitido con el banco de precios ' + versionBanco + ' · folio ' + folio + ' · ' + fecha"></p>
+      </section>
+
+    </article>
+  </template>
+
+  <script type="module" src="/src/paginas/documento.ts"></script>
+</body>
+</html>

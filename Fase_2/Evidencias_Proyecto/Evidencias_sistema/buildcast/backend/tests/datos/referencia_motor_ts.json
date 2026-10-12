@@ -1,0 +1,765 @@
+{
+  "generado_con": "backend/tests/paridad/generar_referencia.mjs",
+  "entradas": {
+    "categorias": [
+      {
+        "id": 1,
+        "codigo": "01",
+        "nombre": "Obras preliminares",
+        "orden": 1
+      },
+      {
+        "id": 2,
+        "codigo": "02",
+        "nombre": "Movimiento de tierras",
+        "orden": 2
+      },
+      {
+        "id": 3,
+        "codigo": "03",
+        "nombre": "Fundaciones",
+        "orden": 3
+      },
+      {
+        "id": 4,
+        "codigo": "04",
+        "nombre": "Obra gruesa y estructura",
+        "orden": 4
+      },
+      {
+        "id": 5,
+        "codigo": "05",
+        "nombre": "Techumbre",
+        "orden": 5
+      },
+      {
+        "id": 6,
+        "codigo": "06",
+        "nombre": "Terminaciones",
+        "orden": 6
+      },
+      {
+        "id": 7,
+        "codigo": "07",
+        "nombre": "Puertas y ventanas",
+        "orden": 7
+      },
+      {
+        "id": 8,
+        "codigo": "08",
+        "nombre": "Instalación sanitaria",
+        "orden": 8
+      },
+      {
+        "id": 9,
+        "codigo": "09",
+        "nombre": "Instalación eléctrica",
+        "orden": 9
+      },
+      {
+        "id": 10,
+        "codigo": "10",
+        "nombre": "Instalación de gas",
+        "orden": 10
+      },
+      {
+        "id": 11,
+        "codigo": "11",
+        "nombre": "Obras exteriores",
+        "orden": 11
+      },
+      {
+        "id": 12,
+        "codigo": "12",
+        "nombre": "Aseo y entrega",
+        "orden": 12
+      }
+    ],
+    "partidas": [
+      {
+        "categoria_id": 1,
+        "codigo": "01.01",
+        "nombre": "Instalación de faenas",
+        "unidad": "gl",
+        "orden": 1
+      },
+      {
+        "categoria_id": 1,
+        "codigo": "01.02",
+        "nombre": "Cierre provisorio de obra",
+        "unidad": "ml",
+        "orden": 2
+      },
+      {
+        "categoria_id": 1,
+        "codigo": "01.03",
+        "nombre": "Trazado y niveles",
+        "unidad": "m2",
+        "orden": 3
+      },
+      {
+        "categoria_id": 1,
+        "codigo": "01.04",
+        "nombre": "Empalme provisorio de agua y electricidad",
+        "unidad": "gl",
+        "orden": 4
+      },
+      {
+        "categoria_id": 2,
+        "codigo": "02.01",
+        "nombre": "Escarpe y despeje de terreno",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 2,
+        "codigo": "02.02",
+        "nombre": "Excavación para fundaciones",
+        "unidad": "m3",
+        "orden": 2
+      },
+      {
+        "categoria_id": 2,
+        "codigo": "02.03",
+        "nombre": "Relleno compactado",
+        "unidad": "m3",
+        "orden": 3
+      },
+      {
+        "categoria_id": 2,
+        "codigo": "02.04",
+        "nombre": "Retiro de excedentes",
+        "unidad": "m3",
+        "orden": 4
+      },
+      {
+        "categoria_id": 3,
+        "codigo": "03.01",
+        "nombre": "Emplantillado",
+        "unidad": "m3",
+        "orden": 1
+      },
+      {
+        "categoria_id": 3,
+        "codigo": "03.02",
+        "nombre": "Hormigón de cimientos",
+        "unidad": "m3",
+        "orden": 2
+      },
+      {
+        "categoria_id": 3,
+        "codigo": "03.03",
+        "nombre": "Sobrecimiento",
+        "unidad": "m3",
+        "orden": 3
+      },
+      {
+        "categoria_id": 3,
+        "codigo": "03.04",
+        "nombre": "Enfierradura de fundaciones",
+        "unidad": "kg",
+        "orden": 4
+      },
+      {
+        "categoria_id": 3,
+        "codigo": "03.05",
+        "nombre": "Moldaje de fundaciones",
+        "unidad": "m2",
+        "orden": 5
+      },
+      {
+        "categoria_id": 3,
+        "codigo": "03.06",
+        "nombre": "Polietileno y aislación de humedad",
+        "unidad": "m2",
+        "orden": 6
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.01",
+        "nombre": "Radier",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.02",
+        "nombre": "Albañilería de ladrillo",
+        "unidad": "m2",
+        "orden": 2
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.03",
+        "nombre": "Pilares y cadenas de hormigón armado",
+        "unidad": "m3",
+        "orden": 3
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.04",
+        "nombre": "Enfierradura de estructura",
+        "unidad": "kg",
+        "orden": 4
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.05",
+        "nombre": "Moldaje de estructura",
+        "unidad": "m2",
+        "orden": 5
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.06",
+        "nombre": "Losa de hormigón armado",
+        "unidad": "m2",
+        "orden": 6
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.07",
+        "nombre": "Tabiquería estructural",
+        "unidad": "m2",
+        "orden": 7
+      },
+      {
+        "categoria_id": 4,
+        "codigo": "04.08",
+        "nombre": "Escalera",
+        "unidad": "un",
+        "orden": 8
+      },
+      {
+        "categoria_id": 5,
+        "codigo": "05.01",
+        "nombre": "Estructura de cubierta",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 5,
+        "codigo": "05.02",
+        "nombre": "Cubierta",
+        "unidad": "m2",
+        "orden": 2
+      },
+      {
+        "categoria_id": 5,
+        "codigo": "05.03",
+        "nombre": "Hojalatería y canales",
+        "unidad": "ml",
+        "orden": 3
+      },
+      {
+        "categoria_id": 5,
+        "codigo": "05.04",
+        "nombre": "Aislación térmica de cubierta",
+        "unidad": "m2",
+        "orden": 4
+      },
+      {
+        "categoria_id": 5,
+        "codigo": "05.05",
+        "nombre": "Cielo interior",
+        "unidad": "m2",
+        "orden": 5
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.01",
+        "nombre": "Estuco interior",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.02",
+        "nombre": "Estuco o revestimiento exterior",
+        "unidad": "m2",
+        "orden": 2
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.03",
+        "nombre": "Tabiquería no estructural y revestimiento",
+        "unidad": "m2",
+        "orden": 3
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.04",
+        "nombre": "Pavimento cerámico",
+        "unidad": "m2",
+        "orden": 4
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.05",
+        "nombre": "Piso flotante o similar",
+        "unidad": "m2",
+        "orden": 5
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.06",
+        "nombre": "Revestimiento cerámico de muros",
+        "unidad": "m2",
+        "orden": 6
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.07",
+        "nombre": "Pintura interior",
+        "unidad": "m2",
+        "orden": 7
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.08",
+        "nombre": "Pintura exterior",
+        "unidad": "m2",
+        "orden": 8
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.09",
+        "nombre": "Muebles de cocina",
+        "unidad": "ml",
+        "orden": 9
+      },
+      {
+        "categoria_id": 6,
+        "codigo": "06.10",
+        "nombre": "Closets y muebles fijos",
+        "unidad": "ml",
+        "orden": 10
+      },
+      {
+        "categoria_id": 7,
+        "codigo": "07.01",
+        "nombre": "Ventanas",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 7,
+        "codigo": "07.02",
+        "nombre": "Puerta de acceso",
+        "unidad": "un",
+        "orden": 2
+      },
+      {
+        "categoria_id": 7,
+        "codigo": "07.03",
+        "nombre": "Puertas interiores",
+        "unidad": "un",
+        "orden": 3
+      },
+      {
+        "categoria_id": 7,
+        "codigo": "07.04",
+        "nombre": "Quincallería",
+        "unidad": "un",
+        "orden": 4
+      },
+      {
+        "categoria_id": 8,
+        "codigo": "08.01",
+        "nombre": "Red de agua fría y caliente",
+        "unidad": "pto",
+        "orden": 1
+      },
+      {
+        "categoria_id": 8,
+        "codigo": "08.02",
+        "nombre": "Red de alcantarillado",
+        "unidad": "pto",
+        "orden": 2
+      },
+      {
+        "categoria_id": 8,
+        "codigo": "08.03",
+        "nombre": "Artefactos sanitarios y grifería",
+        "unidad": "un",
+        "orden": 3
+      },
+      {
+        "categoria_id": 8,
+        "codigo": "08.04",
+        "nombre": "Sistema de agua caliente",
+        "unidad": "un",
+        "orden": 4
+      },
+      {
+        "categoria_id": 8,
+        "codigo": "08.05",
+        "nombre": "Cámaras y arranque domiciliario",
+        "unidad": "un",
+        "orden": 5
+      },
+      {
+        "categoria_id": 9,
+        "codigo": "09.01",
+        "nombre": "Empalme eléctrico",
+        "unidad": "gl",
+        "orden": 1
+      },
+      {
+        "categoria_id": 9,
+        "codigo": "09.02",
+        "nombre": "Tablero general",
+        "unidad": "un",
+        "orden": 2
+      },
+      {
+        "categoria_id": 9,
+        "codigo": "09.03",
+        "nombre": "Centros y enchufes",
+        "unidad": "pto",
+        "orden": 3
+      },
+      {
+        "categoria_id": 9,
+        "codigo": "09.04",
+        "nombre": "Artefactos de iluminación",
+        "unidad": "un",
+        "orden": 4
+      },
+      {
+        "categoria_id": 9,
+        "codigo": "09.05",
+        "nombre": "Certificación SEC TE1",
+        "unidad": "gl",
+        "orden": 5
+      },
+      {
+        "categoria_id": 10,
+        "codigo": "10.01",
+        "nombre": "Red interior de gas",
+        "unidad": "ml",
+        "orden": 1
+      },
+      {
+        "categoria_id": 10,
+        "codigo": "10.02",
+        "nombre": "Certificación SEC de gas",
+        "unidad": "gl",
+        "orden": 2
+      },
+      {
+        "categoria_id": 11,
+        "codigo": "11.01",
+        "nombre": "Radier exterior y terrazas",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 11,
+        "codigo": "11.02",
+        "nombre": "Cierre perimetral",
+        "unidad": "ml",
+        "orden": 2
+      },
+      {
+        "categoria_id": 11,
+        "codigo": "11.03",
+        "nombre": "Paisajismo y áreas verdes",
+        "unidad": "m2",
+        "orden": 3
+      },
+      {
+        "categoria_id": 12,
+        "codigo": "12.01",
+        "nombre": "Aseo final de obra",
+        "unidad": "m2",
+        "orden": 1
+      },
+      {
+        "categoria_id": 12,
+        "codigo": "12.02",
+        "nombre": "Retiro de escombros",
+        "unidad": "gl",
+        "orden": 2
+      }
+    ],
+    "precios": {
+      "01.01": [
+        1800000,
+        16
+      ],
+      "01.02": [
+        12000,
+        0.5
+      ],
+      "01.03": [
+        1200,
+        0.08
+      ],
+      "01.04": [
+        650000,
+        8
+      ],
+      "02.01": [
+        900,
+        0.05
+      ],
+      "02.02": [
+        7500,
+        1.2
+      ],
+      "02.03": [
+        14000,
+        0.8
+      ],
+      "02.04": [
+        11000,
+        0.15
+      ],
+      "03.01": [
+        78000,
+        2
+      ],
+      "03.02": [
+        95000,
+        5
+      ],
+      "03.03": [
+        98000,
+        6.5
+      ],
+      "03.04": [
+        1350,
+        0.06
+      ],
+      "03.05": [
+        9500,
+        1.1
+      ],
+      "03.06": [
+        1400,
+        0.05
+      ],
+      "04.01": [
+        16500,
+        0.9
+      ],
+      "04.02": [
+        28000,
+        1.8
+      ],
+      "04.03": [
+        105000,
+        9
+      ],
+      "04.04": [
+        1350,
+        0.07
+      ],
+      "04.05": [
+        11000,
+        1.4
+      ],
+      "04.06": [
+        52000,
+        3.2
+      ],
+      "04.07": [
+        22000,
+        1.2
+      ],
+      "04.08": [
+        850000,
+        40
+      ],
+      "05.01": [
+        19000,
+        1.1
+      ],
+      "05.02": [
+        14500,
+        0.6
+      ],
+      "05.03": [
+        9800,
+        0.35
+      ],
+      "05.04": [
+        6200,
+        0.25
+      ],
+      "05.05": [
+        11500,
+        0.7
+      ],
+      "06.01": [
+        6800,
+        0.9
+      ],
+      "06.02": [
+        8900,
+        1.1
+      ],
+      "06.03": [
+        15500,
+        1
+      ],
+      "06.04": [
+        12000,
+        0.8
+      ],
+      "06.05": [
+        14000,
+        0.45
+      ],
+      "06.06": [
+        13500,
+        0.9
+      ],
+      "06.07": [
+        3200,
+        0.3
+      ],
+      "06.08": [
+        4100,
+        0.35
+      ],
+      "06.09": [
+        285000,
+        3
+      ],
+      "06.10": [
+        195000,
+        2.5
+      ],
+      "07.01": [
+        165000,
+        1.2
+      ],
+      "07.02": [
+        320000,
+        4
+      ],
+      "07.03": [
+        95000,
+        2.5
+      ],
+      "07.04": [
+        28000,
+        0.5
+      ],
+      "08.01": [
+        62000,
+        3.5
+      ],
+      "08.02": [
+        78000,
+        4
+      ],
+      "08.03": [
+        185000,
+        3
+      ],
+      "08.04": [
+        420000,
+        6
+      ],
+      "08.05": [
+        380000,
+        8
+      ],
+      "09.01": [
+        750000,
+        6
+      ],
+      "09.02": [
+        260000,
+        5
+      ],
+      "09.03": [
+        26000,
+        1.2
+      ],
+      "09.04": [
+        32000,
+        0.6
+      ],
+      "09.05": [
+        280000,
+        0
+      ],
+      "10.01": [
+        22000,
+        1
+      ],
+      "10.02": [
+        180000,
+        0
+      ],
+      "11.01": [
+        18000,
+        1
+      ],
+      "11.02": [
+        42000,
+        1.6
+      ],
+      "11.03": [
+        12000,
+        0.5
+      ],
+      "12.01": [
+        900,
+        0.15
+      ],
+      "12.02": [
+        450000,
+        6
+      ]
+    },
+    "configuracion": {
+      "valorHoraHombre": 9000,
+      "gastosGeneralesPct": 12,
+      "utilidadPct": 10,
+      "factoresComuna": {
+        "Viña del Mar": 1.05,
+        "Valparaíso": 1.04,
+        "Concón": 1.06,
+        "Quilpué": 1,
+        "Villa Alemana": 0.99,
+        "Limache": 0.98,
+        "Olmué": 1,
+        "Quillota": 0.98,
+        "Casablanca": 1.02
+      },
+      "tramosPisos": [
+        {
+          "desde": 1,
+          "hasta": 1,
+          "factor": 1
+        },
+        {
+          "desde": 2,
+          "hasta": 2,
+          "factor": 1.05
+        },
+        {
+          "desde": 3,
+          "hasta": 99,
+          "factor": 1.12
+        }
+      ],
+      "factoresEstandar": {
+        "economico": 0.85,
+        "medio": 1,
+        "alto": 1.28
+      },
+      "factoresMaterial": {
+        "Albañilería confinada": 0.94,
+        "Hormigón armado": 1.03,
+        "Tabiquería de madera": 0.97,
+        "Estructura metálica": 1.02
+      }
+    }
+  }
+}

@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Banco de precios · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body x-data="banco" x-init="cargar()">
+
+  <header class="bc-barra">
+    <div>
+      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <nav class="bc-nav">
+        <a href="/panel.html">Panel</a>
+        <a href="/proyectos.html">Proyectos</a>
+        <a href="/precios.html" aria-current="page">Banco de precios</a>
+        <a href="/plantillas.html">Plantillas</a>
+        <a href="/configuracion.html">Configuración</a>
+      </nav>
+      <span class="bc-cuenta">
+        <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
+        <span>RAM Arquitectura &amp; Construcción</span>
+      </span>
+      <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="salir()">Salir</button>
+    </div>
+  </header>
+
+  <main class="bc-pagina" x-cloak>
+
+    <div class="bc-encabezado">
+      <div>
+        <span class="bc-rotulo">Administración</span>
+        <h1 class="bc-h1">Banco de precios</h1>
+      </div>
+      <div class="bc-acciones">
+        <button type="button" class="bc-boton bc-boton--linea" @click="abrirVersion()">Nueva versión</button>
+        <button type="button" class="bc-boton" @click="abrirPartida()">+ Nueva partida</button>
+      </div>
+    </div>
+
+    <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+
+    <p class="bc-aviso" x-show="esReferencial">
+      Los precios cargados son <strong>valores referenciales de mercado</strong>, no provienen de presupuestos de RAM.
+      Sirven de punto de partida: al corregir uno, la partida queda marcada como valor de la oficina.
+    </p>
+
+    <!-- Versión en trabajo -->
+    <div class="bc-kpis" x-show="!cargando">
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Versión</span>
+        <div class="bc-campo" style="margin-top:4px">
+          <select class="bc-entrada" x-model="versionId" @change="cambiarVersion()" aria-label="Versión del banco">
+            <template x-for="v in versiones" :key="v.id">
+              <option :value="v.id" x-text="etiquetaVersion(v)"></option>
+            </template>
+          </select>
+        </div>
+        <span class="bc-nota" x-show="estado === 'borrador'">
+          <span class="bc-estado">Borrador · editable</span>
+          <button type="button" class="bc-enlace" @click="publicar()">Publicar como vigente</button>
+        </span>
+        <span class="bc-nota" x-show="estado === 'vigente'">
+          <span class="bc-estado bc-estado--vigente">Publicada · vigente · bloqueada</span>
+          Es la que usan las estimaciones nuevas. Para cambiar precios,
+          <button type="button" class="bc-enlace" @click="abrirVersion()">crea una nueva versión</button>.
+        </span>
+        <span class="bc-nota" x-show="estado === 'historica'">
+          <span class="bc-estado">Publicada · histórica · bloqueada</span>
+          Ya no es la vigente y no se modifica.
+          <button type="button" class="bc-enlace" @click="publicar()">Volver a marcarla vigente</button>
+        </span>
+      </div>
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Partidas con precio</span>
+        <span class="bc-cifra" x-text="conPrecio"></span>
+        <span class="bc-nota" x-text="deOficina + ' corregidas por la oficina · ' + (conPrecio - deOficina) + ' aún referenciales'"></span>
+      </div>
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Partidas sin precio</span>
+        <span class="bc-cifra" x-text="sinPrecio"></span>
+        <span class="bc-nota">En un proyecto quedan sin precio salvo que se indique uno particular</span>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="bc-filtros" x-show="!cargando">
+      <div class="bc-campo" style="flex:2 1 260px">
+        <label for="buscar">Buscar partida</label>
+        <input class="bc-entrada" id="buscar" type="search" placeholder="Nombre o código" x-model="busqueda">
+      </div>
+      <div class="bc-campo" style="flex:1 1 200px">
+        <label for="categoria">Categoría</label>
+        <select class="bc-entrada" id="categoria" x-model="categoriaFiltro">
+          <option value="">Todas</option>
+          <template x-for="c in categorias" :key="c.id">
+            <option :value="c.id" x-text="c.codigo + ' · ' + c.nombre"></option>
+          </template>
+        </select>
+      </div>
+      <button type="button" class="bc-opcion" :aria-pressed="soloSinPrecio"
+              @click="soloSinPrecio = !soloSinPrecio">Solo sin precio</button>
+    </div>
+
+    <p class="bc-apoyo" x-show="cargando">Cargando el banco…</p>
+
+    <!-- Tabla por categorías -->
+    <div class="bc-tarjeta bc-desplaza" x-show="!cargando && grupos.length > 0">
+      <table class="bc-tabla bc-tabla--banco">
+        <thead>
+          <tr>
+            <th style="width:80px">Código</th>
+            <th>Partida</th>
+            <th style="width:70px">Unidad</th>
+            <th class="bc-num" style="width:160px">Precio unitario</th>
+            <th style="width:140px">Estado</th>
+          </tr>
+        </thead>
+        <template x-for="g in grupos" :key="g.categoria.id">
+          <tbody>
+              <tr class="bc-fila-categoria">
+                <td x-text="g.categoria.codigo"></td>
+                <td colspan="4" x-text="g.categoria.nombre"></td>
+              </tr>
+              <template x-for="f in g.filas" :key="f.id">
+                <tr>
+                  <td class="bc-tabla__codigo" x-text="f.codigo"></td>
+                  <td class="bc-tabla__nombre" x-text="f.nombre"></td>
+                  <td class="bc-tabla__suave" x-text="f.unidad"></td>
+                  <td class="bc-num">
+                    <input class="bc-entrada bc-entrada--celda" type="number" min="0" step="1"
+                           :value="f.precio_unitario" placeholder="—"
+                           :disabled="!esEditable" :title="esEditable ? '' : 'Versión publicada: crea una nueva versión para cambiar precios'"
+                           @change="editarPrecio(f, $event.target.value)">
+                  </td>
+                  <td>
+                    <span class="bc-estado" x-show="f.precio_unitario == null">Sin precio</span>
+                    <span class="bc-estado" x-show="f.precio_unitario != null && guardando !== f.id && esReferencia(f)">Referencial</span>
+                    <span class="bc-estado bc-estado--vigente" x-show="f.precio_unitario != null && guardando !== f.id && !esReferencia(f)">Oficina</span>
+                    <span class="bc-estado" x-show="guardando === f.id">Guardando…</span>
+                    <button type="button" class="bc-enlace bc-enlace--baja" @click="abrirEditar(f)">Editar</button>
+                    <button type="button" class="bc-enlace bc-enlace--baja" @click="darDeBaja(f)"
+                            x-show="!f.es_base" title="Dar de baja">Dar de baja</button>
+                  </td>
+                </tr>
+            </template>
+          </tbody>
+        </template>
+      </table>
+    </div>
+
+    <div class="bc-vacio" x-show="!cargando && grupos.length === 0">
+      <span class="bc-rotulo">Sin resultados</span>
+      <h2 class="bc-h2">Ninguna partida coincide</h2>
+      <p class="bc-apoyo">Ajusta la búsqueda o el filtro de categoría.</p>
+    </div>
+
+    <p class="bc-nota">Los precios se cargan por versión. Editar el nombre, la unidad o la categoría de una partida no cambia los proyectos ni las estimaciones ya emitidas: cada uno guarda su propia copia. Las partidas no se borran; se dan de baja.</p>
+
+  </main>
+  <div class="bc-esqueleto" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+
+  <!-- Nueva partida -->
+  <div class="bc-capa" x-show="formPartida" @click.self="formPartida = false" x-cloak>
+    <div class="bc-modal">
+      <span class="bc-rotulo">Catálogo</span>
+      <h2 class="bc-h2" style="margin-bottom:20px">Nueva partida</h2>
+
+      <div class="bc-form">
+        <div class="bc-campo">
+          <label for="np-categoria">Categoría</label>
+          <select class="bc-entrada" id="np-categoria" x-model.number="nueva.categoria_id">
+            <template x-for="c in categorias" :key="c.id">
+              <option :value="c.id" x-text="c.codigo + ' · ' + c.nombre"></option>
+            </template>
+          </select>
+          <p class="bc-ayuda">El código se asigna solo, correlativo dentro de la categoría.</p>
+        </div>
+
+        <div class="bc-campo">
+          <label for="np-nombre">Nombre de la partida</label>
+          <input class="bc-entrada" id="np-nombre" x-model="nueva.nombre" placeholder="Muro cortina de aluminio">
+        </div>
+
+        <div class="bc-campo">
+          <label>Unidad de medida</label>
+          <div class="bc-opciones">
+            <template x-for="u in unidades" :key="u">
+              <button type="button" class="bc-opcion" :aria-pressed="nueva.unidad === u"
+                      @click="nueva.unidad = u" x-text="u"></button>
+            </template>
+          </div>
+        </div>
+
+        <p class="bc-error" x-show="errorNueva" x-text="errorNueva"></p>
+        <p class="bc-nota">La partida nace sin precio: se le carga en la versión del banco que estés editando.</p>
+
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" @click="crearPartida()">Crear partida</button>
+          <button type="button" class="bc-boton bc-boton--linea" @click="formPartida = false">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Editar partida -->
+  <div class="bc-capa" x-show="formEditar" @click.self="formEditar = false" x-cloak>
+    <div class="bc-modal">
+      <span class="bc-rotulo">Catálogo</span>
+      <h2 class="bc-h2" style="margin-bottom:20px">Editar partida</h2>
+
+      <div class="bc-form">
+        <div class="bc-campo">
+          <label for="ep-nombre">Nombre de la partida</label>
+          <input class="bc-entrada" id="ep-nombre" x-model="edicion.nombre">
+        </div>
+
+        <div class="bc-campo">
+          <label for="ep-categoria">Categoría</label>
+          <select class="bc-entrada" id="ep-categoria" x-model.number="edicion.categoria_id">
+            <template x-for="c in categorias" :key="c.id">
+              <option :value="c.id" x-text="c.codigo + ' · ' + c.nombre"></option>
+            </template>
+          </select>
+          <p class="bc-ayuda">El código de la partida no cambia, para no perder su trazabilidad.</p>
+        </div>
+
+        <div class="bc-campo">
+          <label>Unidad de medida</label>
+          <div class="bc-opciones">
+            <template x-for="u in unidades" :key="u">
+              <button type="button" class="bc-opcion" :aria-pressed="edicion.unidad === u"
+                      :disabled="edicion.unidadFija && u !== edicion.unidadOriginal"
+                      @click="edicion.unidad = u" x-text="u"></button>
+            </template>
+          </div>
+          <p class="bc-ayuda" x-show="edicion.unidadFija">
+            La unidad no se puede cambiar: la partida ya tiene precios cargados en esa unidad.
+            Para usar otra, da de baja esta partida y crea una nueva.
+          </p>
+        </div>
+
+        <p class="bc-error" x-show="errorEditar" x-text="errorEditar"></p>
+
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" @click="guardarEdicion()">Guardar cambios</button>
+          <button type="button" class="bc-boton bc-boton--linea" @click="formEditar = false">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nueva versión -->
+  <div class="bc-capa" x-show="formVersion" @click.self="formVersion = false" x-cloak>
+    <div class="bc-modal">
+      <span class="bc-rotulo">Banco</span>
+      <h2 class="bc-h2" style="margin-bottom:20px">Nueva versión</h2>
+
+      <div class="bc-form">
+        <div class="bc-campo">
+          <label for="nv-nombre">Identificador</label>
+          <input class="bc-entrada" id="nv-nombre" x-model="nombreVersion" placeholder="2026-T4">
+          <p class="bc-ayuda">Se usa el trimestre, porque el banco se revisa cada tres meses.</p>
+        </div>
+
+        <div class="bc-campo">
+          <label>Punto de partida</label>
+          <div class="bc-opciones">
+            <button type="button" class="bc-opcion" :aria-pressed="copiarPrecios"
+                    @click="copiarPrecios = true">Copiar precios actuales</button>
+            <button type="button" class="bc-opcion" :aria-pressed="!copiarPrecios"
+                    @click="copiarPrecios = false">Empezar vacía</button>
+          </div>
+        </div>
+
+        <p class="bc-nota">La versión nueva nace como borrador editable. Las estimaciones siguen usando la vigente hasta que la publiques; una vez publicada, sus precios quedan fijos.</p>
+
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" @click="crearVersion()">Crear versión</button>
+          <button type="button" class="bc-boton bc-boton--linea" @click="formVersion = false">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/paginas/precios.ts"></script>
+</body>
+</html>

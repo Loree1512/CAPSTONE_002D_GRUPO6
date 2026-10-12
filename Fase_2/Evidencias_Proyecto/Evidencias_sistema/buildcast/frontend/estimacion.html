@@ -1,0 +1,594 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estimación · BuildCast</title>
+  <link rel="icon" type="image/svg+xml" href="/buildcast-icon-app.svg">
+  <link rel="apple-touch-icon" href="/buildcast-icon-app.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
+  <style>
+    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
+       hoja completa. Evita ver la estructura sin estilos al navegar entre
+       páginas. Incluye el esqueleto de carga para no depender de base.css. */
+    :root { color-scheme: light; }
+    html { background: #F9F9F7; }
+    body {
+      margin: 0;
+      background: #F9F9F7;
+      color: #1A1A1A;
+      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
+    img { display: block; max-width: 100%; }
+    [x-cloak] { display: none !important; }
+    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
+
+    .bc-esqueleto {
+      max-width: 1600px; margin: 0 auto;
+      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
+      display: flex; flex-direction: column; gap: 20px;
+    }
+    .bc-esqueleto span {
+      display: block;
+      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
+      background-size: 200% 100%;
+      animation: bc-latido 1.4s ease-in-out infinite;
+    }
+    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
+    .bc-esqueleto span:nth-child(2) { height: 120px; }
+    .bc-esqueleto span:nth-child(3) { height: 280px; }
+    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
+    main:not([x-cloak]) ~ .bc-esqueleto,
+    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
+
+    body > * { animation: bc-entrar .22s ease-out both; }
+    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+    @media (prefers-reduced-motion: reduce) {
+      body > * { animation: none; }
+      .bc-esqueleto span { animation: none; }
+    }
+  </style>
+</head>
+<body x-data="estimacion" x-init="iniciar()">
+
+  <header class="bc-barra">
+    <div>
+      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <nav class="bc-nav">
+        <a href="/panel.html">Panel</a>
+        <a href="/proyectos.html" aria-current="page">Proyectos</a>
+        <a href="/precios.html">Banco de precios</a>
+        <a href="/plantillas.html">Plantillas</a>
+        <a href="/configuracion.html">Configuración</a>
+      </nav>
+      <span class="bc-cuenta">
+        <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
+        <span>RAM Arquitectura &amp; Construcción</span>
+      </span>
+      <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="salir()">Salir</button>
+    </div>
+  </header>
+
+  <main class="bc-pagina" x-cloak>
+
+    <p class="bc-apoyo" x-show="cargando">Cargando el presupuesto…</p>
+    <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+
+    <template x-if="proyecto">
+      <div style="display:flex;flex-direction:column;gap:clamp(20px,2.4vw,32px)">
+
+        <div class="bc-encabezado">
+          <div>
+            <p class="bc-migas"><a href="/proyectos.html">Proyectos</a><span x-text="' / ' + proyecto.nombre"></span></p>
+            <h1 class="bc-h1" x-text="proyecto.nombre"></h1>
+            <p class="bc-apoyo" style="margin-top:6px"
+               x-text="proyecto.comuna + ' · ' + proyecto.tipo_obra + ' · ' + numero(proyecto.superficie_m2) + ' m² en ' + proyecto.pisos + ' piso(s) · ' + proyecto.material + ' · terminación ' + etiquetaEstandar.toLowerCase()"></p>
+          </div>
+          <div class="bc-acciones">
+            <a class="bc-boton bc-boton--linea" :href="'/proyecto.html?id=' + proyecto.id">Editar datos</a>
+            <a class="bc-boton" :href="enlaceDocumento" x-show="presupuesto">Documento de entrega</a>
+          </div>
+        </div>
+
+        <!-- Avisos de la estimación guardada -->
+        <p class="bc-aviso bc-aviso--error" x-show="errorCalculo" x-text="errorCalculo"></p>
+
+        <p class="bc-aviso bc-aviso--pendiente" x-show="presupuesto && (datosCambiaron || versionCambio || partidasCambiaron)">
+          <span x-text="datosCambiaron
+            ? 'Los datos del proyecto cambiaron después de esta estimación.'
+            : versionCambio
+              ? 'Hay una versión de precios vigente más nueva que la usada en esta estimación.'
+              : 'Las partidas cambiaron después de esta estimación.'"></span>
+          Los montos guardados no cambian hasta que uses «Recalcular».
+        </p>
+
+        <p class="bc-aviso bc-aviso--pendiente" x-show="presupuesto && !presupuesto.completa">
+          Estimación incompleta:
+          <span x-text="presupuesto.partidasSinCantidad + ' partida(s) sin cantidad y ' + presupuesto.partidasSinPrecio + ' sin precio no suman al costo directo'"></span>
+          <span x-text="'(' + presupuesto.sinCantidad.concat(presupuesto.sinPrecio).map((l) => l.nombre).join(', ') + ').'"></span>
+        </p>
+
+        <!-- Resultado guardado -->
+        <template x-if="presupuesto">
+          <div class="bc-resultados">
+            <div class="bc-resultado">
+              <span class="bc-rotulo">Costo total estimado</span>
+              <span class="bc-resultado__cifra" x-text="pesos(presupuesto.total)"></span>
+              <span class="bc-resultado__resumen" x-text="'CLP neto, sin IVA · banco de precios ' + presupuesto.versionPrecios.version"></span>
+              <div style="display:flex;flex-direction:column;margin-top:4px">
+                <div class="bc-resultado__fila"><span>Costo por m² edificado</span><b x-text="pesos(presupuesto.costoM2)"></b></div>
+                <div class="bc-resultado__fila"><span>Origen del cálculo</span><b>Cantidad × precio unitario por partida</b></div>
+                <div class="bc-resultado__fila"><span>Calculada el</span><b x-text="fecha(presupuesto.fechaCreacion)"></b></div>
+              </div>
+            </div>
+
+            <div class="bc-resultado bc-resultado--claro">
+              <span class="bc-rotulo">Plazo de construcción</span>
+              <span class="bc-resultado__cifra"><span x-text="presupuesto.plazoDias"></span> días</span>
+              <span class="bc-resultado__resumen">
+                Intervalo de <span x-text="presupuesto.plazoMin"></span> a <span x-text="presupuesto.plazoMax"></span> días
+                · tolerancia ±<span x-text="tolerancia"></span>%
+              </span>
+              <div style="display:flex;flex-direction:column;margin-top:4px">
+                <div class="bc-resultado__fila"><span>Método</span><b>Regla paramétrica</b></div>
+                <div class="bc-resultado__fila"><span>Métricas del modelo</span><b>Pendientes de validación</b></div>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <p class="bc-aviso bc-aviso--pendiente" x-show="presupuesto">
+          El plazo se obtiene con una <strong>regla paramétrica provisional</strong>, no con el modelo predictivo:
+          el conjunto de datos de obras ejecutadas todavía no permite entrenarlo ni validarlo. Mientras no existan
+          métricas medidas sobre datos fuera del entrenamiento, la plataforma no declara precisión alguna.
+        </p>
+
+        <!-- Pestañas -->
+        <div class="bc-pestanas">
+          <button type="button" class="bc-pestana" :aria-selected="pestana === 'presupuesto'"
+                  @click="pestana = 'presupuesto'">Presupuesto por partidas</button>
+          <button type="button" class="bc-pestana" :aria-selected="pestana === 'cronograma'" x-show="presupuesto"
+                  @click="pestana = 'cronograma'">Cronograma preliminar</button>
+          <button type="button" class="bc-pestana" :aria-selected="pestana === 'transparencia'" x-show="presupuesto"
+                  @click="pestana = 'transparencia'">Transparencia</button>
+        </div>
+
+        <!-- Presupuesto -->
+        <div x-show="pestana === 'presupuesto'" style="display:flex;flex-direction:column;gap:20px">
+
+          <!-- Plantilla -->
+          <div class="bc-tarjeta bc-tarjeta--relleno bc-plantilla">
+            <div>
+              <span class="bc-rotulo">Plantilla aplicada</span>
+              <p class="bc-plantilla__nombre"
+                 x-text="plantillaAplicada ? nombrePlantilla(plantillaAplicada) : 'Sin plantilla aplicada'"></p>
+              <p class="bc-nota">Las partidas iniciales se generan según el tipo de obra y la materialidad. Puedes agregar, quitar y ajustar partidas antes de generar la estimación.</p>
+              <p class="bc-nota" x-show="plantillaSugerida && plantillaSugerida.id !== plantillaAplicada?.id"
+                 x-text="'Con los datos actuales del proyecto corresponde: ' + nombrePlantilla(plantillaSugerida) + '.'"></p>
+            </div>
+            <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="abrirPlantilla()"
+                    x-text="partidas.length ? 'Cambiar o reaplicar plantilla' : 'Aplicar plantilla'"></button>
+          </div>
+
+          <div class="bc-presupuesto">
+            <div class="bc-presupuesto__tabla">
+              <p class="bc-aviso bc-aviso--error" x-show="errorPartidas" x-text="errorPartidas"></p>
+
+              <div class="bc-tarjeta bc-desplaza" x-show="partidas.length > 0">
+                <table class="bc-tabla bc-tabla--partidas">
+                  <colgroup>
+                    <col>
+                    <col class="bc-col-unidad">
+                    <col class="bc-col-cantidad">
+                    <col class="bc-col-precio">
+                    <col class="bc-col-subtotal">
+                    <col class="bc-col-acciones">
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>Partida</th>
+                      <th>Unidad</th>
+                      <th class="bc-num">Cantidad</th>
+                      <th class="bc-num">Precio unitario</th>
+                      <th class="bc-num">Subtotal</th>
+                      <th><span class="bc-oculto">Acciones</span></th>
+                    </tr>
+                  </thead>
+                  <template x-for="g in grupos" :key="g.codigo">
+                    <tbody>
+                      <tr class="bc-fila-categoria bc-fila-capitulo">
+                        <td colspan="4">
+                          <span class="bc-fila-capitulo__codigo" x-text="g.codigo"></span>
+                          <span x-text="g.nombre"></span>
+                        </td>
+                        <td class="bc-num bc-fila-capitulo__monto" x-text="pesos(g.subtotal)"></td>
+                        <td></td>
+                      </tr>
+                      <template x-for="p in g.partidas" :key="p.id">
+                        <tr :class="editando === p.id ? 'bc-fila-guardando' : ''">
+                          <td class="bc-partida">
+                            <button type="button" class="bc-partida__nombre" x-show="nombreEditando !== p.id"
+                                    title="Editar nombre" @click="editarNombre(p, $el.parentElement)" x-text="p.nombre"></button>
+                            <input class="bc-entrada bc-entrada--celda bc-entrada--texto" x-show="nombreEditando === p.id"
+                                   :value="p.nombre" :aria-label="'Nombre de ' + p.nombre"
+                                   @keydown.enter.prevent="$event.target.blur()"
+                                   @keydown.escape="$event.target.value = p.nombre; $event.target.blur()"
+                                   @blur="terminarNombre(p, $event.target.value)">
+                            <span class="bc-partida__meta" x-text="origenPartida(p)"></span>
+                          </td>
+                          <td><span class="bc-celda-linea bc-tabla__suave" x-text="p.unidad"></span></td>
+                          <td class="bc-num">
+                            <input class="bc-entrada bc-entrada--celda" type="number" min="0" step="any"
+                                   :value="p.cantidad" placeholder="Definir" :aria-label="'Cantidad de ' + p.nombre"
+                                   @change="cambiarCantidad(p, $event.target.value)">
+                          </td>
+                          <td class="bc-num">
+                            <input class="bc-entrada bc-entrada--celda" type="text" inputmode="decimal" autocomplete="off"
+                                   :value="precioUnitario(p.precio_unitario)" placeholder="Sin precio"
+                                   :aria-label="'Precio unitario de ' + p.nombre"
+                                   @focus="$event.target.value = precioAlEditar(p); $event.target.select()"
+                                   @change="cambiarPrecioEscrito(p, $event.target.value)"
+                                   @blur="$event.target.value = precioUnitario(p.precio_unitario)"
+                                   @keydown.enter.prevent="$event.target.blur()">
+                            <span class="bc-precio-origen bc-precio-origen--particular" x-show="p.precio_unitario_override != null && p.partida_id">
+                              Precio particular
+                              <button type="button" class="bc-enlace" @click="usarPrecioBanco(p)"
+                                      x-text="p.precio_banco != null ? 'Usar banco (' + pesos(p.precio_banco) + ')' : 'Quitar precio'"></button>
+                            </span>
+                            <span class="bc-precio-origen" x-show="p.precio_unitario_override == null && p.precio_banco != null">Banco de precios</span>
+                            <span class="bc-precio-origen" x-show="p.partida_id == null">Precio del proyecto</span>
+                          </td>
+                          <td class="bc-num">
+                            <span class="bc-celda-linea bc-celda-linea--derecha bc-tabla__monto" x-show="p.estado === 'calculada'" x-text="pesos(p.subtotal)"></span>
+                            <span class="bc-celda-linea bc-celda-linea--derecha" x-show="p.estado === 'sin_cantidad'"><span class="bc-estado bc-estado--pendiente">Sin cantidad</span></span>
+                            <span class="bc-celda-linea bc-celda-linea--derecha" x-show="p.estado === 'sin_precio'"><span class="bc-estado bc-estado--pendiente">Sin precio</span></span>
+                          </td>
+                          <td>
+                            <span class="bc-celda-linea bc-tabla__acciones">
+                              <button type="button" class="bc-icono" title="Subir" aria-label="Subir"
+                                      :disabled="!puedeMover(p, -1)" @click="mover(p, -1)">↑</button>
+                              <button type="button" class="bc-icono" title="Bajar" aria-label="Bajar"
+                                      :disabled="!puedeMover(p, 1)" @click="mover(p, 1)">↓</button>
+                              <button type="button" class="bc-icono bc-icono--quitar" title="Quitar partida"
+                                      :aria-label="'Quitar ' + p.nombre" @click="quitar(p)">✕</button>
+                            </span>
+                          </td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </template>
+                  <tfoot>
+                    <tr class="bc-fila-suma">
+                      <td colspan="4">Suma de partidas <span class="bc-nota" x-show="pendientes" x-text="'· ' + pendientes + ' sin cantidad o precio'"></span></td>
+                      <td class="bc-tabla__monto" x-text="pesos(sumaPartidas)"></td>
+                      <td></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div class="bc-vacio" x-show="partidas.length === 0">
+                <span class="bc-rotulo">Sin partidas</span>
+                <h2 class="bc-h2">Este proyecto todavía no tiene partidas</h2>
+                <p class="bc-apoyo">Aplica una plantilla o agrega partidas del catálogo o manuales.</p>
+              </div>
+
+              <div class="bc-acciones">
+                <button type="button" class="bc-boton" @click="abrirAgregar()">+ Agregar partida</button>
+              </div>
+            </div>
+
+            <aside class="bc-presupuesto__lateral">
+              <div class="bc-tarjeta bc-tarjeta--relleno">
+                <span class="bc-rotulo">Ajustes comerciales</span>
+                <div class="bc-form" style="margin-top:16px">
+                  <div class="bc-campo">
+                    <label for="gg">Gastos generales · %</label>
+                    <input class="bc-entrada bc-entrada--num" id="gg" type="number" min="0" :max="limiteGg" step="0.5"
+                           x-model.number="gg" :disabled="guardando">
+                  </div>
+                  <div class="bc-campo">
+                    <label for="ut">Utilidad · %</label>
+                    <input class="bc-entrada bc-entrada--num" id="ut" type="number" min="0" :max="limiteUtilidad" step="0.5"
+                           x-model.number="utilidad" :disabled="guardando">
+                  </div>
+                  <label class="bc-casilla">
+                    <input type="checkbox" x-model="aplicarFactores" :disabled="guardando">
+                    <span>Aplicar factores de comuna y número de pisos</span>
+                  </label>
+                </div>
+                <p class="bc-nota" style="margin-top:8px">Gastos generales y utilidad se calculan sobre el costo directo.</p>
+                <p class="bc-error" x-show="errorAjustes" x-text="errorAjustes"></p>
+                <button type="button" class="bc-boton" style="margin-top:16px;width:100%"
+                        :disabled="!puedeAplicar" @click="aplicar()" x-text="textoAplicar"></button>
+                <p class="bc-nota" style="margin-top:8px" x-show="!presupuesto && partidas.length > 0">
+                  Todavía no hay una estimación guardada. Revisa las partidas y genera la estimación.
+                </p>
+                <p class="bc-nota" style="margin-top:8px" x-show="presupuesto && (ajustesCambiaron || partidasCambiaron) && !guardando">
+                  Los montos de abajo son los de la estimación guardada hasta que recalcules.
+                </p>
+
+                <template x-if="presupuesto">
+                  <div style="margin-top:20px">
+                    <div class="bc-resumen__fila">
+                      <span>Suma de partidas</span><b x-text="pesos(presupuesto.costoDirectoBase)"></b>
+                    </div>
+                    <div class="bc-resumen__fila">
+                      <span x-text="presupuesto.aplicarFactores ? 'Factor aplicado (comuna × pisos)' : 'Factor aplicado'"></span>
+                      <b x-text="factor(presupuesto.factores.ajuste)"></b>
+                    </div>
+                    <div class="bc-resumen__fila"><span>Costo directo</span><b x-text="pesos(presupuesto.costoDirecto)"></b></div>
+                    <div class="bc-resumen__fila">
+                      <span x-text="'Gastos generales (' + presupuesto.gastosGeneralesPct + '%)'"></span>
+                      <b x-text="pesos(presupuesto.gastosGenerales)"></b>
+                    </div>
+                    <div class="bc-resumen__fila">
+                      <span x-text="'Utilidad (' + presupuesto.utilidadPct + '%)'"></span>
+                      <b x-text="pesos(presupuesto.utilidad)"></b>
+                    </div>
+                    <div class="bc-resumen__fila bc-resumen__fila--total">
+                      <span>Total</span><b x-text="pesos(presupuesto.total)"></b>
+                    </div>
+                  </div>
+                </template>
+              </div>
+
+              <template x-if="presupuesto">
+                <div class="bc-tarjeta bc-tarjeta--relleno">
+                  <span class="bc-rotulo">Factores de ajuste</span>
+                  <div style="margin-top:16px">
+                    <div class="bc-resumen__fila"><span>Subtotal base</span><b x-text="pesos(presupuesto.costoDirectoBase)"></b></div>
+                    <template x-if="presupuesto.aplicarFactores">
+                      <div>
+                        <div class="bc-resumen__fila"><span x-text="'Factor comuna · ' + presupuesto.proyecto.comuna"></span><b x-text="factor(presupuesto.factores.comuna)"></b></div>
+                        <div class="bc-resumen__fila"><span x-text="'Factor pisos · ' + presupuesto.proyecto.numeroPisos + ' piso(s)'"></span><b x-text="factor(presupuesto.factores.pisos)"></b></div>
+                      </div>
+                    </template>
+                    <div class="bc-resumen__fila" x-show="!presupuesto.aplicarFactores"><span>Factor aplicado</span><b>× 1,00</b></div>
+                    <div class="bc-resumen__fila"><span>Subtotal ajustado</span><b x-text="pesos(presupuesto.costoDirecto)"></b></div>
+                  </div>
+                  <p class="bc-nota" style="margin-top:16px"
+                     x-text="presupuesto.aplicarFactores
+                       ? 'Se aplicaron los factores de comuna y número de pisos de la configuración.'
+                       : 'Sin factores: el costo directo es la suma de cantidad × precio de cada partida.'"></p>
+                </div>
+              </template>
+            </aside>
+          </div>
+        </div>
+
+        <!-- Cronograma -->
+        <div x-show="pestana === 'cronograma' && presupuesto" class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo">Distribución referencial del plazo</span>
+          <h2 class="bc-h2" style="margin:8px 0 6px">Cronograma preliminar</h2>
+          <p class="bc-apoyo" style="margin-bottom:24px">
+            Las etapas se reparten en proporción a la incidencia de sus capítulos sobre el costo directo.
+            Sirve para ordenar la conversación con el mandante, no para programar la obra.
+          </p>
+
+          <template x-for="e in etapas" :key="e.nombre">
+            <div class="bc-etapa">
+              <div class="bc-etapa__texto">
+                <span class="bc-etapa__nombre" x-text="e.nombre"></span>
+                <span class="bc-nota" x-text="'Día ' + e.desde + ' a ' + e.hasta + ' · ' + e.dias + ' días'"></span>
+              </div>
+              <div class="bc-etapa__barra">
+                <div class="bc-etapa__relleno"
+                     :style="'margin-left:' + (e.desde / presupuesto.plazoDias * 100) + '%; width:' + (e.dias / presupuesto.plazoDias * 100) + '%'"></div>
+              </div>
+            </div>
+          </template>
+        </div>
+
+        <!-- Transparencia -->
+        <template x-if="presupuesto">
+          <div x-show="pestana === 'transparencia'" class="bc-tarjeta bc-desplaza">
+            <table class="bc-tabla">
+              <thead>
+                <tr>
+                  <th>Componente</th>
+                  <th>De dónde sale</th>
+                  <th>Método</th>
+                  <th>Versión o estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="bc-tabla__nombre">Partidas y cantidades</td>
+                  <td class="bc-tabla__suave">Presupuesto del proyecto</td>
+                  <td class="bc-tabla__suave">Definidas por el profesional; pueden partir de una plantilla por tipo de obra y materialidad</td>
+                  <td><span class="bc-estado" x-text="presupuesto.partidasCalculadas + ' partidas con monto'"></span></td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">Precios unitarios</td>
+                  <td class="bc-tabla__suave">Banco de precios</td>
+                  <td class="bc-tabla__suave">Precio de la versión usada, salvo que el proyecto tenga un precio particular</td>
+                  <td>
+                    <span class="bc-estado" x-text="presupuesto.versionPrecios.version"></span>
+                    <span class="bc-nota" style="display:block;margin-top:4px" x-show="presupuesto.versionPrecios.fuente"
+                          x-text="presupuesto.versionPrecios.fuente"></span>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">Mano de obra</td>
+                  <td class="bc-tabla__suave">Partidas del proyecto</td>
+                  <td class="bc-tabla__suave">Se presupuesta como una partida más: cantidad × precio unitario</td>
+                  <td><span class="bc-estado">Incluida en las partidas</span></td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">Factores de ajuste</td>
+                  <td class="bc-tabla__suave">Configuración del sistema</td>
+                  <td class="bc-tabla__suave">Comuna y número de pisos, opcionales</td>
+                  <td><span class="bc-estado" x-text="presupuesto.aplicarFactores ? 'Aplicados · ' + factor(presupuesto.factores.ajuste) : 'No aplicados · × 1,00'"></span></td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">Gastos generales y utilidad</td>
+                  <td class="bc-tabla__suave">Ajustes comerciales</td>
+                  <td class="bc-tabla__suave">Porcentaje sobre el costo directo</td>
+                  <td><span class="bc-estado" x-text="presupuesto.gastosGeneralesPct + ' % · ' + presupuesto.utilidadPct + ' %'"></span></td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">Plazo de construcción</td>
+                  <td class="bc-tabla__suave">Regla paramétrica</td>
+                  <td class="bc-tabla__suave">Base más superficie elevada a 0,52, pisos y estándar</td>
+                  <td><span class="bc-estado bc-estado--pendiente">Provisional · modelo sin validar</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
+
+        <p class="bc-nota">
+          Estimación preliminar referencial, sin valor contractual. Las cantidades son las definidas para este
+          proyecto y los precios son netos, sin IVA.
+        </p>
+
+      </div>
+    </template>
+
+  </main>
+  <div class="bc-esqueleto" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
+
+
+  <!-- Agregar partida -->
+  <div class="bc-capa" x-show="modalAgregar" @click.self="modalAgregar = false" x-cloak>
+    <div class="bc-modal bc-modal--ancho">
+      <span class="bc-rotulo">Presupuesto del proyecto</span>
+      <h2 class="bc-h2" style="margin-bottom:20px">Agregar partida</h2>
+
+      <div class="bc-opciones" style="margin-bottom:20px">
+        <button type="button" class="bc-opcion" :aria-pressed="modoAgregar === 'catalogo'"
+                @click="modoAgregar = 'catalogo'; errorAgregar = ''">Desde catálogo</button>
+        <button type="button" class="bc-opcion" :aria-pressed="modoAgregar === 'manual'"
+                @click="modoAgregar = 'manual'; errorAgregar = ''">Partida manual</button>
+      </div>
+
+      <p class="bc-error" x-show="errorAgregar" x-text="errorAgregar"></p>
+      <p class="bc-nota" x-show="avisoAgregar" x-text="avisoAgregar"></p>
+
+      <!-- Catálogo -->
+      <div class="bc-form" x-show="modoAgregar === 'catalogo'">
+        <div class="bc-rejilla">
+          <div class="bc-campo" style="grid-column:span 2">
+            <label for="ag-buscar">Buscar en el catálogo</label>
+            <input class="bc-entrada" id="ag-buscar" type="search" placeholder="Nombre o código" x-model="busqueda">
+          </div>
+          <div class="bc-campo">
+            <label for="ag-cantidad">Cantidad (opcional)</label>
+            <input class="bc-entrada bc-entrada--num" id="ag-cantidad" type="number" min="0" step="any"
+                   x-model.number="cantidadCatalogo">
+          </div>
+        </div>
+        <div class="bc-lista">
+          <template x-for="f in resultadosCatalogo" :key="f.id">
+            <div class="bc-lista__fila">
+              <div>
+                <b x-text="f.codigo + ' · ' + f.nombre"></b>
+                <span class="bc-nota" style="display:block"
+                      x-text="f.unidad + ' · ' + (f.precio_unitario != null ? pesos(f.precio_unitario) : 'sin precio en el banco')"></span>
+              </div>
+              <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="agregarDelCatalogo(f)">Agregar</button>
+            </div>
+          </template>
+          <p class="bc-nota" x-show="resultadosCatalogo.length === 0">Ninguna partida coincide con la búsqueda.</p>
+        </div>
+      </div>
+
+      <!-- Manual -->
+      <div class="bc-form" x-show="modoAgregar === 'manual'">
+        <div class="bc-campo">
+          <label for="am-categoria">Categoría</label>
+          <select class="bc-entrada" id="am-categoria" x-model.number="manual.categoria_id">
+            <template x-for="c in categorias" :key="c.id">
+              <option :value="c.id" x-text="c.codigo + ' · ' + c.nombre"></option>
+            </template>
+          </select>
+        </div>
+        <div class="bc-campo">
+          <label for="am-nombre">Nombre de la partida</label>
+          <input class="bc-entrada" id="am-nombre" x-model="manual.nombre" placeholder="Equipo de trabajo">
+        </div>
+        <div class="bc-rejilla">
+          <div class="bc-campo">
+            <label for="am-unidad">Unidad</label>
+            <input class="bc-entrada" id="am-unidad" list="unidades" x-model="manual.unidad" maxlength="20">
+            <datalist id="unidades">
+              <template x-for="u in unidades" :key="u"><option :value="u"></option></template>
+            </datalist>
+          </div>
+          <div class="bc-campo">
+            <label for="am-cantidad">Cantidad</label>
+            <input class="bc-entrada bc-entrada--num" id="am-cantidad" type="number" min="0" step="any"
+                   x-model.number="manual.cantidad">
+          </div>
+          <div class="bc-campo">
+            <label for="am-precio">Precio unitario · CLP</label>
+            <input class="bc-entrada bc-entrada--num" id="am-precio" type="number" min="0" step="any"
+                   x-model.number="manual.precio">
+          </div>
+        </div>
+        <p class="bc-nota">Queda solo en este proyecto: no se agrega al catálogo del banco de precios.</p>
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" @click="agregarManual()">Agregar partida</button>
+        </div>
+      </div>
+
+      <div class="bc-acciones" style="margin-top:20px">
+        <button type="button" class="bc-boton bc-boton--linea" @click="modalAgregar = false">Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plantilla -->
+  <div class="bc-capa" x-show="modalPlantilla" @click.self="modalPlantilla = false" x-cloak>
+    <div class="bc-modal">
+      <span class="bc-rotulo">Partidas iniciales</span>
+      <h2 class="bc-h2" style="margin-bottom:12px">Aplicar plantilla</h2>
+      <p class="bc-nota" style="margin-bottom:20px">Las partidas iniciales se generan según el tipo de obra y la materialidad. Puedes agregar, quitar y ajustar partidas antes de generar la estimación.</p>
+
+      <div class="bc-form">
+        <div class="bc-campo">
+          <label for="pl-elegida">Plantilla</label>
+          <select class="bc-entrada" id="pl-elegida" x-model="plantillaElegida">
+            <template x-for="p in plantillas" :key="p.id">
+              <option :value="p.id"
+                      x-text="nombrePlantilla(p) + (p.id === plantillaSugerida?.id ? ' · corresponde al proyecto' : '')"></option>
+            </template>
+          </select>
+          <p class="bc-ayuda" x-show="plantillaSeleccionada"
+             x-text="plantillaSeleccionada?.cantidad_partidas ? plantillaSeleccionada.cantidad_partidas + ' partida(s)' : 'Sin partidas configuradas'"></p>
+        </div>
+
+        <template x-if="partidas.length > 0">
+          <div class="bc-aviso bc-aviso--pendiente">
+            <p x-text="'Se reemplazarán las ' + partidas.length + ' partidas actuales del proyecto, con sus cantidades y precios.'"></p>
+            <label class="bc-casilla" style="margin-top:8px">
+              <input type="checkbox" x-model="confirmaReemplazo">
+              <span>Sí, reemplazar las partidas actuales</span>
+            </label>
+          </div>
+        </template>
+
+        <p class="bc-error" x-show="errorPlantilla" x-text="errorPlantilla"></p>
+
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" @click="aplicarPlantilla()"
+                  :disabled="!plantillaElegida || (partidas.length > 0 && !confirmaReemplazo)">Aplicar plantilla</button>
+          <button type="button" class="bc-boton bc-boton--linea" @click="modalPlantilla = false">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/paginas/estimacion.ts"></script>
+</body>
+</html>
