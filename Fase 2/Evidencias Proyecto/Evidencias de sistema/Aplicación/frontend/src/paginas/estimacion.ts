@@ -1,15 +1,43 @@
 import Alpine from 'alpinejs'
-import '../estilos/base.css'
 import { api, ErrorApi } from '../lib/api'
 import { marcarSimulacion } from '../lib/marcaSimulacion'
+import { prepararNavegacion } from '../lib/navegacion'
+import { iniciarBotonTema } from '../lib/tema'
 import { exigirSesion, salir } from '../lib/sesion'
+import { confirmar } from '../lib/confirmar'
+import {
+  conCalculo, crearSecuencia, estadoTrasCalcular, filaEnProceso, hayFilasEnProceso, iniciarFila, puedeCalcular,
+  terminarFila, textoBotonCalcular,
+} from '../lib/calculoPresupuesto'
+import type { FilasEnProceso } from '../lib/calculoPresupuesto'
+import { partidaDeCatalogoAgregada } from '../lib/duplicados'
 import { pesos, numero, fecha, factor, leerPrecioEscrito, precioUnitario } from '../lib/formato'
 import { ESTANDARES } from '../lib/catalogos'
 import { CONFIGURACION_BASE } from '../lib/configuracion'
 import { conPlazo, proyectoCambio, ultimaEstimacion } from '../lib/estimaciones'
-import type { EstimacionConPlazo } from '../lib/estimaciones'
+import {
+  cargarDetalleProyecto, mensajeCargaProyecto, MENSAJE_SIN_ID, puedeReintentar, vistaDetalle,
+} from '../lib/detalleProyecto'
+import type { VistaDetalle } from '../lib/detalleProyecto'
+import {
+  advertenciaSugerencia, avisoPlazo, bloqueoCronograma, confirmarSugerencia, diasParaCronograma, ERROR_PLAZO_ESCRITO,
+  etiquetaModelo, filasTransparenciaModelo, filasTransparenciaProfesional, hayPlazo, leerPlazoEscrito, lineaErrorMedio,
+  PLAZO_PROFESIONAL_MAX, PLAZO_PROFESIONAL_MIN, presentarPlazo, presentarPlazoProfesional, puedeGuardarPlazoEscrito,
+  rotuloCronograma, textoDias, textoEstadoModelo, textoPlazo, textoRango,
+} from '../lib/plazo'
+import type { FilaTransparencia, PresentacionPlazo, PresentacionProfesional } from '../lib/plazo'
+import { presentarUfUtilizada, type PresentacionUf } from '../lib/uf'
+import { crearMiembros, etiquetaRol, ROLES_ASIGNABLES } from '../lib/miembros'
+import type { GestionMiembros } from '../lib/miembros'
+import { crearHistorial, describirEvento } from '../lib/historial'
+import type { EntradaHistorial, Historial } from '../lib/historial'
+import {
+  accionCotizacion, errorObservaciones, normalizarObservaciones, observacionesCambiaron, OBSERVACIONES_MAX,
+  puedeEditarObservaciones, puedeEditarPlazo,
+} from '../lib/observaciones'
+import type { AccionCotizacion } from '../lib/observaciones'
 import { LIMITE_GASTOS_GENERALES, LIMITE_UTILIDAD } from '../tipos/estimacion'
-import type { Estimacion, LineaEstimacion } from '../tipos/estimacion'
+import type { DefinirPlazoProfesional, Estimacion, LineaEstimacion } from '../tipos/estimacion'
 import type {
   CategoriaPartida, FilaBanco, PartidaProyecto, PartidaProyectoEditada, PlantillaResumen, Proyecto,
 } from '../tipos/api'
@@ -29,9 +57,11 @@ interface PartidaManual {
   precio: number | null
 }
 
+type Pestana = 'presupuesto' | 'cronograma' | 'transparencia' | 'miembros' | 'historial'
+
 interface PantallaEstimacion {
   proyecto: Proyecto | null
-  presupuesto: EstimacionConPlazo | null
+  presupuesto: Estimacion | null
   partidas: PartidaProyecto[]
   plantillaAplicada: PlantillaResumen | null
   plantillaSugerida: PlantillaResumen | null
@@ -42,19 +72,67 @@ interface PantallaEstimacion {
   aplicarFactores: boolean
   limiteGg: number
   limiteUtilidad: number
-  pestana: 'presupuesto' | 'cronograma' | 'transparencia'
+  pestana: Pestana
   cargando: boolean
   guardando: boolean
-  editando: string
+  /** Partidas que se están guardando, por id: cada fila avisa lo suyo sin bloquear a las demás. */
+  enProceso: FilasEnProceso
+  /** Numera los refrescos del proyecto: solo el último aplica su respuesta. */
+  refresco: ReturnType<typeof crearSecuencia>
+  /** Partida de catálogo que el usuario intentó agregar y ya está en el presupuesto. */
+  duplicada: PartidaProyecto | null
+  agregandoCatalogo: boolean
+  /** Partida resaltada un momento tras «Ver partida». */
+  destacada: string
   nombreEditando: string
   error: string
+  /** Único interruptor de la pantalla: esqueleto, contenido real o error. */
+  get vista(): VistaDetalle
+  get puedeReintentar(): boolean
   errorCalculo: string
   errorPartidas: string
+
+  // Observaciones de la cotización
+  observaciones: string
+  limiteObservaciones: number
+  actualizandoCotizacion: boolean
+  errorCotizacion: string
+  get puedeEditarObservaciones(): boolean
+  get observacionCambio(): boolean
+  get errorTextoObservaciones(): string
+  get costoPendiente(): boolean
+  get accion(): AccionCotizacion
+  get puedeActualizarCotizacion(): boolean
+  actualizarCotizacion(): Promise<void>
+
+  // Plazo para la cotización (lo define el profesional; el modelo solo sugiere)
+  plazoEscrito: string
+  plazoMin: number
+  plazoMax: number
+  guardandoPlazo: boolean
+  errorPlazo: string
+  get puedeEditarPlazo(): boolean
+  get profesional(): PresentacionProfesional
+  get errorMedio(): string
+  get estadoModelo(): string
+  get sugerenciaDisponible(): boolean
+  get textoUsarSugerencia(): string
+  get advertenciaSugerencia(): string
+  get errorPlazoEscrito(): string
+  get puedeGuardarPlazo(): boolean
+  get textoMantener(): string
+  get transparenciaModelo(): FilaTransparencia[]
+  get transparenciaProfesional(): FilaTransparencia[]
+  definirPlazo(cuerpo: DefinirPlazoProfesional): Promise<void>
+  guardarPlazo(): Promise<void>
+  usarSugerencia(): Promise<void>
+  mantenerPlazo(): Promise<void>
 
   // Agregar partida
   modalAgregar: boolean
   modoAgregar: 'catalogo' | 'manual'
   catalogo: FilaBanco[]
+  cargandoCatalogo: boolean
   busqueda: string
   cantidadCatalogo: number | null
   manual: PartidaManual
@@ -65,13 +143,30 @@ interface PantallaEstimacion {
   // Plantilla
   modalPlantilla: boolean
   plantillas: PlantillaResumen[]
+  cargandoPlantillas: boolean
   plantillaElegida: string
   confirmaReemplazo: boolean
   errorPlantilla: string
 
+  // Miembros e historial
+  miembros: GestionMiembros
+  historial: Historial
+  roles: typeof ROLES_ASIGNABLES
+  etiquetaRol: typeof etiquetaRol
+  get entradasHistorial(): EntradaHistorial[]
+  abrirPestana(p: Pestana): void
+
   pesos: typeof pesos
   numero: typeof numero
   fecha: typeof fecha
+  textoPlazo: typeof textoPlazo
+  textoRango: typeof textoRango
+  etiquetaModelo: typeof etiquetaModelo
+  avisoPlazo: typeof avisoPlazo
+  hayPlazo: typeof hayPlazo
+  bloqueoCronograma: typeof bloqueoCronograma
+  get presentacion(): PresentacionPlazo
+  get ufUtilizada(): PresentacionUf
   factor: typeof factor
   precioUnitario: typeof precioUnitario
 
@@ -85,15 +180,20 @@ interface PantallaEstimacion {
   get ajustesCambiaron(): boolean
   get errorAjustes(): string
   get puedeAplicar(): boolean
+  get hayFilasEnProceso(): boolean
+  filaEnProceso(id: string): boolean
+  verPartidaExistente(): Promise<void>
   get textoAplicar(): string
-  get tolerancia(): number
   get etapas(): { nombre: string; desde: number; hasta: number; dias: number }[]
+  /** Días que reparte el cronograma: el plazo para la cotización o, si falta, la sugerencia. */
+  get diasCronograma(): number
+  get rotuloCronograma(): string
   get enlaceDocumento(): string
   get resultadosCatalogo(): FilaBanco[]
   get plantillaSeleccionada(): PlantillaResumen | undefined
 
   iniciar(): Promise<void>
-  cargarPartidas(): Promise<void>
+  reintentar(): void
   refrescarEstado(): Promise<void>
   mostrar(estimacion: Estimacion): void
   aplicar(): Promise<void>
@@ -153,6 +253,8 @@ function leerNumero(valor: string): number | null | undefined {
 const manualVacia = (categoriaId = 1): PartidaManual =>
   ({ categoria_id: categoriaId, nombre: '', unidad: 'gl', cantidad: null, precio: null })
 
+const idProyecto = new URLSearchParams(window.location.search).get('id') ?? ''
+
 Alpine.data('estimacion', (): PantallaEstimacion => ({
   proyecto: null,
   presupuesto: null,
@@ -169,15 +271,31 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
   pestana: 'presupuesto',
   cargando: true,
   guardando: false,
-  editando: '',
+  enProceso: {},
+  refresco: crearSecuencia(),
+  duplicada: null,
+  agregandoCatalogo: false,
+  destacada: '',
   nombreEditando: '',
   error: '',
   errorCalculo: '',
   errorPartidas: '',
 
+  observaciones: '',
+  limiteObservaciones: OBSERVACIONES_MAX,
+  actualizandoCotizacion: false,
+  errorCotizacion: '',
+
+  plazoEscrito: '',
+  plazoMin: PLAZO_PROFESIONAL_MIN,
+  plazoMax: PLAZO_PROFESIONAL_MAX,
+  guardandoPlazo: false,
+  errorPlazo: '',
+
   modalAgregar: false,
   modoAgregar: 'catalogo',
   catalogo: [],
+  cargandoCatalogo: false,
   busqueda: '',
   cantidadCatalogo: null,
   manual: manualVacia(),
@@ -187,17 +305,43 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
 
   modalPlantilla: false,
   plantillas: [],
+  cargandoPlantillas: false,
   plantillaElegida: '',
   confirmaReemplazo: false,
   errorPlantilla: '',
+
+  miembros: crearMiembros({
+    listar: () => api.listarMiembros(idProyecto),
+    candidatos: (buscar) => api.listarCandidatosMiembro(idProyecto, buscar),
+    agregar: (email, rol) => api.agregarMiembro(idProyecto, email, rol),
+    cambiarRol: (usuarioId, rol) => api.cambiarRolMiembro(idProyecto, usuarioId, rol),
+    quitar: (usuarioId) => api.quitarMiembro(idProyecto, usuarioId),
+  }),
+  historial: crearHistorial(() => api.listarHistorial(idProyecto)),
+  roles: ROLES_ASIGNABLES,
+  etiquetaRol,
 
   pesos,
   numero,
   fecha,
   factor,
   precioUnitario,
+  textoPlazo,
+  textoRango,
+  etiquetaModelo,
+  avisoPlazo,
+  hayPlazo,
+  bloqueoCronograma,
 
   // Datos con que se calculó, no los actuales del proyecto.
+  get vista() {
+    return vistaDetalle(this)
+  },
+
+  get puedeReintentar() {
+    return puedeReintentar(this.error)
+  },
+
   get etiquetaEstandar() {
     const estandar = this.presupuesto?.proyecto.estandarTerminaciones ?? this.proyecto?.estandar_terminaciones
     return ESTANDARES.find((e) => e.valor === estandar)?.etiqueta ?? '—'
@@ -262,24 +406,202 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
   },
 
   get puedeAplicar() {
-    if (this.guardando || this.errorAjustes || this.partidas.length === 0) return false
-    if (!this.presupuesto) return true
+    return puedeCalcular({
+      guardando: this.guardando,
+      hayFilasEnProceso: this.hayFilasEnProceso,
+      errorAjustes: this.errorAjustes,
+      errorTextoObservaciones: this.errorTextoObservaciones,
+      hayPartidas: this.partidas.length > 0,
+      hayPresupuesto: !!this.presupuesto,
+      costoPendiente: this.costoPendiente,
+    })
+  },
+
+  get hayFilasEnProceso() {
+    return hayFilasEnProceso(this.enProceso)
+  },
+
+  filaEnProceso(id) {
+    return filaEnProceso(this.enProceso, id)
+  },
+
+  // Lo que cambia el costo. La observación no está aquí: no pide recalcular.
+  get costoPendiente() {
     return this.ajustesCambiaron || this.proyecto?.estado === 'recalcular' || this.datosCambiaron || this.versionCambio
   },
 
-  get textoAplicar() {
-    if (this.guardando) return 'Calculando…'
-    if (!this.presupuesto) return 'Generar estimación'
-    return this.ajustesCambiaron ? 'Aplicar cambios' : 'Recalcular'
+  // --- Observaciones -----------------------------------------------------------
+
+  get puedeEditarObservaciones() {
+    return puedeEditarObservaciones(this.miembros.miRol)
   },
 
-  get tolerancia() {
+  // Comparada con la de la estimación mostrada, que el formulario propone por defecto.
+  get observacionCambio() {
+    return !!this.presupuesto && observacionesCambiaron(this.observaciones, this.presupuesto.observaciones)
+  },
+
+  get errorTextoObservaciones() {
+    return errorObservaciones(this.observaciones)
+  },
+
+  get accion() {
+    return accionCotizacion({
+      hayEstimacion: !!this.presupuesto,
+      costoPendiente: this.costoPendiente,
+      observacionCambio: this.observacionCambio,
+    })
+  },
+
+  get puedeActualizarCotizacion() {
+    return this.accion === 'actualizar' && this.puedeEditarObservaciones
+      && !this.actualizandoCotizacion && !this.guardando && !this.errorTextoObservaciones
+  },
+
+  // Nueva estimación con los mismos montos: no pasa por el motor.
+  async actualizarCotizacion() {
+    if (!this.proyecto || !this.presupuesto || !this.puedeActualizarCotizacion) return
+    this.actualizandoCotizacion = true
+    this.errorCotizacion = ''
+    try {
+      this.mostrar(await api.actualizarCotizacion(
+        this.proyecto.id, this.presupuesto.id, normalizarObservaciones(this.observaciones)))
+    } catch (e) {
+      this.errorCotizacion = e instanceof ErrorApi ? e.message : 'No se pudo actualizar la cotización.'
+    } finally {
+      this.actualizandoCotizacion = false
+    }
+  },
+
+  get textoAplicar() {
+    return textoBotonCalcular({
+      guardando: this.guardando,
+      hayFilasEnProceso: this.hayFilasEnProceso,
+      hayPresupuesto: !!this.presupuesto,
+      ajustesCambiaron: this.ajustesCambiaron,
+    })
+  },
+
+  // --- Plazo ---------------------------------------------------------------------
+
+  // Sugerencia del modelo: referencia interna para el profesional.
+  get presentacion() {
+    return presentarPlazo(this.presupuesto?.plazo)
+  },
+
+  // Error medio y estado del modelo: salen de la versión del modelo (backend), no de aquí.
+  get errorMedio() {
+    return lineaErrorMedio(this.presupuesto?.plazo)
+  },
+
+  get estadoModelo() {
+    return textoEstadoModelo(this.presupuesto?.plazo)
+  },
+
+  // Plazo para la cotización: el que va al documento de entrega.
+  get puedeEditarPlazo() {
+    return puedeEditarPlazo(this.miembros.miRol)
+  },
+
+  get profesional() {
+    return presentarPlazoProfesional(this.presupuesto?.plazoProfesional)
+  },
+
+  // En la demostración no hay modelo: no hay sugerencia que usar.
+  get sugerenciaDisponible() {
+    return hayPlazo(this.presupuesto?.plazo)
+  },
+
+  get textoUsarSugerencia() {
+    const plazo = this.presupuesto?.plazo
+    return hayPlazo(plazo) ? `Usar sugerencia de ${textoDias(plazo.dias)}` : 'Usar sugerencia'
+  },
+
+  get advertenciaSugerencia() {
+    return advertenciaSugerencia(this.presupuesto?.plazo)
+  },
+
+  get errorPlazoEscrito() {
+    return leerPlazoEscrito(this.plazoEscrito) === undefined ? ERROR_PLAZO_ESCRITO : ''
+  },
+
+  get puedeGuardarPlazo() {
+    return !!this.presupuesto && this.puedeEditarPlazo && !this.guardandoPlazo && !this.guardando
+      && !this.actualizandoCotizacion && puedeGuardarPlazoEscrito(this.plazoEscrito, this.presupuesto.plazoProfesional)
+  },
+
+  get textoMantener() {
+    const dias = this.presupuesto?.plazoProfesional.dias
+    return typeof dias === 'number' ? `Mantener ${textoDias(dias)}` : 'Mantener'
+  },
+
+  get transparenciaModelo() {
+    return filasTransparenciaModelo(this.presupuesto?.plazo)
+  },
+
+  get transparenciaProfesional() {
+    return filasTransparenciaProfesional(this.presupuesto?.plazoProfesional, this.presupuesto?.plazo)
+  },
+
+  // Nueva estimación con el plazo definido y lo demás igual: no recalcula ni toca la sugerencia.
+  async definirPlazo(cuerpo) {
+    if (!this.proyecto || !this.presupuesto || !this.puedeEditarPlazo || this.guardandoPlazo) return
+    this.guardandoPlazo = true
+    this.errorPlazo = ''
+    try {
+      const nueva = conPlazo(await api.definirPlazoProfesional(this.proyecto.id, this.presupuesto.id, cuerpo))
+      // Solo el presupuesto mostrado: el formulario (ajustes, observaciones) conserva lo que se esté editando.
+      this.presupuesto = nueva
+      this.plazoEscrito = nueva.plazoProfesional.dias === null ? '' : String(nueva.plazoProfesional.dias)
+    } catch (e) {
+      this.errorPlazo = e instanceof ErrorApi ? e.message : 'No se pudo guardar el plazo para la cotización.'
+    } finally {
+      this.guardandoPlazo = false
+    }
+  },
+
+  async guardarPlazo() {
+    const dias = leerPlazoEscrito(this.plazoEscrito)
+    if (!this.puedeGuardarPlazo || typeof dias !== 'number') return
+    await this.definirPlazo({ dias })
+  },
+
+  // Fuera del dominio o con el respaldo, se pide confirmación antes de guardar.
+  async usarSugerencia() {
+    if (!this.presupuesto || !this.puedeEditarPlazo || !this.sugerenciaDisponible || this.guardandoPlazo) return
+    if (!(await confirmarSugerencia(this.presupuesto.plazo, confirmar))) return
+    await this.definirPlazo({ usarSugerencia: true })
+  },
+
+  // Resuelve «por revisar» con el mismo valor.
+  async mantenerPlazo() {
+    const dias = this.presupuesto?.plazoProfesional.dias
+    if (typeof dias !== 'number') return
+    await this.definirPlazo({ dias })
+  },
+
+  // Snapshot guardado con la estimación, no la UF de hoy.
+  get ufUtilizada() {
+    return presentarUfUtilizada(this.presupuesto?.plazo)
+  },
+
+  // Sin plazo, o con la estimación incompleta, no se reparte nada: con pocas partidas
+  // las etapas quedarían en 0 días y parecería un cronograma real.
+  // Con el plazo para la cotización (definido o por revisar) se reparte ese; si no, la
+  // sugerencia del modelo, rotulada como distribución interna.
+  get diasCronograma() {
     if (!this.presupuesto) return 0
-    return Math.round(((this.presupuesto.plazoMax - this.presupuesto.plazoDias) / this.presupuesto.plazoDias) * 100)
+    return diasParaCronograma(this.presupuesto.plazo, this.presupuesto.completa, this.presupuesto.plazoProfesional)
+  },
+
+  get rotuloCronograma() {
+    return rotuloCronograma(this.presupuesto?.plazo, this.presupuesto?.plazoProfesional)
   },
 
   get etapas() {
     if (!this.presupuesto) return []
+    const plazo = this.diasCronograma
+    if (plazo === 0) return []
     const total = this.presupuesto.costoDirecto
     let acumulado = 0
 
@@ -288,7 +610,7 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
         .filter((c) => etapa.capitulos.includes(c.codigo))
         .reduce((suma, c) => suma + c.subtotal, 0) / (total || 1)
 
-      const dias = Math.round(this.presupuesto!.plazoDias * peso)
+      const dias = Math.round(plazo * peso)
       const desde = acumulado
       acumulado += dias
       return { nombre: etapa.nombre, desde, hasta: acumulado, dias }
@@ -312,54 +634,80 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
     return this.plantillas.find((p) => p.id === this.plantillaElegida)
   },
 
+  get entradasHistorial() {
+    const categorias = Object.fromEntries(this.categorias.map((c) => [c.id, c.nombre]))
+    return this.historial.eventos.map((e) => describirEvento(e, { nombres: this.miembros.nombres, categorias }))
+  },
+
+  abrirPestana(p) {
+    this.pestana = p
+    if (p === 'miembros' && !this.miembros.cargado) void this.miembros.cargar()
+    if (p === 'historial') {
+      // Se recarga cada vez: puede haber cambios desde la última visita.
+      void this.historial.cargar()
+      // Con los miembros, el historial muestra nombres en vez de correos.
+      if (!this.miembros.cargado) void this.miembros.cargar()
+    }
+  },
+
   async iniciar() {
-    const id = new URLSearchParams(window.location.search).get('id')
-    if (!id) {
-      this.error = 'No se indicó el proyecto.'
+    this.cargando = true
+    this.error = ''
+    if (!idProyecto) {
+      this.error = MENSAJE_SIN_ID
       this.cargando = false
       return
     }
 
     try {
-      const [proyecto, versiones, categorias, guardada] = await Promise.all([
-        api.obtenerProyecto(id),
-        api.listarVersiones(),
-        api.listarCategorias(),
-        ultimaEstimacion(id),
-      ])
-      this.proyecto = proyecto
-      this.versionVigenteId = versiones.find((v) => v.vigente)?.id ?? null
-      this.categorias = categorias
-      await this.cargarPartidas()
-
+      const detalle = await cargarDetalleProyecto(
+        {
+          obtenerProyecto: api.obtenerProyecto,
+          listarVersiones: api.listarVersiones,
+          listarCategorias: api.listarCategorias,
+          listarPartidasProyecto: api.listarPartidasProyecto,
+          obtenerConfiguracion: api.obtenerConfiguracion,
+          ultimaEstimacion,
+        },
+        idProyecto, CONFIGURACION_BASE)
+      // Se asigna todo junto y el proyecto al final: la vista real nunca ve
+      // partidas, plantilla o estimación a medio llegar.
+      this.miembros.miRol = detalle.proyecto.mi_rol ?? null
+      this.versionVigenteId = detalle.versionVigenteId
+      this.categorias = detalle.categorias
+      this.partidas = detalle.partidas
+      this.plantillaAplicada = detalle.plantillaAplicada
+      this.plantillaSugerida = detalle.plantillaSugerida
       // Recargar muestra la guardada; sin estimación no se calcula sola.
-      if (guardada) {
-        this.mostrar(guardada)
+      if (detalle.estimacion) {
+        this.mostrar(detalle.estimacion)
       } else {
-        const config = await api.obtenerConfiguracion().catch(() => CONFIGURACION_BASE)
-        this.gg = config.gastosGeneralesPct
-        this.utilidad = config.utilidadPct
+        this.gg = detalle.ajustes.gastosGeneralesPct
+        this.utilidad = detalle.ajustes.utilidadPct
       }
+      this.proyecto = detalle.proyecto
     } catch (e) {
-      this.error = e instanceof ErrorApi ? e.message : 'No se pudo cargar la estimación.'
+      this.error = mensajeCargaProyecto(e)
     } finally {
       this.cargando = false
     }
   },
 
-  async cargarPartidas() {
-    if (!this.proyecto) return
-    const datos = await api.listarPartidasProyecto(this.proyecto.id)
-    this.partidas = datos.partidas
-    this.plantillaAplicada = datos.plantilla_aplicada
-    this.plantillaSugerida = datos.plantilla_sugerida
+  reintentar() {
+    if (this.cargando || !this.puedeReintentar) return
+    void this.iniciar()
   },
 
   // El backend decide si la estimación quedó desactualizada.
+  // Se lanza sin esperarlo: la acción ya terminó y esta lectura solo actualiza el aviso de estado.
   async refrescarEstado() {
     if (!this.proyecto) return
+    const id = this.proyecto.id
+    const numero = this.refresco.nueva()
     try {
-      this.proyecto = await api.obtenerProyecto(this.proyecto.id)
+      const actual = await api.obtenerProyecto(id)
+      // Una respuesta lenta y vieja no pisa a una más reciente.
+      if (this.refresco.vigente(numero) && this.proyecto?.id === id) this.proyecto = actual
     } catch {
       // Solo informativo: la tabla ya quedó guardada.
     }
@@ -370,24 +718,43 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
     this.gg = estimacion.gastosGeneralesPct
     this.utilidad = estimacion.utilidadPct
     this.aplicarFactores = estimacion.aplicarFactores
+    // La siguiente estimación propone la misma observación; se puede cambiar antes de generarla.
+    this.observaciones = estimacion.observaciones ?? ''
+    // El campo parte del plazo ya decidido (también si está por revisar); vacío si no hay.
+    const dias = this.presupuesto.plazoProfesional.dias
+    this.plazoEscrito = dias === null ? '' : String(dias)
+    this.errorPlazo = ''
   },
 
   async aplicar() {
     if (!this.proyecto || !this.puedeAplicar) return
-    this.guardando = true
-    this.errorCalculo = ''
-    try {
-      this.mostrar(await api.crearEstimacion(this.proyecto.id, {
+    const proyecto = this.proyecto
+    // Un solo cálculo a la vez; el botón se libera con éxito o con error. En error se conservan
+    // los valores editados para corregir y reintentar.
+    const estimacion = await conCalculo(this, async () => {
+      const nueva = await api.crearEstimacion(proyecto.id, {
         gastos_generales_pct: this.gg,
         utilidad_pct: this.utilidad,
         aplicar_factores: this.aplicarFactores,
-      }))
-      await this.refrescarEstado()
-    } catch (e) {
-      // Se conservan los valores editados para corregir y reintentar.
-      this.errorCalculo = e instanceof ErrorApi ? e.message : 'No se pudo calcular la estimación.'
-    } finally {
-      this.guardando = false
+        observaciones: normalizarObservaciones(this.observaciones),
+      })
+      this.mostrar(nueva)
+      // La estimación recién guardada ya está al día: no se espera a releer el proyecto para dejar
+      // de mostrar «por recalcular». La lectura real corre aparte y confirma el estado.
+      if (this.proyecto) this.proyecto = { ...this.proyecto, estado: estadoTrasCalcular(this.proyecto.estado) }
+      void this.refrescarEstado()
+      return nueva
+    }, (e) => (e instanceof ErrorApi ? e.message : 'No se pudo calcular la estimación.'))
+    if (!estimacion) return
+
+    // El botón queda bajo las partidas y el resultado arriba: se lleva la vista hasta él.
+    await Alpine.nextTick()
+    const resultado = document.getElementById('resultado-estimacion')
+    if (resultado) {
+      // La barra superior es fija y en pantallas angostas ocupa dos líneas: se descuenta su alto real.
+      const barra = document.querySelector('.bc-barra')?.getBoundingClientRect().bottom ?? 0
+      const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      window.scrollTo({ top: window.scrollY + resultado.getBoundingClientRect().top - barra - 24, behavior: suave ? 'smooth' : 'auto' })
     }
   },
 
@@ -395,18 +762,19 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
 
   async editar(p, cambios) {
     if (!this.proyecto) return
-    this.editando = p.id
+    this.enProceso = iniciarFila(this.enProceso, p.id)
     this.errorPartidas = ''
     try {
       const actualizada = await api.editarPartidaProyecto(this.proyecto.id, p.id, cambios)
       this.partidas = this.partidas.map((x) => (x.id === p.id ? actualizada : x))
-      await this.refrescarEstado()
+      // La fila se libera con lo guardado; el aviso de estado se actualiza aparte.
+      void this.refrescarEstado()
     } catch (e) {
       this.errorPartidas = e instanceof ErrorApi ? e.message : 'No se pudo guardar la partida.'
       // Vuelve a mostrar lo guardado.
       this.partidas = [...this.partidas]
     } finally {
-      this.editando = ''
+      this.enProceso = terminarFila(this.enProceso, p.id)
     }
   },
 
@@ -474,12 +842,16 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
 
   async quitar(p) {
     if (!this.proyecto) return
-    if (!window.confirm(`¿Quitar «${p.nombre}» del presupuesto de este proyecto?`)) return
+    const ok = await confirmar({
+      rotulo: 'Presupuesto', titulo: 'Quitar partida',
+      mensaje: `¿Quitar «${p.nombre}» del presupuesto de este proyecto?`, confirmar: 'Quitar',
+    })
+    if (!ok) return
     this.errorPartidas = ''
     try {
       await api.eliminarPartidaProyecto(this.proyecto.id, p.id)
       this.partidas = this.partidas.filter((x) => x.id !== p.id)
-      await this.refrescarEstado()
+      void this.refrescarEstado()
     } catch (e) {
       this.errorPartidas = e instanceof ErrorApi ? e.message : 'No se pudo quitar la partida.'
     }
@@ -511,26 +883,42 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
     this.modalAgregar = true
     this.errorAgregar = ''
     this.avisoAgregar = ''
+    this.duplicada = null
     this.busqueda = ''
     this.cantidadCatalogo = null
     this.manual = manualVacia(this.categorias[0]?.id)
     if (this.catalogo.length === 0) {
+      // Mientras llega no se dice «ninguna partida coincide»: sería un vacío falso.
+      this.cargandoCatalogo = true
       try {
         this.catalogo = await api.listarBanco()
       } catch (e) {
         this.errorAgregar = e instanceof ErrorApi ? e.message : 'No se pudo cargar el catálogo.'
+      } finally {
+        this.cargandoCatalogo = false
       }
     }
   },
 
   async agregarDelCatalogo(f) {
-    if (!this.proyecto) return
+    // Un clic repetido mientras llega la respuesta no agrega la misma partida dos veces.
+    if (!this.proyecto || this.agregandoCatalogo) return
     this.errorAgregar = ''
+    this.avisoAgregar = ''
+    // Misma partida de catálogo (mismo partida_id, sea de plantilla o agregada antes): no se duplica.
+    // Se avisa y se ofrece ir a la fila existente, donde se puede cambiar la cantidad.
+    const existente = partidaDeCatalogoAgregada(this.partidas, f.id)
+    if (existente) {
+      this.duplicada = existente
+      return
+    }
+    this.duplicada = null
     const cantidad = this.cantidadCatalogo
     if (cantidad != null && (!Number.isFinite(cantidad) || cantidad < 0)) {
       this.errorAgregar = 'La cantidad debe ser un número mayor o igual a 0.'
       return
     }
+    this.agregandoCatalogo = true
     try {
       const nueva = await api.crearPartidaProyecto(this.proyecto.id, {
         origen: 'catalogo', partida_id: f.id, cantidad: cantidad ?? null,
@@ -538,10 +926,27 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
       this.partidas = [...this.partidas, nueva]
       this.avisoAgregar = `Agregada: ${nueva.nombre}.`
       this.cantidadCatalogo = null
-      await this.refrescarEstado()
+      void this.refrescarEstado()
     } catch (e) {
       this.errorAgregar = e instanceof ErrorApi ? e.message : 'No se pudo agregar la partida.'
+    } finally {
+      this.agregandoCatalogo = false
     }
+  },
+
+  // Cierra el catálogo, lleva la vista a la partida que ya estaba y la resalta un momento.
+  async verPartidaExistente() {
+    const existente = this.duplicada
+    if (!existente) return
+    this.duplicada = null
+    this.modalAgregar = false
+    this.pestana = 'presupuesto'
+    this.destacada = existente.id
+    await Alpine.nextTick()
+    const fila = document.getElementById(`partida-${existente.id}`)
+    const suave = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    fila?.scrollIntoView({ block: 'center', behavior: suave ? 'smooth' : 'auto' })
+    window.setTimeout(() => { if (this.destacada === existente.id) this.destacada = '' }, 2400)
   },
 
   async agregarManual() {
@@ -564,7 +969,7 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
       this.partidas = [...this.partidas, nueva]
       this.avisoAgregar = `Agregada: ${nueva.nombre}.`
       this.manual = manualVacia(m.categoria_id)
-      await this.refrescarEstado()
+      void this.refrescarEstado()
     } catch (e) {
       this.errorAgregar = e instanceof ErrorApi ? e.message : 'No se pudo agregar la partida.'
     }
@@ -576,11 +981,14 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
     this.modalPlantilla = true
     this.errorPlantilla = ''
     this.confirmaReemplazo = false
+    this.cargandoPlantillas = true
     try {
       this.plantillas = (await api.listarPlantillas()).filter((p) => p.vigente)
       this.plantillaElegida = this.plantillaSugerida?.id ?? this.plantillaAplicada?.id ?? this.plantillas[0]?.id ?? ''
     } catch (e) {
       this.errorPlantilla = e instanceof ErrorApi ? e.message : 'No se pudieron cargar las plantillas.'
+    } finally {
+      this.cargandoPlantillas = false
     }
   },
 
@@ -599,7 +1007,7 @@ Alpine.data('estimacion', (): PantallaEstimacion => ({
       this.plantillaAplicada = datos.plantilla_aplicada
       this.plantillaSugerida = datos.plantilla_sugerida
       this.modalPlantilla = false
-      await this.refrescarEstado()
+      void this.refrescarEstado()
     } catch (e) {
       this.errorPlantilla = e instanceof ErrorApi ? e.message : 'No se pudo aplicar la plantilla.'
     }
@@ -624,4 +1032,6 @@ if (exigirSesion()) {
   window.Alpine = Alpine
   Alpine.start()
   marcarSimulacion()
+  void prepararNavegacion()
+  iniciarBotonTema()
 }

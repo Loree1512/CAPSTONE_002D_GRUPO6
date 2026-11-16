@@ -6,11 +6,14 @@
    esquinas rectas y bordes hairline #E5E5E5.
    ========================================================================= */
 
-/* Las fuentes se cargan desde el <head> de cada página, junto al estilo
-   crítico: con @import aquí el navegador debía descargar y parsear esta
-   hoja completa antes de siquiera pedirlas. */
+/* Cada página enlaza esta hoja con <link> en su <head>, junto a las fuentes.
+   Así bloquea el primer pintado también en `npm run dev` (importada desde
+   TS llegaba después del JS y la página parpadeaba sin estilo). Las fuentes
+   no van con @import aquí: el navegador tendría que descargar y parsear
+   esta hoja completa antes de siquiera pedirlas. */
 
 :root {
+  color-scheme: light;
   --bc-fondo:  #F9F9F7;
   --bc-blanco: #FFFFFF;
   --bc-tinta:  #1A1A1A;
@@ -20,14 +23,51 @@
   --bc-acento: #FF5E00;
   --bc-acento-oscuro: #E05200;
   --bc-acento-tenue:  #FFF0E6;
-
   --bc-display: 'Space Grotesk', 'Helvetica Neue', system-ui, sans-serif;
   --bc-cuerpo:  'Manrope', system-ui, sans-serif;
-
   --bc-e1: 4px;  --bc-e2: 8px;  --bc-e3: 12px; --bc-e4: 16px;
   --bc-e5: 20px; --bc-e6: 24px; --bc-e7: 40px; --bc-e8: 80px;
-
   --bc-ancho: 1600px;
+  --bc-estado-ok: #1A1A1A;
+  --bc-estado-atencion: #FF5E00;
+  --bc-estado-pendiente: #FFC9A6;
+  --bc-estado-cerrado: #9E9E9E;
+  --bc-precio-referencial: #8F8F8F;
+  --bc-curva: cubic-bezier(.2, .7, .2, 1);
+  --bc-tinta-rgb: 26, 26, 26;
+  --bc-fondo-rgb: 249, 249, 247;
+  --bc-borde-acento: #FFD2B8;
+  --bc-linea-fuerte: #CFCFCB;
+  --bc-cabecera-tabla: #FBFBFA;
+  --bc-esqueleto: #EFF0ED;
+  --bc-esqueleto-bloque: #ECECE8;
+  --bc-texto-medio: #5C5C5C;
+  --bc-reticula: rgba(var(--bc-tinta-rgb), .045);
+}
+
+/* Modo oscuro: solo redefine las variables. Las superficies que en claro son
+   «tinta» (botón principal, tarjeta destacada) se invierten solas. */
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+  --bc-fondo:  #141413;
+  --bc-blanco: #1D1D1C;
+  --bc-tinta:  #EDEDE9;
+  --bc-negro:  #EDEDE9;
+  --bc-gris:   #9A9A96;
+  --bc-linea:  #2F2F2D;
+  --bc-acento-tenue: #2B1A10;
+  --bc-estado-ok: #EDEDE9;
+  --bc-estado-pendiente: #7A4A2E;
+  --bc-estado-cerrado: #6E6E6B;
+  --bc-precio-referencial: #9A9A96;
+  --bc-tinta-rgb: 237, 237, 233;
+  --bc-fondo-rgb: 20, 20, 19;
+  --bc-borde-acento: #5A2E14;
+  --bc-linea-fuerte: #454542;
+  --bc-cabecera-tabla: #222221;
+  --bc-esqueleto: #2A2A28;
+  --bc-esqueleto-bloque: #2A2A28;
+  --bc-texto-medio: #B3B3AF;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -36,7 +76,7 @@ html, body { margin: 0; padding: 0; }
 /* `clip` recorta el desborde lateral sin crear un contenedor de scroll:
    con `hidden` el body se vuelve scroller y deja de funcionar
    position:sticky, que es de lo que viven las secciones de la landing. */
-html { overflow-x: clip; }
+html { overflow-x: clip; background: var(--bc-fondo); }
 @supports not (overflow-x: clip) { html { overflow-x: hidden; } }
 
 body {
@@ -65,19 +105,27 @@ a { color: var(--bc-tinta); text-decoration: none; }
 :focus-visible { outline: 2px solid var(--bc-acento); outline-offset: 2px; }
 [x-cloak] { display: none !important; }
 
+/* Entrada suave de la página completa. */
+body > * { animation: bc-entrar .22s ease-out both; }
+@keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { body > * { animation: none; } }
+
+/* Enlaces solo para administradores: hidden gana a cualquier display. */
+[hidden] { display: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
 
 /* --- Tipografía ---------------------------------------------------------- */
 
-.bc-h1 { font-size: clamp(28px, 3.1vw, 46px); }
+.bc-h1 { font-size: clamp(28px, 3.1vw, 46px); letter-spacing: -.04em; }
 .bc-h2 { font-size: clamp(19px, 1.8vw, 25px); }
 
 .bc-rotulo {
   display: block;
   font-size: 11px; font-weight: 700;
-  letter-spacing: .24em; text-transform: uppercase;
+  text-transform: uppercase;
   color: var(--bc-acento);
   margin-bottom: var(--bc-e2);
 }
@@ -89,7 +137,7 @@ a { color: var(--bc-tinta); text-decoration: none; }
 
 .bc-cifra {
   font-family: var(--bc-display); font-weight: 400;
-  font-size: clamp(26px, 2.5vw, 38px); line-height: 1.05; letter-spacing: -.03em;
+  font-size: clamp(26px, 2.5vw, 38px); line-height: 1.05; 
 }
 
 /* --- Botones ------------------------------------------------------------- */
@@ -100,15 +148,21 @@ a { color: var(--bc-tinta); text-decoration: none; }
   background: var(--bc-tinta); color: var(--bc-fondo);
   border: 1px solid var(--bc-tinta);
   font-family: var(--bc-cuerpo); font-size: 11px; font-weight: 700;
-  letter-spacing: .18em; text-transform: uppercase;
+  text-transform: uppercase;
   cursor: pointer;
-  transition: background .3s, border-color .3s, color .3s;
+  transition: background .25s ease, border-color .25s ease, color .25s ease,
+      transform .15s ease, box-shadow .3s ease;
 }
 .bc-boton:hover:not(:disabled) { background: var(--bc-acento); border-color: var(--bc-acento); color: #fff; }
 .bc-boton:disabled { opacity: .45; cursor: not-allowed; }
 
 .bc-boton--linea { background: transparent; color: var(--bc-tinta); }
 .bc-boton--linea:hover:not(:disabled) { background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo); }
+
+.bc-boton--peligro { background: #B3261E; border-color: #B3261E; color: #fff; }
+.bc-boton--peligro:hover:not(:disabled) { background: #8C1D18; border-color: #8C1D18; color: #fff; }
+.bc-boton--linea.bc-boton--peligro { background: transparent; color: #B3261E; }
+.bc-boton--linea.bc-boton--peligro:hover:not(:disabled) { background: #B3261E; border-color: #B3261E; color: #fff; }
 
 .bc-boton--ancho { width: 100%; padding: 18px; font-size: 12px; }
 .bc-boton--menor { padding: 11px 18px; }
@@ -117,6 +171,7 @@ a { color: var(--bc-tinta); text-decoration: none; }
   background: none; border: 0; padding: 0; cursor: pointer;
   font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
   color: var(--bc-acento);
+  transition: color .2s ease;
 }
 .bc-enlace:hover { color: var(--bc-tinta); }
 
@@ -128,6 +183,7 @@ a { color: var(--bc-tinta); text-decoration: none; }
   position: sticky; top: 0; z-index: 40;
   background: var(--bc-fondo);
   border-bottom: 1px solid var(--bc-linea);
+  min-height: 66px;
 }
 .bc-barra > div {
   max-width: var(--bc-ancho); margin: 0 auto;
@@ -138,15 +194,16 @@ a { color: var(--bc-tinta); text-decoration: none; }
 
 .bc-marca {
   font-family: var(--bc-display); font-weight: 700; font-size: 19px;
-  letter-spacing: .2em; text-transform: uppercase;
+  text-transform: uppercase;
   margin-right: auto;
 }
 
 .bc-nav { display: flex; gap: clamp(14px, 2vw, 28px); flex-wrap: wrap; }
 .bc-nav a {
-  font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
-  color: rgba(26, 26, 26, .6);
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  color: rgba(var(--bc-tinta-rgb), .6);
   transition: color .2s ease;
+  position: relative; padding: 6px 0; white-space: nowrap;
 }
 .bc-nav a:hover { color: var(--bc-tinta); }
 .bc-nav a[aria-current="page"] { color: var(--bc-acento); }
@@ -156,6 +213,7 @@ a { color: var(--bc-tinta); text-decoration: none; }
   border: 1px solid var(--bc-linea); background: var(--bc-blanco);
   padding: 7px 12px;
   font-size: 12.5px; font-weight: 600;
+  transition: border-color .2s ease;
 }
 .bc-placa { display: inline-flex; flex: none; }
 .bc-placa img { height: 16px; width: auto; }
@@ -177,6 +235,11 @@ a { color: var(--bc-tinta); text-decoration: none; }
 
 .bc-tarjeta { background: var(--bc-blanco); border: 1px solid var(--bc-linea); }
 .bc-tarjeta--relleno { padding: clamp(24px, 3vw, 34px); }
+
+/* Columna con separación. Va en una clase y no en style="display:flex": al
+   mostrarse, x-show borra el display del estilo en línea y el bloque perdía
+   la separación. El espacio se ajusta con --bc-pila-gap, que x-show no toca. */
+.bc-pila { display: flex; flex-direction: column; gap: var(--bc-pila-gap, var(--bc-e5)); min-width: 0; }
 
 .bc-dupla {
   display: grid;
@@ -203,12 +266,13 @@ a { color: var(--bc-tinta); text-decoration: none; }
   text-align: left;
   padding: 14px 16px;
   border-bottom: 1px solid var(--bc-linea);
-  font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
   color: var(--bc-gris);
 }
 .bc-tabla td { padding: 16px; border-bottom: 1px solid var(--bc-linea); font-size: 14px; font-weight: 500; }
-.bc-tabla tbody tr { cursor: pointer; transition: background .2s ease; }
-.bc-tabla tbody tr:hover td { background: var(--bc-fondo); }
+/* Solo las tablas cuyas filas abren algo muestran mano y resaltado */
+.bc-tabla--navegable tbody tr { cursor: pointer; transition: background .2s ease; }
+.bc-tabla--navegable tbody tr:hover td { background: var(--bc-fondo); }
 .bc-tabla tbody tr:last-child td { border-bottom: 0; }
 
 .bc-tabla__nombre { font-weight: 600; }
@@ -226,9 +290,7 @@ a { color: var(--bc-tinta); text-decoration: none; }
   font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
   color: var(--bc-gris); white-space: nowrap;
 }
-.bc-estado--vigente   { border-color: var(--bc-acento); color: var(--bc-acento); background: var(--bc-acento-tenue); }
 .bc-estado--pendiente { border-color: var(--bc-tinta); color: var(--bc-tinta); }
-.bc-estado--hecho     { border-color: var(--bc-tinta); background: var(--bc-tinta); color: var(--bc-fondo); }
 
 /* --- Formularios --------------------------------------------------------- */
 
@@ -247,12 +309,27 @@ a { color: var(--bc-tinta); text-decoration: none; }
   border: 1px solid var(--bc-linea);
   padding: 13px;
   font-size: 14px; font-weight: 600; color: var(--bc-tinta);
-  transition: border-color .2s ease;
+  transition: border-color .2s ease, background .2s ease, box-shadow .2s ease;
 }
 .bc-entrada::placeholder { color: var(--bc-gris); font-weight: 500; }
-.bc-entrada:focus { outline: none; border-color: var(--bc-acento); }
+.bc-entrada:focus { outline: none; border-color: var(--bc-acento); box-shadow: 0 0 0 3px rgba(255, 94, 0, .12); }
 .bc-entrada[aria-invalid="true"] { border-color: var(--bc-acento); background: var(--bc-acento-tenue); }
 .bc-entrada--num { font-family: var(--bc-display); font-size: 18px; font-weight: 400; letter-spacing: .02em; }
+
+/* Contraseña con ojo: se ve solo mientras se mantiene apretado */
+.bc-clave { position: relative; }
+.bc-clave .bc-entrada { padding-right: 46px; }
+.bc-clave__ver {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--bc-gris);
+  touch-action: none; user-select: none; -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.bc-clave__ver:hover, .bc-clave__ver:focus-visible, .bc-clave__ver[aria-pressed="true"] { color: var(--bc-acento); }
+.bc-clave__ver:focus-visible { outline: 2px solid var(--bc-acento); outline-offset: -2px; }
+.bc-clave__ver svg { width: 20px; height: 20px; }
 
 select.bc-entrada {
   appearance: none; padding-right: var(--bc-e7);
@@ -268,7 +345,6 @@ select.bc-entrada {
   border: 1px solid var(--bc-linea); background: var(--bc-blanco);
   font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
   color: var(--bc-gris); cursor: pointer;
-  transition: background .25s, color .25s, border-color .25s;
 }
 .bc-opcion:hover { border-color: var(--bc-tinta); color: var(--bc-tinta); }
 .bc-opcion[aria-pressed="true"] { background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo); }
@@ -281,7 +357,7 @@ select.bc-entrada {
   border: 1px solid var(--bc-linea); border-left: 3px solid var(--bc-tinta);
   font-size: 13px; font-weight: 500;
 }
-.bc-aviso--error { border-left-color: var(--bc-acento); border-color: #FFD9C2; background: var(--bc-acento-tenue); }
+.bc-aviso--error { border-color: var(--bc-borde-acento); border-left-color: var(--bc-acento); background: var(--bc-acento-tenue); }
 
 /* --- Panel oscuro de resultado ------------------------------------------- */
 
@@ -293,17 +369,45 @@ select.bc-entrada {
 .bc-resultado .bc-rotulo { font-size: 10px; letter-spacing: .22em; color: var(--bc-acento); margin: 0; }
 .bc-resultado__cifra {
   font-family: var(--bc-display); font-weight: 400;
-  font-size: clamp(38px, 4.4vw, 62px); line-height: .98; letter-spacing: -.03em;
+  font-size: clamp(38px, 4.4vw, 62px); line-height: .98; 
+  animation: bc-cifra .7s var(--bc-curva) both .1s;
 }
-.bc-resultado__resumen { font-size: 12.5px; font-weight: 500; color: rgba(249, 249, 247, .6); }
+.bc-resultado__resumen { font-size: 12.5px; font-weight: 500; color: rgba(var(--bc-fondo-rgb), .6); }
+/* Plazo fuera del dominio histórico: leyenda en lugar de cifra grande. */
+.bc-resultado__leyenda {
+  font-family: var(--bc-display); font-weight: 500;
+  font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; letter-spacing: -.02em;
+}
+/* Tarjeta de plazo: ficha técnica. Rótulo, estado, explicación breve, métricas en dos columnas y pie. */
+.bc-plazo { gap: var(--bc-e3); }
+.bc-plazo .bc-resultado__leyenda { font-size: clamp(20px, 1.9vw, 26px); }
+.bc-plazo__avisos { display: flex; flex-direction: column; gap: 6px; }
+.bc-plazo__avisos p { margin: 0; font-size: 13px; font-weight: 500; line-height: 1.55; color: rgba(var(--bc-tinta-rgb), .72); }
+.bc-plazo__avisos p:empty { display: none; }
+/* Métricas: dos columnas entre filetes finos, con la etiqueta pequeña sobre la cifra. */
+.bc-plazo__datos {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); margin: var(--bc-e1) 0 0;
+  border-top: 1px solid var(--bc-linea); border-bottom: 1px solid var(--bc-linea);
+}
+.bc-plazo__datos > div { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; }
+.bc-plazo__datos > div + div { padding-left: 16px; border-left: 1px solid var(--bc-linea); }
+.bc-plazo__datos dt { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--bc-gris); }
+.bc-plazo__datos dd {
+  margin: 0; font-family: var(--bc-display); font-size: clamp(20px, 1.9vw, 26px); font-weight: 500; line-height: 1.1;
+  letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--bc-tinta);
+}
+/* Pie al fondo de la tarjeta: modelo y alcance. */
+.bc-plazo__pie { display: flex; flex-direction: column; gap: 4px; margin-top: auto; }
+.bc-plazo__pie b { font-size: 12.5px; font-weight: 700; color: var(--bc-tinta); }
+.bc-plazo__pie span { font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--bc-gris); }
 .bc-resultado__fila {
   display: flex; align-items: baseline; justify-content: space-between; gap: var(--bc-e3);
-  padding: 12px 0; border-top: 1px solid rgba(249, 249, 247, .14);
+  padding: 12px 0; border-top: 1px solid rgba(var(--bc-fondo-rgb), .14);
   font-size: 13px; font-weight: 500;
 }
-.bc-resultado__fila span { color: rgba(249, 249, 247, .65); }
+.bc-resultado__fila span { color: rgba(var(--bc-fondo-rgb), .65); }
 .bc-resultado__fila b { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
-.bc-resultado__nota { font-size: 11.5px; font-weight: 500; line-height: 1.55; color: rgba(249, 249, 247, .45); }
+.bc-resultado__nota { font-size: 11.5px; font-weight: 500; line-height: 1.55; color: rgba(var(--bc-fondo-rgb), .45); }
 
 /* --- Estado vacío -------------------------------------------------------- */
 
@@ -311,7 +415,17 @@ select.bc-entrada {
   background: var(--bc-blanco); border: 1px solid var(--bc-linea);
   padding: clamp(40px, 5vw, 72px) clamp(24px, 3vw, 40px);
   display: flex; flex-direction: column; align-items: flex-start; gap: var(--bc-e4);
+  position: relative;
+  background-image:
+      linear-gradient(var(--bc-reticula) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bc-reticula) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: right -1px top -1px;
 }
+.bc-vacio .bc-rotulo { margin-bottom: 0; }
+.bc-vacio .bc-acciones { margin-top: var(--bc-e2); }
+/* Falla de carga: el título lo dice en texto; el filete naranjo solo acompaña. */
+.bc-vacio--error { border-left: 3px solid var(--bc-acento); }
 
 /* --- Acceso -------------------------------------------------------------- */
 
@@ -329,27 +443,38 @@ select.bc-entrada {
 }
 .bc-acceso__bajada {
   margin-top: 28px; font-size: clamp(15px, 1.2vw, 19px); font-weight: 500; line-height: 1.6;
-  color: rgba(249, 249, 247, .65); max-width: 440px;
+  color: rgba(var(--bc-fondo-rgb), .65); max-width: 440px;
 }
 
 .bc-acceso__lista li {
   display: flex; gap: var(--bc-e5); align-items: baseline;
   padding: var(--bc-e4) 0;
-  border-top: 1px solid rgba(249, 249, 247, .16);
+  border-top: 1px solid rgba(var(--bc-fondo-rgb), .16);
   font-size: 14px; font-weight: 500;
 }
-.bc-acceso__lista li:last-child { border-bottom: 1px solid rgba(249, 249, 247, .16); }
+.bc-acceso__lista li:last-child { border-bottom: 1px solid rgba(var(--bc-fondo-rgb), .16); }
 .bc-acceso__lista i {
   font-style: normal; font-family: var(--bc-display); font-size: 13px;
   letter-spacing: .12em; color: var(--bc-acento); flex: none;
 }
 
 .bc-acceso__cuenta { display: flex; align-items: center; gap: var(--bc-e3); }
-.bc-acceso__cuenta p { font-size: 12px; font-weight: 500; color: rgba(249, 249, 247, .6); line-height: 1.5; }
+.bc-acceso__cuenta p { font-size: 12px; font-weight: 500; color: rgba(var(--bc-fondo-rgb), .6); line-height: 1.5; }
 
 .bc-acceso__form { display: grid; place-items: center; padding: clamp(40px, 6vw, 80px) clamp(24px, 4vw, 48px); }
 .bc-acceso__caja { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 28px; }
 .bc-acceso__caja h1 { font-size: clamp(32px, 3.4vw, 50px); line-height: 1.16; }
+
+/* En celular las dos columnas se apilan y el panel de marca tapaba el formulario:
+   queda solo una franja con el logo y el formulario se ve sin bajar. */
+@media (max-width: 679px) {
+  .bc-acceso { align-content: start; }
+  .bc-acceso__panel { padding: 16px 24px; }
+  .bc-acceso__panel .bc-logo--grande { height: 20px; }
+  .bc-acceso__panel > div { display: none; }
+  .bc-acceso__form { place-items: start center; padding: 28px 24px 40px; }
+  .bc-acceso__caja { gap: 22px; }
+}
 
 @media (max-width: 720px) {
   .bc-barra > div { gap: var(--bc-e4); }
@@ -357,37 +482,9 @@ select.bc-entrada {
   .bc-cuenta span:not(.bc-placa) { display: none; }
 }
 
-/* --- Landing ------------------------------------------------------------- */
-
-.bc-landing { overflow-x: clip; }
-@supports not (overflow-x: clip) { .bc-landing { overflow-x: hidden; } }
-.bc-landing h1, .bc-landing h2, .bc-landing h3 { text-transform: none; }
-.bc-landing a { transition: color .3s ease; }
-
-/* Marco de fotografía: si existe /images/<id>.jpg se muestra;
-   si no, queda el rótulo de qué imagen corresponde. */
-.bc-foto {
-  position: relative;
-  background: var(--bc-linea);
-  display: grid; place-items: center;
-  overflow: hidden;
-}
-.bc-foto img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
-.bc-foto span {
-  position: relative; z-index: 1;
-  font-family: var(--bc-display); font-size: 12px;
-  letter-spacing: .24em; text-transform: uppercase;
-  color: var(--bc-gris); text-align: center; padding: 16px;
-}
-.bc-foto img[src]:not([style*="display: none"]) ~ span { display: none; }
-
-@keyframes bc-scan { 0% { top: 0 } 100% { top: 100% } }
 @keyframes bc-blink { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
 
 /* --- Banco de precios ---------------------------------------------------- */
-
-.bc-filtros { display: flex; gap: var(--bc-e4); flex-wrap: wrap; align-items: flex-end; }
-.bc-filtros .bc-opcion { min-height: 44px; }
 
 .bc-tabla--banco td { padding: 10px 16px; }
 
@@ -398,8 +495,6 @@ select.bc-entrada {
   color: var(--bc-tinta);
   padding: 12px 16px;
 }
-.bc-fila-categoria { cursor: default; }
-.bc-tabla tbody tr.bc-fila-categoria:hover td { background: var(--bc-fondo); }
 
 /* Campo editable dentro de la tabla */
 .bc-entrada--celda {
@@ -409,7 +504,7 @@ select.bc-entrada {
   font-family: var(--bc-display); font-size: 15px; font-weight: 400;
 }
 .bc-entrada--celda:hover { border-color: var(--bc-linea); background: var(--bc-blanco); }
-.bc-entrada--celda:focus { border-color: var(--bc-acento); background: var(--bc-blanco); }
+.bc-entrada--celda:focus { border-color: var(--bc-acento); background: var(--bc-blanco); box-shadow: none; }
 .bc-entrada--celda::placeholder { font-family: var(--bc-cuerpo); color: var(--bc-gris); }
 
 .bc-enlace--baja {
@@ -426,6 +521,7 @@ select.bc-entrada {
   padding: var(--bc-e5);
   background: rgba(17, 17, 17, .55);
   overflow-y: auto;
+  animation: bc-fundido .2s ease-out both;
 }
 
 .bc-modal {
@@ -433,22 +529,49 @@ select.bc-entrada {
   background: var(--bc-blanco);
   border: 1px solid var(--bc-linea);
   padding: clamp(24px, 3vw, 34px);
+  position: relative; animation: bc-modal .32s var(--bc-curva) both; box-shadow: 0 30px 60px -30px rgba(17, 17, 17, .45);
 }
 
 /* --- Estimación ---------------------------------------------------------- */
 
 .bc-resultados { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: var(--bc-e5); }
 
+/* Ficha clara de plazo: filete naranjo arriba, equilibra con la ficha negra. */
 .bc-resultado--claro {
   background: var(--bc-blanco);
   color: var(--bc-tinta);
   border: 1px solid var(--bc-linea);
+  box-shadow: inset 0 3px 0 var(--bc-acento);
 }
 .bc-resultado--claro .bc-resultado__resumen { color: var(--bc-gris); }
 .bc-resultado--claro .bc-resultado__fila { border-top-color: var(--bc-linea); }
 .bc-resultado--claro .bc-resultado__fila span { color: var(--bc-gris); }
 
-.bc-aviso--pendiente { border-left-color: var(--bc-acento); background: var(--bc-acento-tenue); border-color: #FFD9C2; }
+/* Ámbar: pide recalcular, no es un error */
+.bc-aviso--pendiente { border-color: var(--bc-estado-pendiente); }
+
+/* Plazo para la cotización: campo de días corto, botones en una fila y la advertencia como aviso a todo el ancho. */
+/* Campo de días con − y + a los lados. */
+.bc-paso { display: flex; align-items: stretch; gap: 8px; }
+.bc-paso > label {
+  align-self: center; margin: 0; padding-right: 8px;
+  font-size: 18px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--bc-tinta);
+}
+.bc-paso .bc-entrada {
+  flex: 1; min-width: 0; text-align: center; font-size: 28px; padding-block: 10px;
+  border-radius: 0; appearance: textfield; -moz-appearance: textfield;
+}
+.bc-paso .bc-entrada::-webkit-outer-spin-button,
+.bc-paso .bc-entrada::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.bc-paso__boton {
+  flex: 0 0 52px; border: 1px solid var(--bc-linea); background: var(--bc-blanco); color: var(--bc-tinta);
+  font-size: 24px; line-height: 1; cursor: pointer;
+}
+.bc-paso__boton:hover:not(:disabled) { background: var(--bc-acento-tenue); }
+.bc-paso__boton:disabled { opacity: .5; cursor: not-allowed; }
+.bc-plazo-cotizacion .bc-nota { max-width: none; }
+.bc-plazo-cotizacion .bc-resultado__resumen { color: var(--bc-tinta); font-weight: 700; }
+.bc-plazo-cotizacion .bc-campo > label { margin-bottom: 4px; }
 
 /* Pestañas */
 .bc-pestanas { display: flex; gap: var(--bc-e5); border-bottom: 1px solid var(--bc-linea); flex-wrap: wrap; }
@@ -462,10 +585,15 @@ select.bc-entrada {
 .bc-pestana:hover { color: var(--bc-tinta); }
 .bc-pestana[aria-selected="true"] { color: var(--bc-tinta); border-bottom-color: var(--bc-acento); }
 
-/* Detalle de partidas dentro de un capítulo */
-.bc-fila-detalle td { background: var(--bc-fondo); font-weight: 400; }
-.bc-fila-detalle .bc-tabla__codigo { color: var(--bc-gris); }
-.bc-tabla tbody tr.bc-fila-detalle:hover td { background: var(--bc-fondo); }
+/* Desglose: etiqueta a la izquierda, monto a la derecha */
+.bc-resumen__fila {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--bc-e3);
+  padding: 10px 0; border-top: 1px solid var(--bc-linea);
+  font-size: 13px; font-weight: 500;
+}
+.bc-resumen__fila span { color: var(--bc-gris); }
+.bc-resumen__fila b { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.bc-resumen__fila--total span { color: var(--bc-tinta); }
 
 .bc-resumen__fila--total {
   border-top: 2px solid var(--bc-tinta); margin-top: 4px; padding-top: 14px;
@@ -519,6 +647,7 @@ select.bc-entrada {
 
 .bc-hoja__cifras { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: var(--bc-e5); }
 .bc-hoja__cifras .bc-cifra { font-size: 32px; margin: 8px 0 4px; }
+.bc-hoja__cifras .bc-cifra--leyenda { font-size: 20px; line-height: 1.15; }
 .bc-hoja h2 { margin-bottom: var(--bc-e4); }
 
 .bc-tabla--ficha td { padding: 10px 0; font-weight: 500; }
@@ -530,71 +659,28 @@ select.bc-entrada {
 .bc-tabla__total .bc-tabla__monto { font-family: var(--bc-display); font-size: 22px; font-weight: 500; }
 
 .bc-hoja__alcance { border-top: 1px solid var(--bc-linea); padding-top: var(--bc-e5); display: flex; flex-direction: column; gap: 12px; }
+/* En la hoja el texto ocupa todo el ancho: el límite de 64ch dejaba un margen vacío a la derecha. */
+.bc-hoja .bc-apoyo, .bc-hoja .bc-nota { max-width: none; }
+/* Párrafos de alcance justificados, sin cortar palabras. */
+.bc-hoja__alcance .bc-apoyo { text-align: justify; hyphens: manual; }
 
+/* Sin margen de página el navegador no imprime su encabezado y pie (URL, fecha, título);
+   el margen lo da la hoja y se repite en cada página (box-decoration-break). */
+@page hoja { size: A4; margin: 0; }
 @media print {
+  .bc-fondo-hoja { page: hoja; }
   .bc-cinta { display: none !important; }
   .bc-fondo-hoja { background: #fff; }
-  .bc-hoja { border: 0; margin: 0; padding: 0; max-width: none; }
-  .bc-hoja section { break-inside: avoid; }
-}
-
-/* --- Landing: móvil ------------------------------------------------------ */
-/* El prototipo fue diseñado para pantalla ancha: secciones de 300 a 600vh
-   con capas fijadas y tipografías de hasta 190px. En un teléfono eso
-   obliga a scrollear seis pantallas por idea y corta los titulares.
-   Aquí las secuencias pasan a flujo normal y la escala tipográfica baja. */
-
-@media (max-width: 760px) {
-  /* Secuencias fijadas → bloques apilados */
-  .bc-landing [data-seq] { height: auto !important; overflow: visible !important; }
-  .bc-landing [data-seq] > div { position: static !important; height: auto !important; display: block !important; }
-  .bc-landing [data-seq-item] {
-    position: static !important;
-    opacity: 1 !important;
-    transform: none !important;
-    padding: 40px clamp(20px, 5vw, 28px) !important;
-    width: auto !important;
-    inset: auto !important;
+  .bc-hoja {
+    border: 0; margin: 0; padding: 14mm 16mm; max-width: none;
+    box-decoration-break: clone; -webkit-box-decoration-break: clone;
   }
-  .bc-landing [data-seq-bar] { display: none; }
-  .bc-landing [data-hero] { transform: none !important; opacity: 1 !important; }
-  .bc-landing [data-parallax] { transform: none !important; }
-  .bc-landing [data-cross-out], .bc-landing [data-cross-in] { opacity: 1 !important; }
-  .bc-landing [data-cross-scale] { transform: none !important; }
-
-  /* Escala tipográfica del relato */
-  .bc-landing h1 { font-size: clamp(34px, 11vw, 54px) !important; line-height: .96 !important; }
-  .bc-landing h2 { font-size: clamp(26px, 8.4vw, 42px) !important; line-height: 1.02 !important; }
-  .bc-landing h3 { font-size: clamp(19px, 5.6vw, 28px) !important; }
-  .bc-landing p  { font-size: 15px !important; }
-  .bc-landing [data-chaos] { font-size: 13px !important; }
-
-  /* Cabecera: solo marca y acceso */
-  .bc-landing [data-navbar] { padding: 14px 20px !important; background: rgba(249,249,247,.94); backdrop-filter: blur(10px); }
-  .bc-landing [data-navbar] [data-chapter] { display: none; }
-
-  /* Alturas de sección y marcos de imagen */
-  .bc-landing section { padding-left: 20px !important; padding-right: 20px !important; }
-  .bc-landing section > div { padding-left: 0 !important; padding-right: 0 !important; }
-  .bc-landing .bc-foto { min-height: 220px; }
-  .bc-landing [style*="height:100vh"] { height: auto !important; min-height: 92vh !important; }
-
-  /* Tablas de la maqueta: desplazamiento propio en lugar de desbordar */
-  .bc-landing table { font-size: 12px !important; }
-}
-
-/* Pantallas medianas: baja el pico de la escala sin tocar el layout */
-@media (min-width: 761px) and (max-width: 1100px) {
-  .bc-landing h1 { font-size: clamp(48px, 8vw, 86px) !important; }
-  .bc-landing h2 { font-size: clamp(32px, 6vw, 64px) !important; }
+  .bc-hoja section { break-inside: avoid; }
 }
 
 /* --- Aplicación: móvil --------------------------------------------------- */
 
 @media (max-width: 600px) {
-  .bc-barra > div { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .bc-barra > div::-webkit-scrollbar { display: none; }
-  .bc-nav { flex-wrap: nowrap; }
   .bc-marca { font-size: 15px; letter-spacing: .14em; }
   .bc-h1 { font-size: clamp(28px, 9vw, 40px); }
   .bc-cifra { font-size: 30px; }
@@ -604,148 +690,68 @@ select.bc-entrada {
   .bc-tarjeta--relleno { padding: 20px 16px; }
   .bc-boton { padding: 13px 18px; }
   .bc-acciones .bc-boton { flex: 1 1 auto; }
-  .bc-pestanas { gap: 18px; overflow-x: auto; scrollbar-width: none; }
+  /* Las pestañas se desplazan en una sola línea, no se parten en dos. */
+  .bc-pestanas { gap: 18px; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
   .bc-pestanas::-webkit-scrollbar { display: none; }
   .bc-pestana { white-space: nowrap; }
   .bc-hoja__folio { gap: 20px; }
   .bc-entrada { font-size: 16px; }   /* evita el zoom automático de iOS */
 }
 
-/* Rejillas de columnas fijas de la maqueta: en móvil se vuelven una lista */
+/* --- Barra superior: menú en celular --------------------------------------
+   src/lib/menuBarra.ts agrega un botón y mete la cuenta, los enlaces y la marca de
+   demostración en .bc-barra__panel. En escritorio ese panel es «transparente»
+   (display: contents) y todo sigue en la barra en el orden de siempre. Bajo 760px
+   la barra deja el logo, «Salir» y el botón, y el panel se abre a la derecha. */
+
+.bc-barra__menu { display: none; }
+.bc-barra__panel { display: contents; }
+.bc-barra__panel > .bc-nav { order: 1; }
+.bc-barra__panel > .bc-cuenta { order: 2; }
+.bc-barra > div > .bc-boton { order: 3; }
+.bc-barra__panel > .bc-marca-simulacion { order: 4; }
+
 @media (max-width: 760px) {
-  .bc-landing [style*="grid-template-columns:90px"] {
-    grid-template-columns: 1fr auto !important;
-    gap: 2px 10px !important;
-    font-size: 12px !important;
+  .bc-barra > div { position: relative; flex-wrap: nowrap; column-gap: 8px; }
+  .bc-barra .bc-marca { flex: none; }
+  .bc-barra > div > .bc-boton { order: 1; padding: 11px 12px; }
+  .bc-barra__menu {
+    order: 2;
+    display: flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 44px; height: 44px; padding: 0 11px; flex: none;
+    background: transparent; border: 1px solid var(--bc-linea); cursor: pointer;
   }
-  .bc-landing [style*="grid-template-columns:90px"] > *:nth-child(3),
-  .bc-landing [style*="grid-template-columns:90px"] > *:nth-child(4) { display: none !important; }
-  .bc-landing [style*="grid-template-columns:minmax(0,1fr) 160px"] { grid-template-columns: 1fr !important; }
-  .bc-landing [style*="width:1200px"], .bc-landing [style*="width:960px"],
-  .bc-landing [style*="width:900px"] { width: 100% !important; }
-  .bc-landing [style*="position:absolute"] { max-width: 100%; }
-}
+  .bc-barra__menu span { display: block; height: 2px; background: var(--bc-tinta); transition: transform .2s ease, opacity .2s ease; }
+  .bc-barra[data-abierto] .bc-barra__menu span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .bc-barra[data-abierto] .bc-barra__menu span:nth-child(2) { opacity: 0; }
+  .bc-barra[data-abierto] .bc-barra__menu span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-
-/* --- Landing sin capas fijadas ------------------------------------------
-   Este es el modo que ve un teléfono, y también el de respaldo si el
-   script no llega a iniciar. Las capas del prototipo son titulares
-   superpuestos con posición absoluta que se cruzan según el scroll; aquí
-   se convierten en bloques que se leen uno tras otro. */
-
-.bc-landing:not(.bc-animada) [data-seq] { height: auto !important; }
-.bc-landing:not(.bc-animada) [data-seq] > div {
-  position: static !important;
-  height: auto !important;
-  overflow: visible !important;
-  /* El contenedor fijado alinea las capas en fila; sin capas, en fila
-     los bloques se pisan entre sí. */
-  display: block !important;
-  padding-block: clamp(48px, 9vw, 96px) !important;
-  padding-inline: clamp(20px, 4vw, 48px) !important;
-}
-
-/* Nada posicionado en absoluto: si no hay capas, no hay superposición */
-.bc-landing:not(.bc-animada) [data-seq] [style*="position:absolute"] {
-  position: static !important;
-  inset: auto !important;
-  width: auto !important;
-}
-
-/* El contenedor que alineaba los titulares en fila pasa a columna */
-.bc-landing:not(.bc-animada) [data-seq] [style*="display:flex"][style*="max-width:960px"],
-.bc-landing:not(.bc-animada) [data-seq] [style*="height:clamp(180px"] {
-  display: block !important;
-  height: auto !important;
-  max-width: none !important;
-}
-
-.bc-landing:not(.bc-animada) [data-seq-item] {
-  opacity: 1 !important;
-  transform: none !important;
-  display: block !important;
-  width: 100% !important;
-  max-width: 900px !important;
-  margin: 0 auto clamp(36px, 6vw, 64px) !important;
-  padding-bottom: clamp(28px, 5vw, 48px) !important;
-  border-bottom: 1px solid currentColor;
-  opacity: 1;
-}
-.bc-landing:not(.bc-animada) [data-seq-item] { border-bottom-color: color-mix(in srgb, currentColor 22%, transparent); }
-.bc-landing:not(.bc-animada) [data-seq-item]:last-child {
-  margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: 0;
-}
-
-/* Los pares «palabra tachada → palabra nueva» conservan su fila */
-.bc-landing:not(.bc-animada) [data-seq-item] > span { display: inline-block !important; }
-
-/* Los titulares de 130px solo funcionan ocupando la pantalla completa */
-.bc-landing:not(.bc-animada) [data-seq-item] h2,
-.bc-landing:not(.bc-animada) [data-seq-item] > span {
-  font-size: clamp(28px, 7.5vw, 58px) !important;
-}
-.bc-landing:not(.bc-animada) [data-seq-item] h3 { font-size: clamp(22px, 6vw, 38px) !important; }
-
-/* Las palabras dispersas son decoración de la capa fijada */
-.bc-landing:not(.bc-animada) [data-chaos] { display: none !important; }
-
-.bc-landing:not(.bc-js) [data-reveal] { opacity: 1 !important; transform: none !important; }
-.bc-landing:not(.bc-animada) [data-cross-out],
-.bc-landing:not(.bc-animada) [data-cross-in] { opacity: 1 !important; }
-.bc-landing:not(.bc-animada) [data-cross-scale] { transform: none !important; }
-.bc-landing:not(.bc-animada) [data-hero] { transform: none !important; opacity: 1 !important; }
-.bc-landing:not(.bc-animada) [data-seq-bar] { display: none !important; }
-
-/* --- Menú de la landing -------------------------------------------------- */
-
-.bc-hamburguesa {
-  display: none;
-  flex-direction: column; justify-content: center; gap: 5px;
-  width: 44px; height: 44px; padding: 0;
-  background: transparent; border: 1px solid var(--bc-linea);
-  cursor: pointer;
-}
-.bc-hamburguesa span {
-  display: block; width: 20px; height: 2px; margin: 0 auto;
-  background: var(--bc-tinta);
-  transition: transform .3s ease, opacity .2s ease;
-}
-.bc-hamburguesa[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.bc-hamburguesa[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
-.bc-hamburguesa[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
-
-/* Bajo 1024px la barra no da para cinco elementos en línea: el botón de
-   acceso terminaba cayendo bajo los enlaces. Pasa a menú desplegable. */
-@media (max-width: 1024px) {
-  .bc-hamburguesa { display: flex; }
-
-  .bc-landing [data-navbar] { background: rgba(249,249,247,.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--bc-linea); }
-
-  .bc-menu {
-    position: absolute; top: 100%; left: 0; right: 0;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 0 !important;
-    background: var(--bc-fondo);
-    border-bottom: 1px solid var(--bc-linea);
-    padding: 8px clamp(20px, 4vw, 48px) 20px;
-    display: none !important;
+  /* Panel angosto que cae desde el botón, pegado al borde derecho */
+  .bc-barra__panel {
+    position: absolute; top: calc(100% + 1px); right: clamp(20px, 3vw, 40px); z-index: 50;
+    width: min(280px, calc(100vw - 40px));
+    display: flex; flex-direction: column; gap: 14px;
+    padding: 16px;
+    background: var(--bc-fondo); border: 1px solid var(--bc-linea);
+    box-shadow: 0 18px 40px -20px rgba(17, 17, 17, .35);
+    transform-origin: top right;
+    visibility: hidden; opacity: 0; transform: translateX(16px);
+    transition: opacity .2s ease, transform .2s ease, visibility 0s linear .2s;
   }
-  .bc-menu[data-abierto] { display: flex !important; }
-  .bc-menu a {
-    padding: 16px 0;
-    border-bottom: 1px solid var(--bc-linea);
-    font-size: 13px;
+  .bc-barra[data-abierto] .bc-barra__panel {
+    visibility: visible; opacity: 1; transform: none;
+    transition: opacity .2s ease, transform .2s ease;
   }
-  .bc-menu__entrar { width: 100%; margin-top: 16px; }
-
-  .bc-landing [data-chapter] { display: none; }
+  .bc-barra__panel > .bc-cuenta { order: 0; align-self: flex-start; }
+  .bc-barra__panel .bc-cuenta span:not(.bc-placa) { display: inline; }
+  .bc-barra__panel > .bc-nav { order: 1; flex-direction: column; flex-wrap: nowrap; gap: 0; border-top: 1px solid var(--bc-linea); }
+  .bc-barra__panel .bc-nav a { padding: 13px 0; border-bottom: 1px solid var(--bc-linea); font-size: 12px; }
+  .bc-barra__panel .bc-nav a::after { display: none; }
+  .bc-barra__panel > .bc-marca-simulacion { order: 2; flex-wrap: wrap; }
+  @media (prefers-reduced-motion: reduce) {
+    .bc-barra__menu span, .bc-barra__panel { transition: none; }
+  }
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .bc-hamburguesa span { transition: none; }
-}
-
 
 /* =========================================================================
    Presupuesto editable por partidas
@@ -770,10 +776,8 @@ select.bc-entrada {
 
 /* --- Tabla de partidas --------------------------------------------------- */
 
-.bc-tabla--partidas { min-width: 760px; }
+.bc-tabla--partidas { min-width: 760px; --bc-borde-cifra: 11px; }
 .bc-tabla--partidas td { padding: 10px 12px; vertical-align: middle; }
-.bc-tabla--partidas tbody tr { cursor: default; }
-.bc-tabla--partidas tbody tr:hover td { background: var(--bc-fondo); }
 
 .bc-col-unidad    { width: 84px; }
 .bc-col-cantidad  { width: 130px; }
@@ -784,13 +788,13 @@ select.bc-entrada {
 /* Fila de capítulo: separa visualmente cada grupo del itemizado */
 .bc-fila-capitulo td {
   background: var(--bc-fondo);
-  border-top: 1px solid var(--bc-linea-fuerte, #B9C7D8);
-  border-top-color: var(--bc-tinta);
+  border-top: 1px solid var(--bc-linea);
   font-family: var(--bc-display);
   font-size: 12px; letter-spacing: .16em; text-transform: uppercase;
   padding: 12px !important;
 }
-.bc-fila-capitulo__codigo { color: var(--bc-gris); margin-right: 10px; }
+/* Código del capítulo en naranjo, con más presencia. */
+.bc-fila-capitulo__codigo { margin-right: 10px; color: var(--bc-acento); }
 .bc-fila-capitulo__monto {
   font-family: var(--bc-display); font-weight: 500; letter-spacing: 0;
   font-variant-numeric: tabular-nums; text-transform: none;
@@ -803,12 +807,23 @@ select.bc-entrada {
   font-weight: 700;
   padding-top: 14px;
 }
+/* En el itemizado la suma sigue al último capítulo: misma línea fina que el resto de la tabla. */
+.bc-tabla--partidas .bc-fila-suma td { border-top: 1px solid var(--bc-linea); background: var(--bc-fondo); }
 
-/* Fila en proceso de guardado */
+/* Fila en proceso de guardado: fondo tenue y una línea naranja fina bajo su nombre, sin mover el diseño. */
 .bc-fila-guardando td { background: var(--bc-acento-tenue) !important; }
+.bc-partida { position: relative; min-width: 260px; }
+.bc-fila-barra { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; overflow: hidden; pointer-events: none; }
+.bc-fila-barra::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, var(--bc-acento), transparent);
+  animation: bc-barra-carga 1.1s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+/* Partida a la que lleva «Ver partida» */
+.bc-fila-destacada td { background: var(--bc-acento-tenue) !important; transition: background .6s ease; }
 
 /* Celda de la partida: nombre editable más su procedencia */
-.bc-partida { min-width: 260px; }
+
 .bc-partida__nombre {
   display: block; width: 100%; text-align: left;
   background: none; border: 1px solid transparent;
@@ -837,6 +852,27 @@ select.bc-entrada {
 /* Valor no editable dentro de una celda, alineado con los campos */
 .bc-celda-linea { display: block; padding: 6px 2px; font-size: 14px; }
 .bc-celda-linea--derecha { text-align: right; }
+
+/* Columnas numéricas del presupuesto: toda cifra termina en el mismo borde que
+   el texto de los campos editables (1px de borde + 10px de relleno). Antes el
+   origen del precio, los subtotales y la suma quedaban corridos respecto de él. */
+
+.bc-tabla--partidas .bc-celda-linea--derecha,
+.bc-tabla--partidas .bc-precio-origen { padding-right: var(--bc-borde-cifra); }
+.bc-tabla--partidas th.bc-num,
+.bc-tabla--partidas .bc-fila-capitulo td.bc-fila-capitulo__monto,
+.bc-tabla--partidas .bc-fila-suma td.bc-tabla__monto { padding-right: calc(var(--bc-e4) + var(--bc-borde-cifra)) !important; }
+/* El subtotal del capítulo con la misma cifra que los subtotales de sus partidas
+   (sin el espaciado del rótulo del capítulo, que heredaba de la fila). */
+.bc-tabla--partidas .bc-fila-capitulo td.bc-fila-capitulo__monto {
+  font-family: var(--bc-cuerpo); font-size: 14px; font-weight: 800; letter-spacing: 0;
+}
+
+/* Sin las flechas del campo numérico: reservaban espacio y la cantidad no
+   quedaba alineada a la derecha como el resto de las cifras. */
+.bc-entrada--celda[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+.bc-entrada--celda[type="number"]::-webkit-inner-spin-button,
+.bc-entrada--celda[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
 /* Campo de texto dentro de la tabla */
 .bc-entrada--texto {
@@ -886,16 +922,15 @@ select.bc-entrada {
 .bc-casilla input {
   appearance: none;
   width: 18px; height: 18px; margin: 1px 0 0; flex: none;
-  border: 1px solid var(--bc-linea-fuerte, #B9C7D8);
-  border-color: var(--bc-gris);
+  border: 1px solid var(--bc-gris);
   background: var(--bc-blanco);
   cursor: pointer;
   transition: background .2s ease, border-color .2s ease;
 }
 .bc-casilla input:checked {
   background: var(--bc-tinta); border-color: var(--bc-tinta);
-  background-image: linear-gradient(45deg, transparent 52%, #F9F9F7 52%, #F9F9F7 60%, transparent 60%),
-                    linear-gradient(-45deg, transparent 52%, #F9F9F7 52%, #F9F9F7 60%, transparent 60%);
+  background-image: linear-gradient(45deg, transparent 52%, var(--bc-fondo) 52%, var(--bc-fondo) 60%, transparent 60%),
+                    linear-gradient(-45deg, transparent 52%, var(--bc-fondo) 52%, var(--bc-fondo) 60%, transparent 60%);
   background-size: 11px 11px, 11px 11px;
   background-position: 1px 4px, 6px 4px;
   background-repeat: no-repeat;
@@ -904,8 +939,22 @@ select.bc-entrada {
 
 /* --- Plantillas ---------------------------------------------------------- */
 
-.bc-plantilla { display: flex; flex-direction: column; gap: var(--bc-e3); }
+/* Texto a la izquierda y acción a su medida a la derecha; en móvil se apilan.
+   Antes el botón se estiraba a todo el ancho de la tarjeta. */
+.bc-plantilla {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--bc-e3) var(--bc-e6); align-items: end;
+}
+.bc-plantilla > div { display: flex; flex-direction: column; gap: 6px; }
+.bc-plantilla .bc-rotulo { margin-bottom: 2px; }
 .bc-plantilla__nombre { font-family: var(--bc-display); font-size: 18px; font-weight: 500; }
+@media (max-width: 600px) {
+  .bc-plantilla { grid-template-columns: 1fr; }
+}
+
+/* Plantilla editable: media dupla de ancho; con el mínimo de la tabla de
+   partidas (760px) la columna de acciones quedaba cortada. */
+.bc-tabla--plantilla { min-width: 560px; }
 
 /* --- Documento: detalle de partidas -------------------------------------- */
 
@@ -940,8 +989,8 @@ select.bc-entrada {
 }
 
 /* --- Esqueleto de carga --------------------------------------------------
-   También vive en el estilo crítico de cada página, para que aparezca antes
-   de que llegue esta hoja. Se repite aquí por si ese bloque se quita. */
+   Lo muestran las páginas mientras Alpine carga. Estimación tiene uno propio
+   con la forma de su página, en estimacion.css. */
 
 .bc-esqueleto {
   max-width: var(--bc-ancho);
@@ -951,7 +1000,7 @@ select.bc-entrada {
 }
 .bc-esqueleto span {
   display: block;
-  background: linear-gradient(90deg, var(--bc-linea) 0%, #EFF0ED 50%, var(--bc-linea) 100%);
+  background: linear-gradient(90deg, var(--bc-linea) 0%, var(--bc-esqueleto) 50%, var(--bc-linea) 100%);
   background-size: 200% 100%;
   animation: bc-latido 1.4s ease-in-out infinite;
 }
@@ -969,79 +1018,93 @@ main:not([x-cloak]) ~ .bc-esqueleto,
 
 @media (prefers-reduced-motion: reduce) { .bc-esqueleto span { animation: none; } }
 
+/* --- Estados de carga ----------------------------------------------------
+   Solo decoración: cada página los muestra con el mismo x-show de siempre. */
 
-
-/* =========================================================================
-   Landing · capas fijadas y escala por altura
-   Los tamaños del prototipo están escritos en estilos en línea y se
-   dimensionaron para pantallas altas: hasta 190px de titular y 900px de
-   marco de imagen. En una ventana común el bloque no cabe dentro de la
-   capa y se corta. Aquí se reescalan contra la altura disponible (vh),
-   de modo que el texto crece con la ventana en vez de saltar entre dos
-   tamaños fijos. Se apuntan por el valor de su estilo en línea.
-   ========================================================================= */
-
-/* La cabecera es fija: las capas empiezan debajo */
-.bc-landing.bc-animada [data-seq] [data-seq-item][style*="inset:0"] {
-  top: clamp(68px, 9vh, 92px) !important;
+/* Barra fina en el borde superior mientras hay una carga en curso. */
+.bc-progreso {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 80;
+  height: 3px; overflow: hidden; pointer-events: none;
+  background: var(--bc-acento-tenue);
 }
-.bc-landing.bc-animada [data-seq] > div {
-  padding-top: clamp(68px, 9vh, 92px);
-  box-sizing: border-box;
+.bc-progreso::before {
+  content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 40%;
+  background: linear-gradient(90deg, transparent, var(--bc-acento), transparent);
+  animation: bc-progreso 1.1s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+@keyframes bc-progreso {
+  from { transform: translateX(-100%) }
+  to   { transform: translateX(250%) }
 }
 
-/* Rótulos de sección: 13px con mucho tracking se perdían en pantalla */
-.bc-landing [style*="letter-spacing:.3em"] {
-  font-size: clamp(14px, 1.7vh, 17px) !important;
-  letter-spacing: .22em !important;
-  font-weight: 600 !important;
+.bc-cargando { display: flex; flex-direction: column; gap: var(--bc-e5); animation: bc-aparece .25s ease-out both; }
+.bc-cargando__aviso {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 14px; font-weight: 600; color: var(--bc-gris);
 }
 
-@media (min-width: 761px) {
-  .bc-landing [style*="font-size:clamp(84px,12vw,190px)"],
-  .bc-landing [style*="font-size:clamp(46px,10.5vw,190px)"],
-  .bc-landing [style*="font-size:clamp(46px,9vw,150px)"],
-  .bc-landing [style*="font-size:clamp(44px,9vw,150px)"] { font-size: clamp(38px, 11.5vh, 142px) !important; }
-
-  .bc-landing [style*="font-size:clamp(56px,8vw,120px)"],
-  .bc-landing [style*="font-size:clamp(40px,8vw,130px)"],
-  .bc-landing [style*="font-size:clamp(48px,7vw,110px)"],
-  .bc-landing [style*="font-size:clamp(38px,6vw,100px)"],
-  .bc-landing [style*="font-size:clamp(38px,7vw,120px)"],
-  .bc-landing [style*="font-size:clamp(38px,7vw,110px)"],
-  .bc-landing [style*="font-size:clamp(34px,6.5vw,110px)"],
-  .bc-landing [style*="font-size:clamp(38px,6.5vw,110px)"],
-  .bc-landing [style*="font-size:clamp(38px,7.5vw,125px)"] { font-size: clamp(28px, 7.8vh, 94px) !important; }
-
-  .bc-landing [style*="font-size:clamp(36px,5vw,76px)"],
-  .bc-landing [style*="font-size:clamp(34px,6vw,96px)"],
-  .bc-landing [style*="font-size:clamp(36px,5.5vw,88px)"] { font-size: clamp(24px, 5.6vh, 70px) !important; }
-
-  .bc-landing [style*="font-size:clamp(28px,5vw,64px)"] { font-size: clamp(18px, 3.8vh, 46px) !important; }
-
-  .bc-landing [style*="height:clamp(200px,50vh,560px)"],
-  .bc-landing [style*="height:clamp(340px,70vh,800px)"],
-  .bc-landing [style*="height:clamp(420px,78vh,900px)"],
-  .bc-landing [style*="height:clamp(280px,52vh,620px)"],
-  .bc-landing [style*="height:clamp(320px,60vh,760px)"],
-  .bc-landing [style*="height:clamp(280px,50vh,620px)"],
-  .bc-landing [style*="height:clamp(200px,30vh,320px)"] { height: clamp(170px, 44vh, 620px) !important; }
-
-  .bc-landing [data-seq-item] p { font-size: clamp(15px, 2.3vh, 20px) !important; }
-  .bc-landing [data-seq-item] { overflow: hidden; }
+/* Una obra que se levanta: cuatro bloques que suben uno tras otro. */
+.bc-cargando__obra { display: inline-flex; align-items: flex-end; gap: 3px; height: 22px; flex: none; }
+.bc-cargando__obra i {
+  width: 6px; height: 100%;
+  background: var(--bc-tinta);
+  transform-origin: bottom;
+  animation: bc-obra 1.2s ease-in-out infinite;
+}
+.bc-cargando__obra i:nth-child(2) { animation-delay: .15s; }
+.bc-cargando__obra i:nth-child(3) { animation-delay: .3s; background: var(--bc-acento); }
+.bc-cargando__obra i:nth-child(4) { animation-delay: .45s; }
+@keyframes bc-obra {
+  0%, 100% { transform: scaleY(.25); opacity: .35 }
+  40%      { transform: scaleY(1);   opacity: 1 }
 }
 
+/* Siluetas del contenido que viene, con el mismo brillo del esqueleto. */
+.bc-carga-kpis {
+  display: grid; gap: var(--bc-e5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.bc-carga-filas { display: flex; flex-direction: column; background: var(--bc-blanco); border: 1px solid var(--bc-linea); }
+.bc-carga-fila {
+  display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--bc-e5); align-items: center;
+  padding: 18px 20px; border-top: 1px solid var(--bc-linea);
+}
+.bc-carga-fila:first-child { border-top: 0; }
+.bc-carga-kpi, .bc-carga-bloque, .bc-carga-fila span {
+  display: block;
+  background: linear-gradient(90deg, var(--bc-linea) 0%, var(--bc-esqueleto) 50%, var(--bc-linea) 100%);
+  background-size: 200% 100%;
+  animation: bc-latido 1.4s ease-in-out infinite;
+}
+.bc-carga-kpi { height: 104px; }
+.bc-carga-bloque { height: 160px; }
+.bc-carga-bloque--titulo { height: 42px; width: min(320px, 70%); }
+.bc-carga-bloque--alto { height: 320px; }
+.bc-carga-fila span { height: 10px; }
+.bc-carga-fila span:first-child { height: 14px; width: 75%; }
+.bc-carga-fila span:last-child { width: 60%; justify-self: end; }
+/* Ola: cada fila brilla un poco después que la anterior. */
+.bc-carga-fila:nth-child(2) span { animation-delay: .1s; }
+.bc-carga-fila:nth-child(3) span { animation-delay: .2s; }
+.bc-carga-fila:nth-child(4) span { animation-delay: .3s; }
+.bc-carga-fila:nth-child(5) span { animation-delay: .4s; }
+.bc-carga-fila:nth-child(6) span { animation-delay: .5s; }
 
-/* --- Ritmo de las secciones fijadas --------------------------------------
-   «¿Y si el proceso…» y «Conoce BuildCast» ocupaban dos pantallas enteras
-   de scroll para dos frases. Se acorta el recorrido fijado: el mensaje
-   llega antes y la página deja de sentirse larga en ese tramo. */
-
-@media (min-width: 761px) {
-  .bc-landing [data-seq="cambio"] { height: 160vh !important; }
-  .bc-landing [data-seq="problema"] { height: 240vh !important; }
+/* Entrada suave del contenido cuando termina de cargar (x-show lo vuelve a mostrar). */
+.bc-aparece { animation: bc-aparece .35s ease-out both; }
+@keyframes bc-aparece {
+  from { opacity: 0; transform: translateY(6px) }
+  to   { opacity: 1; transform: none }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .bc-progreso::before, .bc-cargando__obra i, .bc-carga-kpi, .bc-carga-bloque, .bc-carga-fila span,
+  .bc-cargando, .bc-aparece { animation: none; }
+  .bc-cargando__obra i { transform: none; opacity: 1; }
+  /* Sin movimiento, el feedback sigue: línea fija bajo el botón o la fila, más el texto «Calculando…» / «Guardando…». */
+  .bc-boton--calculando::after, .bc-fila-barra::before { animation: none; transform: none; width: 100%; opacity: .6; background: var(--bc-acento); }
+}
 
 /* --- Logotipo ------------------------------------------------------------
    El logotipo es un SVG: escala sin perder nitidez y lleva su propio
@@ -1051,16 +1114,41 @@ main:not([x-cloak]) ~ .bc-esqueleto,
 .bc-logo { height: 26px; width: auto; display: block; }
 .bc-logo--grande { height: 32px; }
 
+/* Logo según el tema: el oscuro (texto claro) solo se ve en modo oscuro */
+.bc-logo--oscuro { display: none; }
+:root[data-tema="oscuro"] .bc-logo--claro { display: none; }
+:root[data-tema="oscuro"] .bc-logo--oscuro { display: block; }
+
+/* Logo + botón de tema: el grupo empuja el resto de la barra a la derecha */
+.bc-marca-grupo { display: flex; align-items: center; gap: 14px; margin-right: auto; }
+.bc-marca-grupo .bc-marca { margin-right: 0; }
+.bc-tema {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0; cursor: pointer;
+  background: transparent; border: 1px solid var(--bc-linea); color: var(--bc-tinta);
+  transition: border-color .2s ease, color .2s ease, background .2s ease;
+}
+.bc-tema:hover { border-color: var(--bc-tinta); }
+.bc-tema:focus-visible { outline: 2px solid var(--bc-acento); outline-offset: 2px; }
+.bc-tema svg { width: 18px; height: 18px; }
+.bc-tema__sol { display: none; }
+:root[data-tema="oscuro"] .bc-tema__luna { display: none; }
+:root[data-tema="oscuro"] .bc-tema__sol { display: block; }
+/* Fichas destacadas: en oscuro son una superficie elevada, no un bloque claro */
+:root[data-tema="oscuro"] .bc-kpi--destacado,
+:root[data-tema="oscuro"] .bc-resultado:not(.bc-resultado--claro) {
+  background-color: #282826; border-color: #3C3C39; color: #EDEDE9;
+  --bc-fondo-rgb: 237, 237, 233;
+}
+/* La placa del logo de RAM es para fondo claro: conserva su fondo blanco */
+:root[data-tema="oscuro"] .bc-placa { background: #fff; padding: 2px 5px; }
+
 /* El enlace de marca ya no lleva texto: se neutraliza su tipografía */
 .bc-marca { display: inline-flex; align-items: center; line-height: 0; }
-
-/* En la cabecera de la landing el logotipo sustituye al texto de 22px */
-.bc-landing [data-navbar] .bc-logo { height: 30px; }
 
 @media (max-width: 760px) {
   .bc-logo { height: 22px; }
   .bc-logo--grande { height: 26px; }
-  .bc-landing [data-navbar] .bc-logo { height: 24px; }
 }
 
 /* En el documento impreso el logotipo encabeza la hoja */
@@ -1068,14 +1156,10 @@ main:not([x-cloak]) ~ .bc-esqueleto,
   .bc-logo { height: 30px; }
 }
 
-
 /* --- Ajustes de la tipografía de marca -----------------------------------
    Space Grotesk, la familia del logotipo, reemplaza a Oswald en los
    títulos. Al no ser condensada, los titulares grandes necesitan un
    tracking más cerrado para no verse sueltos. */
-
-.bc-display, .bc-h1, .bc-titulo, .bc-titulo-l,
-.bc-landing h1, .bc-landing h2 { letter-spacing: -.04em; }
 
 .bc-cifra, .bc-resultado__cifra { letter-spacing: -.035em; font-feature-settings: "tnum" 1; }
 
@@ -1083,34 +1167,6 @@ main:not([x-cloak]) ~ .bc-esqueleto,
    más ancha y el tracking anterior los desarmaba */
 .bc-rotulo, .bc-tabla th, .bc-nav a, .bc-boton { letter-spacing: .14em; }
 .bc-marca { letter-spacing: normal; }
-
-
-/* La frase más larga de la sección del problema no cabe a tamaño pleno
-   con una tipografía no condensada: se limita por ancho de ventana. */
-.bc-landing [data-seq="problema"] [data-seq-item] { font-size: min(7.4vw, 94px) !important; }
-.bc-landing [data-seq="problema"] h2[style*="font-size:13px"] { font-size: clamp(14px, 1.7vh, 17px) !important; }
-
-/* Los titulares de línea larga («Presupuestar no debería serlo.») se topan
-   también por ancho, no solo por altura: con una tipografía no condensada
-   una línea de treinta caracteres desborda antes que la altura. */
-/* Solo las capas y los titulares de sección, nunca los rótulos pequeños */
-.bc-landing h2:not([style*="letter-spacing:.3em"]):not([style*="font-size:13px"]) {
-  font-size: min(5.6vw, 94px);
-}
-.bc-landing [data-seq-item] h2,
-.bc-landing h2[data-seq-item] { font-size: min(7.4vw, 94px) !important; }
-
-/* Los rótulos de sección conservan su tamaño pase lo que pase */
-.bc-landing [style*="letter-spacing:.3em"],
-.bc-landing h2[style*="font-size:13px"] {
-  font-size: clamp(14px, 1.7vh, 17px) !important;
-  letter-spacing: .22em !important;
-  font-weight: 600 !important;
-}
-
-/* Si una línea no cabe, que doble: nunca que desborde la pantalla */
-.bc-landing h1, .bc-landing h2, .bc-landing h3 { overflow-wrap: break-word; }
-
 
 /* --- Cabeceras de tabla alineadas con sus columnas -----------------------
    `.bc-tabla th` fija la alineación a la izquierda y ganaba por
@@ -1133,3 +1189,713 @@ main:not([x-cloak]) ~ .bc-esqueleto,
   display: flex; align-items: flex-end;
   min-height: 2.8em;
 }
+
+/* --- Miembros e historial del proyecto ---------------------------------- */
+
+.bc-colaboracion { display: flex; flex-direction: column; gap: var(--bc-e5); }
+
+.bc-tabla--miembros { min-width: 520px; }
+.bc-entrada--rol { width: auto; min-width: 140px; padding: 9px 12px; }
+
+/* --- Administración de usuarios ------------------------------------------- */
+
+.bc-tabla--usuarios { min-width: 820px; }
+.bc-tabla--usuarios td { vertical-align: top; }
+.bc-solicitud { display: flex; flex-direction: column; align-items: flex-start; gap: var(--bc-e1); }
+.bc-usuario-acciones { display: flex; flex-direction: column; align-items: flex-start; gap: var(--bc-e1); }.bc-solicitud__progreso { font-weight: 700; }
+.bc-solicitud__votos { list-style: none; margin: 0 0 var(--bc-e2); padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.bc-solicitud__votos li { display: flex; gap: var(--bc-e2); color: var(--bc-gris); }
+.bc-solicitud__votos li.bc-solicitud__voto--ok { color: var(--bc-tinta); }
+
+/* Celular: cada usuario es una tarjeta (nombre, correo, rol / estado / fecha, acciones), sin scroll lateral. */
+@media (max-width: 600px) {
+  .bc-tabla--usuarios { min-width: 0; }
+  .bc-tabla--usuarios, .bc-tabla--usuarios tbody { display: block; }
+  .bc-tabla--usuarios thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .bc-tabla--usuarios tr {
+    display: grid; grid-template-columns: 146px 58px minmax(0, 1fr); gap: 10px 14px;
+    padding: 16px; border-bottom: 1px solid var(--bc-linea);
+  }
+  .bc-tabla--usuarios tr:last-child { border-bottom: 0; }
+  .bc-tabla--usuarios td { display: block; padding: 0 !important; border: 0 !important; text-align: left !important; min-width: 0; }
+  .bc-tabla--usuarios td:first-child,
+  .bc-tabla--usuarios .bc-usuario__correo,
+  .bc-tabla--usuarios td:last-child { grid-column: 1 / -1; }
+  .bc-tabla--usuarios .bc-usuario__correo { overflow-wrap: anywhere; }
+  .bc-tabla--usuarios td[data-etiqueta="Creado"] { white-space: nowrap; }
+  .bc-tabla--usuarios td[data-etiqueta]::before {
+    content: attr(data-etiqueta); display: block; margin-bottom: 3px;
+    font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--bc-gris);
+  }
+  /* Sin solicitud ni acciones visibles, la celda de acciones no deja un hueco. */
+  .bc-tabla--usuarios td:last-child:not(:has(.bc-solicitud, button:not([style*="none"]))) { display: none; }
+}
+
+/* --- Observaciones de la cotización ---------------------------------------- */
+
+.bc-entrada--area { min-height: 96px; resize: vertical; font: inherit; line-height: 1.5; }
+/* Texto plano con sus saltos de línea; nunca HTML. */
+.bc-observaciones { white-space: pre-line; overflow-wrap: anywhere; }
+
+.bc-historial { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; position: relative; }
+.bc-historial__evento {
+  position: relative;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 14px 0 14px 22px;
+  border-top: 1px solid var(--bc-linea);
+  font-size: 14px;
+  animation: bc-sube .4s var(--bc-curva) both;
+}
+.bc-historial__evento:first-child { border-top: 0; padding-top: 0; }
+.bc-historial__evento::before {
+  content: ''; position: absolute; left: 0; top: 21px;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--bc-acento);
+  box-shadow: 0 0 0 3px var(--bc-blanco);
+}
+.bc-historial__evento:first-child::before { top: 7px; }
+.bc-historial__autor { font-weight: 700; }
+
+/* Datos modificados: campo a la izquierda, anterior → nuevo a la derecha */
+.bc-historial__cambios {
+  margin: 8px 0 6px; padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--bc-fondo); border-left: 2px solid var(--bc-linea);
+  max-width: 560px;
+}
+.bc-historial__cambio { display: grid; grid-template-columns: minmax(120px, 34%) minmax(0, 1fr); gap: 4px 16px; align-items: baseline; }
+.bc-historial__cambio dt { font-size: 12px; font-weight: 700; color: var(--bc-gris); }
+.bc-historial__cambio dd { margin: 0; font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bc-historial__antes { color: var(--bc-gris); }
+.bc-historial__flecha { margin: 0 8px; color: var(--bc-acento); font-weight: 700; }
+.bc-historial__nuevo { font-weight: 700; color: var(--bc-tinta); }
+@media (max-width: 480px) {
+  .bc-historial__cambio { grid-template-columns: 1fr; gap: 2px; }
+}
+
+.bc-candidatos {
+  list-style: none; margin: 8px 0 0; padding: 0;
+  max-height: 240px; overflow-y: auto;
+  border: 1px solid var(--bc-linea); background: var(--bc-blanco);
+}
+.bc-candidato {
+  width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 10px 12px; background: none; border: 0; border-bottom: 1px solid var(--bc-linea);
+  text-align: left; cursor: pointer; font: inherit; color: var(--bc-tinta);
+}
+.bc-candidatos li:last-child .bc-candidato { border-bottom: 0; }
+.bc-candidato:hover { background: var(--bc-fondo); }
+.bc-candidato[aria-pressed="true"] { background: var(--bc-acento-tenue); box-shadow: inset 3px 0 0 var(--bc-acento); }
+
+/* =========================================================================
+   Tableros: Panel, Proyectos y Banco de precios
+   Mismo lenguaje en las tres pantallas. Naranja = pide acción; tinta =
+   resuelto o confiable; gris = neutro o cerrado. El estado nunca va solo
+   en el color: la insignia lleva texto y el punto cambia de forma.
+   ========================================================================= */
+
+/* --- Cabecera con resumen ------------------------------------------------ */
+
+.bc-cabecera-tablero {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: var(--bc-e5) var(--bc-e6);
+  padding-bottom: var(--bc-e5);
+  border-bottom: 1px solid var(--bc-linea);
+  position: relative; border-bottom-color: transparent;
+}
+.bc-cabecera-tablero__resumen {
+  display: flex; flex-wrap: wrap; gap: 6px 22px;
+  margin-top: 12px;
+  font-size: 15px; font-weight: 500; color: rgba(var(--bc-tinta-rgb), .72);
+}
+.bc-cabecera-tablero__resumen strong { color: var(--bc-tinta); font-weight: 800; }
+.bc-cabecera-tablero__resumen .bc-dato--atencion strong { color: var(--bc-tinta); }
+.bc-cabecera-tablero__mensaje { margin-top: 6px; font-size: 15px; font-weight: 500; color: rgba(var(--bc-tinta-rgb), .72); }
+.bc-dato { display: inline-flex; align-items: center; gap: 8px; }
+.bc-dato--atencion::before {
+  content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--bc-estado-atencion);
+}
+
+.bc-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 7px 12px;
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--bc-gris); white-space: nowrap;
+}
+.bc-chip strong { color: var(--bc-tinta); font-weight: 800; letter-spacing: .06em; }
+/* Junto a botones, el chip toma el alto de la fila. */
+.bc-acciones > .bc-chip { align-self: stretch; }
+
+/* Marca de modo demostración en la barra (marcaSimulacion.ts):
+   la etiqueta toma el alto del botón vecino. */
+.bc-marca-simulacion { display: flex; align-items: stretch; gap: 12px; }
+.bc-marca-simulacion .bc-estado { align-items: center; }
+
+/* UF vigente del Panel: indicador compacto, sin protagonismo. */
+/* UF en dos líneas (rótulo con fecha y fuente; valor) para medir lo mismo que los botones de la fila. */
+.bc-uf {
+  display: flex; flex-direction: column; justify-content: center; gap: 1px;
+  padding: 4px 14px; align-self: stretch;
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+}
+.bc-uf__rotulo { font-size: 10px; font-weight: 700; line-height: 1.4; letter-spacing: .14em; text-transform: uppercase; color: var(--bc-gris); white-space: nowrap; }
+.bc-uf__valor { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; font-size: 17px; font-weight: 700; line-height: 1.2; color: var(--bc-tinta); white-space: nowrap; }
+.bc-uf__valor--ausente { font-size: 14px; font-weight: 500; color: var(--bc-gris); }
+.bc-uf__detalle { font-weight: 500; letter-spacing: .04em; text-transform: none; }
+.bc-uf__detalle::before { content: ' · '; white-space: pre; }
+
+/* --- KPIs ---------------------------------------------------------------- */
+
+.bc-kpis--tablero { grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: var(--bc-e4); }
+@media (min-width: 1180px) {
+  .bc-kpis--cinco  { grid-template-columns: 1.6fr repeat(4, minmax(0, 1fr)); }
+  .bc-kpis--cuatro { grid-template-columns: 1.6fr repeat(3, minmax(0, 1fr)); }
+}
+.bc-kpi__pie { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+
+/* La cifra que encabeza el tablero */
+.bc-kpi--destacado { background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo); }
+.bc-kpi--destacado .bc-rotulo,
+.bc-kpi--destacado .bc-nota { color: rgba(var(--bc-fondo-rgb), .62); }
+.bc-kpi--destacado .bc-cifra { font-size: clamp(34px, 3.4vw, 54px); font-weight: 500; }
+
+/* Pide acción: se marca con una franja, la cifra conserva el color de texto */
+.bc-kpi--alerta { box-shadow: inset 0 3px 0 var(--bc-estado-atencion); }
+
+/* --- Medidor: una proporción contra el total ------------------------------ */
+
+.bc-medidor { height: 6px; background: var(--bc-linea); border-radius: 3px; overflow: hidden; }
+.bc-medidor span { display: block; height: 100%; background: var(--bc-estado-ok); border-radius: 3px; }
+.bc-kpi--destacado .bc-medidor { background: rgba(var(--bc-fondo-rgb), .18); }
+.bc-kpi--destacado .bc-medidor span { background: var(--bc-acento); }
+
+/* --- Tarjetas de gráfico -------------------------------------------------- */
+
+.bc-insights { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: var(--bc-e4); }
+.bc-grafico {
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  padding: clamp(20px, 2vw, 28px);
+  display: flex; flex-direction: column; gap: var(--bc-e4);
+}
+.bc-grafico__titulo { font-family: var(--bc-display); font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.bc-grafico__titulo + .bc-nota { margin-top: -10px; }
+.bc-grafico__pie { margin-top: auto; }
+
+/* Barra apilada: parte de un todo. 2px de superficie entre tramos, extremos redondeados */
+.bc-apilada { display: flex; gap: 2px; height: 16px; }
+.bc-apilada__tramo { min-width: 4px; background: var(--bc-gris); }
+.bc-apilada__tramo:first-child { border-radius: 4px 0 0 4px; }
+.bc-apilada__tramo:last-child { border-radius: 0 4px 4px 0; }
+.bc-apilada__tramo:only-child { border-radius: 4px; }
+.bc-apilada--gruesa { height: 22px; }
+
+.bc-leyenda { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.bc-leyenda--fila { flex-direction: row; flex-wrap: wrap; gap: 8px 20px; }
+.bc-leyenda li { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; }
+.bc-leyenda__muestra { flex: none; width: 10px; height: 10px; border-radius: 2px; background: var(--bc-gris); }
+.bc-leyenda__valor { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; }
+.bc-leyenda--fila .bc-leyenda__valor { margin-left: 0; }
+.bc-leyenda__parte { color: var(--bc-gris); font-weight: 500; font-variant-numeric: tabular-nums; min-width: 3.2em; text-align: right; }
+
+/* Colores de cada estado: el mismo en la barra, la leyenda y la insignia */
+.bc-color--vigente     { background: var(--bc-estado-ok) !important; }
+.bc-color--recalcular  { background: var(--bc-estado-atencion) !important; }
+.bc-color--sin_estimar { background: var(--bc-estado-pendiente) !important; }
+.bc-color--ejecutada   { background: var(--bc-estado-cerrado) !important; }
+.bc-color--oficina     { background: var(--bc-estado-ok) !important; }
+.bc-color--referencial { background: var(--bc-precio-referencial) !important; }
+.bc-color--sin_precio  { background: var(--bc-estado-atencion) !important; }
+
+/* Barras horizontales: magnitud en un solo tono, valor al final */
+.bc-barras { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.bc-barras li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px; align-items: center; font-size: 13px; font-weight: 500;
+}
+.bc-barras__nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bc-barras__valor { font-weight: 800; font-variant-numeric: tabular-nums; }
+.bc-barras__pista { grid-column: 1 / -1; height: 10px; border-left: 1px solid var(--bc-linea); }
+.bc-barras__barra { display: block; height: 100%; min-width: 2px; background: var(--bc-estado-ok); border-radius: 0 4px 4px 0; }
+
+/* Tooltip sin JS: aparece al pasar el mouse o al enfocar con teclado */
+.bc-tip { position: relative; cursor: default; }
+.bc-tip:focus-visible { outline: 2px solid var(--bc-acento); outline-offset: 2px; }
+.bc-tip::after {
+  content: attr(data-tip);
+  position: absolute; left: 50%; bottom: calc(100% + 8px); z-index: 5;
+  transform: translateX(-50%);
+  padding: 6px 10px; white-space: nowrap;
+  background: var(--bc-tinta); color: var(--bc-fondo);
+  font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none;
+  opacity: 0; pointer-events: none; transition: opacity .15s ease;
+}
+.bc-tip:hover::after, .bc-tip:focus-visible::after { opacity: 1; }
+
+/* --- Atención: lo que pide una decisión ------------------------------------ */
+
+.bc-atencion { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.bc-atencion__item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  padding: 16px 20px;
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  box-shadow: inset 3px 0 0 var(--bc-gris);
+  transition: transform .25s var(--bc-curva), border-color .25s ease;
+}
+.bc-atencion__item--alta  { box-shadow: inset 3px 0 0 var(--bc-estado-atencion); }
+.bc-atencion__item--media { box-shadow: inset 3px 0 0 var(--bc-estado-pendiente); }
+.bc-atencion__cifra {
+  min-width: 44px; text-align: center;
+  font-family: var(--bc-display); font-size: 26px; line-height: 1; font-weight: 500;
+}
+.bc-atencion__texto strong { display: block; font-size: 14px; font-weight: 700; }
+.bc-atencion__texto span { display: block; margin-top: 2px; font-size: 13px; color: var(--bc-gris); }
+.bc-atencion__ok {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px; background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  font-size: 14px; font-weight: 600;
+}
+.bc-atencion__ok::before { content: '✓'; font-weight: 800; }
+@media (max-width: 600px) {
+  .bc-atencion__item { grid-template-columns: auto minmax(0, 1fr); }
+  .bc-atencion__item .bc-enlace { grid-column: 2; justify-self: start; }
+}
+
+/* --- Insignias de estado --------------------------------------------------- */
+
+.bc-insignia {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid var(--bc-linea); background: var(--bc-blanco);
+  font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--bc-tinta); white-space: nowrap;
+}
+.bc-insignia::before { content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--bc-gris); }
+.bc-insignia--ok::before { background: var(--bc-estado-ok); }
+.bc-insignia--atencion { border-color: var(--bc-borde-acento); background: var(--bc-acento-tenue); }
+.bc-insignia--atencion::before { background: var(--bc-estado-atencion); }
+/* Pendiente: punto hueco, se distingue de «atención» también por la forma */
+.bc-insignia--pendiente::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--bc-estado-atencion); }
+.bc-insignia--cerrado { color: var(--bc-gris); }
+.bc-insignia--cerrado::before { background: var(--bc-estado-cerrado); }
+.bc-insignia--referencial { color: var(--bc-texto-medio); }
+.bc-insignia--referencial::before { background: var(--bc-precio-referencial); }
+
+/* --- Filtros y tablas ------------------------------------------------------- */
+
+.bc-herramientas {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--bc-e4);
+  padding: var(--bc-e4); background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+}
+.bc-segmentos { display: flex; flex-wrap: wrap; gap: 8px; }
+.bc-segmento {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 40px; padding: 8px 14px;
+  background: var(--bc-fondo); border: 1px solid var(--bc-linea); cursor: pointer;
+  font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: rgba(var(--bc-tinta-rgb), .75);
+}
+.bc-segmento:hover { border-color: var(--bc-tinta); color: var(--bc-tinta); }
+.bc-segmento[aria-pressed="true"] { background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo); }
+.bc-segmento__cuenta {
+  min-width: 22px; padding: 2px 6px; text-align: center;
+  background: var(--bc-blanco); color: var(--bc-tinta);
+  font-size: 11px; letter-spacing: 0; font-variant-numeric: tabular-nums;
+}
+.bc-segmento[aria-pressed="true"] .bc-segmento__cuenta { background: rgba(var(--bc-fondo-rgb), .16); color: var(--bc-fondo); }
+.bc-segmento--atencion .bc-segmento__cuenta { background: var(--bc-acento-tenue); }
+
+/* Fila que pide acción: franja naranja al inicio */
+.bc-tabla tr.bc-fila--atencion td:first-child { box-shadow: inset 3px 0 0 var(--bc-estado-atencion); }
+.bc-tabla tr.bc-fila--pendiente td:first-child { box-shadow: inset 3px 0 0 var(--bc-estado-pendiente); }
+.bc-tabla__sub { display: block; margin-top: 3px; font-size: 12px; font-weight: 500; color: var(--bc-gris); }
+.bc-tabla__accion { font-size: 12px; font-weight: 700; color: var(--bc-tinta); white-space: nowrap; }
+.bc-tabla__accion--resuelta { color: var(--bc-gris); font-weight: 500; }
+.bc-tabla tbody tr:focus-visible td { background: var(--bc-fondo); outline: none; }
+
+/* --- Banco: versión en uso y cobertura -------------------------------------- */
+
+.bc-banco-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: var(--bc-e4); }
+.bc-version {
+  display: flex; flex-direction: column; gap: var(--bc-e4);
+  padding: clamp(20px, 2vw, 28px);
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  box-shadow: inset 0 3px 0 var(--bc-tinta);
+}
+.bc-version--vigente { box-shadow: inset 0 3px 0 var(--bc-acento); }
+.bc-version__nombre { font-family: var(--bc-display); font-size: clamp(28px, 2.6vw, 40px); line-height: 1; letter-spacing: -.03em; }
+.bc-version__fila { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.bc-version__datos { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 0; }
+.bc-version__datos dt { font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--bc-gris); }
+.bc-version__datos dd { margin: 4px 0 0; font-size: 13px; font-weight: 600; }
+.bc-version .bc-nota { margin: 0; }
+
+/* Fila de categoría con su propia cobertura */
+.bc-fila-categoria__cobertura { display: inline-flex; align-items: center; gap: 10px; float: right; font-variant-numeric: tabular-nums; }
+.bc-fila-categoria__cobertura .bc-medidor { width: 72px; }
+.bc-tabla tr.bc-fila--sin-precio td:first-child { box-shadow: inset 3px 0 0 var(--bc-estado-atencion); }
+
+/* Tablas de tablero: la última columna (montos) no queda pegada al borde de la tarjeta */
+.bc-tabla--tablero th:last-child, .bc-tabla--tablero td:last-child { padding-right: var(--bc-e5); }
+.bc-tabla--tablero td { vertical-align: middle; }
+
+/* --- Tableros en pantallas angostas --------------------------------------- */
+
+/* La cifra destacada necesita la fila entera antes de que haya cinco columnas */
+@media (max-width: 1179px) {
+  .bc-kpis--tablero .bc-kpi--destacado { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .bc-kpis--tablero { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .bc-kpis--tablero .bc-kpi { padding: 16px; }
+  .bc-kpis--tablero .bc-cifra { font-size: 26px; }
+  .bc-kpis--tablero .bc-kpi--destacado .bc-cifra { font-size: 34px; }
+
+  /* Cada fila se vuelve una tarjeta: sin desplazamiento lateral */
+  .bc-tabla--tablero { min-width: 0; }
+  .bc-tabla--tablero, .bc-tabla--tablero tbody { display: block; }
+  .bc-tabla--tablero thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .bc-tabla--tablero tr {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px;
+    padding: 14px 16px; border-bottom: 1px solid var(--bc-linea);
+  }
+  .bc-tabla--tablero tr:last-child { border-bottom: 0; }
+  .bc-tabla--tablero td { display: block; padding: 0 !important; border: 0 !important; text-align: left !important; }
+  .bc-tabla--tablero td:first-child { grid-column: 1 / -1; }
+  .bc-tabla--tablero td[data-etiqueta]::before {
+    content: attr(data-etiqueta); display: block; margin-bottom: 2px;
+    font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--bc-gris);
+  }
+  .bc-tabla--tablero tr.bc-fila--atencion,
+  .bc-tabla--tablero tr.bc-fila--sin-precio { box-shadow: inset 3px 0 0 var(--bc-estado-atencion); }
+  .bc-tabla--tablero tr.bc-fila--pendiente { box-shadow: inset 3px 0 0 var(--bc-estado-pendiente); }
+  .bc-tabla--tablero tr td:first-child { box-shadow: none !important; }
+
+  /* Banco: código y partida en una línea; unidad y precio debajo; el origen al final */
+  .bc-tabla--banco.bc-tabla--tablero tr { grid-template-columns: auto minmax(0, 1fr); }
+  .bc-tabla--banco.bc-tabla--tablero td:first-child { grid-column: auto; }
+  .bc-tabla--banco.bc-tabla--tablero td:last-child { grid-column: 1 / -1; }
+  .bc-tabla--banco.bc-tabla--tablero .bc-fila-categoria { background: var(--bc-fondo); }
+  .bc-tabla--banco.bc-tabla--tablero .bc-fila-categoria td:last-child { grid-column: auto; }
+  .bc-fila-categoria__cobertura { float: none; display: flex; margin-top: 6px; }
+}
+@media (max-width: 600px) {
+  /* El precio bajo su etiqueta, no al otro extremo de la tarjeta */
+  .bc-tabla--banco.bc-tabla--tablero .bc-entrada--celda { text-align: left; max-width: 180px; }
+}
+
+/* Banco: categorías con precios faltantes, cada una lleva a la tabla filtrada */
+.bc-faltantes { display: flex; flex-direction: column; gap: 10px; padding-top: var(--bc-e4); border-top: 1px solid var(--bc-linea); }
+.bc-faltantes__titulo {
+  display: block; margin-bottom: 8px;
+  font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--bc-gris);
+}
+.bc-faltantes__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.bc-faltante {
+  width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; align-items: center;
+  padding: 10px 14px; cursor: pointer; text-align: left;
+  background: var(--bc-acento-tenue); border: 1px solid var(--bc-borde-acento); box-shadow: inset 3px 0 0 var(--bc-estado-atencion);
+  font: inherit; font-size: 13px; color: var(--bc-tinta);
+}
+.bc-faltante:hover { border-color: var(--bc-estado-atencion); }
+.bc-faltante__nombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bc-faltante__cuenta { font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bc-faltante__ir { color: var(--bc-estado-atencion); font-weight: 700; }
+.bc-faltantes__resumen { margin: 0; font-size: 13px; font-weight: 500; color: var(--bc-gris); }
+.bc-faltantes__resumen::before { content: '✓  '; color: var(--bc-tinta); font-weight: 800; }
+
+/* =========================================================================
+   Pasada visual · aplicación
+   Identidad de «plano de arquitectura» sobre el sistema existente: retícula
+   tenue, marcas de registro, filetes naranjos y movimiento sobrio. Solo
+   presentación: ninguna regla cambia qué se muestra ni cuándo. Todo el
+   movimiento se apaga con prefers-reduced-motion (al final de la sección).
+   ========================================================================= */
+
+/* --- Papel de plano ------------------------------------------------------- */
+/* Retícula fija detrás de las pantallas de la aplicación; se desvanece hacia
+   abajo para no competir con tablas largas. Las tarjetas blancas la tapan. */
+/* Capa absoluta limitada al primer tramo de la página (background-attachment:
+   fixed no sirve: iOS lo ignora y la retícula cubría todo el largo). El body
+   queda transparente para que la capa se vea; el color lo pone html, que ya
+   lo tiene en el estilo crítico de cada página. */
+body:has(> main.bc-pagina) { background-color: transparent; }
+body:has(> main.bc-pagina)::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 90vh;
+  z-index: -1; pointer-events: none;
+  background-image:
+    linear-gradient(var(--bc-reticula) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bc-reticula) 1px, transparent 1px);
+  background-size: 48px 48px;
+  background-position: -1px -1px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 0, rgba(0, 0, 0, .5) 45%, transparent 100%);
+          mask-image: linear-gradient(to bottom, #000 0, rgba(0, 0, 0, .5) 45%, transparent 100%);
+}
+html:has(> body > main.bc-pagina) { background: var(--bc-fondo); }
+
+/* --- Barra superior --------------------------------------------------------- */
+
+header.bc-barra { background: rgba(var(--bc-fondo-rgb), .9); }
+@supports (backdrop-filter: blur(1px)) {
+  header.bc-barra { background: rgba(var(--bc-fondo-rgb), .78); backdrop-filter: saturate(1.4) blur(12px); }
+}
+
+.bc-nav a::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--bc-tinta);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .35s var(--bc-curva);
+}
+.bc-nav a:hover::after { transform: scaleX(1); }
+.bc-nav a[aria-current="page"]::after { transform: scaleX(1); background: var(--bc-acento); }
+
+.bc-cuenta:hover { border-color: var(--bc-tinta); }
+
+/* --- Encabezados de página ---------------------------------------------- */
+
+/* El rótulo de la página lleva un filete: marca el inicio de la lámina. */
+.bc-encabezado > div > .bc-rotulo,
+.bc-cabecera-tablero > div > .bc-rotulo {
+  display: flex; align-items: center; gap: 10px;
+}
+.bc-encabezado > div > .bc-rotulo::before,
+.bc-cabecera-tablero > div > .bc-rotulo::before {
+  content: ''; flex: none; width: 22px; height: 2px; background: currentColor;
+}
+
+.bc-pagina .bc-h1 { animation: bc-titulo .7s var(--bc-curva) both; }
+@keyframes bc-titulo { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* Línea de la cabecera de tablero: hairline con un tramo naranjo al inicio. */
+
+.bc-cabecera-tablero::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background:
+    linear-gradient(var(--bc-acento), var(--bc-acento)) 0 0 / 72px 2px no-repeat,
+    linear-gradient(var(--bc-linea), var(--bc-linea)) 0 100% / 100% 1px no-repeat;
+  transform-origin: left; animation: bc-crece .9s var(--bc-curva) both .1s;
+}
+
+/* Títulos de sección del panel: un cuadro naranjo, como cota de plano. */
+section[aria-labelledby] > h2.bc-h2,
+section[aria-labelledby] > div > h2.bc-h2 { display: flex; align-items: center; gap: 12px; }
+section[aria-labelledby] > h2.bc-h2::before,
+section[aria-labelledby] > div > h2.bc-h2::before {
+  content: ''; flex: none; width: 9px; height: 9px; background: var(--bc-acento);
+}
+
+.bc-migas a { transition: color .2s ease; }
+.bc-migas a:hover { color: var(--bc-tinta); }
+
+/* --- Marcas de registro en tarjetas de datos ------------------------------ */
+
+.bc-kpi, .bc-grafico, .bc-version, .bc-resultado { position: relative; }
+.bc-kpi::before, .bc-grafico::before, .bc-version::before, .bc-resultado::before {
+  content: ''; position: absolute; top: -1px; left: -1px; width: 12px; height: 12px;
+  border-top: 2px solid var(--bc-acento); border-left: 2px solid var(--bc-acento);
+  pointer-events: none;
+}
+/* La ficha oscura no tiene borde: la marca va al ras, no desplazada. */
+.bc-resultado:not(.bc-resultado--claro)::before { top: 0; left: 0; }
+.bc-kpi, .bc-grafico { transition: border-color .25s ease; }
+.bc-kpi:not(.bc-kpi--destacado):hover, .bc-grafico:hover { border-color: var(--bc-linea-fuerte); }
+
+/* Fichas oscuras (costo, datos de la obra, monto de cartera): retícula clara. */
+.bc-resultado:not(.bc-resultado--claro),
+.bc-kpi--destacado {
+  background-image:
+    linear-gradient(rgba(var(--bc-fondo-rgb), .045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--bc-fondo-rgb), .045) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+.bc-resultado__cifra--vacia { color: rgba(var(--bc-fondo-rgb), .28); }
+
+/* --- KPIs: entrada escalonada --------------------------------------------- */
+
+.bc-kpis--tablero > .bc-kpi { animation: bc-sube .55s var(--bc-curva) both; }
+.bc-kpis--tablero > .bc-kpi:nth-child(2) { animation-delay: .06s; }
+.bc-kpis--tablero > .bc-kpi:nth-child(3) { animation-delay: .12s; }
+.bc-kpis--tablero > .bc-kpi:nth-child(4) { animation-delay: .18s; }
+.bc-kpis--tablero > .bc-kpi:nth-child(5) { animation-delay: .24s; }
+.bc-kpi .bc-cifra { animation: bc-cifra .7s var(--bc-curva) both .15s; }
+
+@keyframes bc-sube  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes bc-cifra { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes bc-crece { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Medidores y barras crecen desde la izquierda al aparecer. */
+.bc-medidor span, .bc-barras__barra, .bc-apilada, .bc-etapa__relleno {
+  transform-origin: left; animation: bc-crece 1s var(--bc-curva) both .2s;
+}
+.bc-insights > .bc-grafico { animation: bc-sube .55s var(--bc-curva) both; }
+.bc-insights > .bc-grafico:nth-child(2) { animation-delay: .07s; }
+.bc-insights > .bc-grafico:nth-child(3) { animation-delay: .14s; }
+
+/* --- Atención -------------------------------------------------------------- */
+
+.bc-atencion__item:hover { transform: translateX(3px); border-color: var(--bc-linea-fuerte); }
+
+/* --- Tablas --------------------------------------------------------------- */
+
+.bc-tabla thead th { background: var(--bc-cabecera-tabla); border-bottom-color: var(--bc-linea-fuerte); }
+.bc-tabla--navegable tbody tr td { transition: background .2s ease, box-shadow .2s ease; }
+.bc-tabla--navegable tbody tr:not(.bc-fila--atencion):not(.bc-fila--pendiente):hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--bc-tinta);
+}
+.bc-tabla--navegable .bc-tabla__nombre { transition: color .2s ease; }
+.bc-tabla--navegable tbody tr:hover .bc-tabla__nombre,
+.bc-tabla--navegable tbody tr:focus-visible .bc-tabla__nombre { color: var(--bc-acento); }
+
+/* Filas de tableros: entran en cascada corta (solo las primeras). */
+.bc-tabla--tablero tbody tr { animation: bc-sube .45s var(--bc-curva) both; }
+.bc-tabla--tablero tbody tr:nth-child(2) { animation-delay: .03s; }
+.bc-tabla--tablero tbody tr:nth-child(3) { animation-delay: .06s; }
+.bc-tabla--tablero tbody tr:nth-child(4) { animation-delay: .09s; }
+.bc-tabla--tablero tbody tr:nth-child(5) { animation-delay: .12s; }
+.bc-tabla--tablero tbody tr:nth-child(6) { animation-delay: .15s; }
+.bc-tabla--tablero tbody tr:nth-child(n+7) { animation-delay: .18s; }
+
+/* Celdas editables: se insinúan al pasar por la fila, no solo por la celda. */
+.bc-tabla tr:hover .bc-entrada--celda:not(:disabled):not(:focus) { border-color: var(--bc-linea); }
+
+/* --- Pestañas: subrayado que se desliza ----------------------------------- */
+
+.bc-pestana { position: relative; border-bottom-color: transparent !important; }
+.bc-pestana::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px;
+  background: var(--bc-tinta);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform .35s var(--bc-curva), background .2s ease;
+}
+.bc-pestana:hover::after { transform: scaleX(.4); }
+.bc-pestana[aria-selected="true"]::after { transform: scaleX(1); background: var(--bc-acento); }
+
+/* --- Botones y opciones --------------------------------------------------- */
+
+.bc-boton:not(.bc-boton--linea):not(.bc-boton--peligro):hover:not(:disabled) {
+  box-shadow: 0 8px 20px -10px rgba(255, 94, 0, .75);
+}
+.bc-boton:active:not(:disabled) { transform: translateY(1px); }
+.bc-boton[aria-busy="true"] { cursor: progress; }
+
+/* Cálculo en curso: una barra naranja fina que va y viene bajo el texto. Es indeterminada a propósito:
+   no se sabe cuánto falta, así que no se muestra ningún porcentaje. */
+.bc-boton--calculando { position: relative; overflow: hidden; }
+.bc-boton--calculando:disabled { opacity: .92; cursor: progress; }
+.bc-boton--calculando::after {
+  content: ''; position: absolute; left: 0; bottom: 0; width: 40%; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--bc-acento), transparent);
+  animation: bc-barra-carga 1.1s cubic-bezier(.4, 0, .2, 1) infinite;
+}
+@keyframes bc-barra-carga {
+  from { transform: translateX(-100%) }
+  to   { transform: translateX(250%) }
+}
+
+.bc-opcion, .bc-segmento { transition: background .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease; }
+.bc-opcion[aria-pressed="true"], .bc-segmento[aria-pressed="true"] { box-shadow: inset 0 -2px 0 var(--bc-acento); }
+
+/* --- Estados vacíos -------------------------------------------------------- */
+/* Un fragmento de retícula a la derecha: la lámina todavía en blanco. */
+
+.bc-vacio::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, var(--bc-blanco) 45%, color-mix(in srgb, var(--bc-blanco) 60%, transparent) 75%, color-mix(in srgb, var(--bc-blanco) 0%, transparent));
+}
+.bc-vacio > * { position: relative; z-index: 1; }
+
+/* --- Modales --------------------------------------------------------------- */
+
+.bc-modal::before {
+  content: ''; position: absolute; top: -1px; left: -1px; right: -1px; height: 3px; background: var(--bc-acento);
+}
+@keyframes bc-fundido { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bc-modal { from { opacity: 0; transform: translateY(14px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* --- Personas: monograma ------------------------------------------------- */
+
+.bc-persona { display: flex; align-items: center; gap: 12px; }
+.bc-persona > div { min-width: 0; }
+.bc-monograma {
+  flex: none; display: inline-grid; place-items: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--bc-linea); background: var(--bc-fondo);
+  font-family: var(--bc-display); font-size: 14px; font-weight: 600; color: var(--bc-tinta);
+}
+.bc-monograma--lleno {
+  background: var(--bc-tinta); border-color: var(--bc-tinta); color: var(--bc-fondo);
+  box-shadow: inset 0 -2px 0 var(--bc-acento);
+}
+/* Usuarios alinea sus celdas arriba: el nombre queda en la línea del correo y el rol. */
+.bc-tabla--usuarios .bc-persona { align-items: baseline; }
+
+/* --- Lista numerada (plantillas) ------------------------------------------ */
+
+.bc-lista--numerada { counter-reset: fila; }
+.bc-lista--numerada .bc-lista__fila {
+  counter-increment: fila;
+  display: grid; grid-template-columns: 2.6em minmax(0, 1fr) auto; gap: var(--bc-e4);
+  transition: background .2s ease, box-shadow .2s ease;
+}
+.bc-lista--numerada .bc-lista__fila:first-of-type { border-top: 0; }
+.bc-lista--numerada .bc-lista__fila::before {
+  content: counter(fila, decimal-leading-zero);
+  font-family: var(--bc-display); font-size: 13px; letter-spacing: .08em; color: var(--bc-gris);
+  transition: color .2s ease;
+}
+.bc-lista--numerada .bc-lista__fila:hover { background: var(--bc-cabecera-tabla); box-shadow: inset 3px 0 0 var(--bc-tinta); }
+.bc-lista--numerada .bc-lista__fila:hover::before { color: var(--bc-acento); }
+.bc-lista__detalle { display: block; }
+.bc-lista__fila--vacia .bc-lista__detalle { color: var(--bc-acento-oscuro); }
+.bc-lista__fila--abriendo { background: var(--bc-acento-tenue) !important; box-shadow: inset 3px 0 0 var(--bc-acento) !important; }
+.bc-lista--numerada > .bc-lista__fila { animation: bc-sube .45s var(--bc-curva) both; }
+.bc-lista--numerada > .bc-lista__fila:nth-of-type(2) { animation-delay: .04s; }
+.bc-lista--numerada > .bc-lista__fila:nth-of-type(3) { animation-delay: .08s; }
+.bc-lista--numerada > .bc-lista__fila:nth-of-type(4) { animation-delay: .12s; }
+.bc-lista--numerada > .bc-lista__fila:nth-of-type(n+5) { animation-delay: .16s; }
+@media (max-width: 600px) {
+  .bc-lista--numerada .bc-lista__fila { grid-template-columns: 2.2em minmax(0, 1fr); }
+  .bc-lista--numerada .bc-lista__fila .bc-acciones { grid-column: 2; }
+}
+
+/* Listas del catálogo (modales y editor): fila con respuesta al pasar. */
+.bc-lista__fila { transition: background .2s ease; }
+.bc-lista .bc-lista__fila:hover { background: var(--bc-cabecera-tabla); }
+
+/* --- Cargas --------------------------------------------------------------- */
+
+/* Aviso de carga dentro de un formulario o modal. */
+.bc-cargando__aviso--menor { margin-top: 8px; font-size: 12.5px; gap: 10px; }
+.bc-cargando__aviso--menor .bc-cargando__obra { height: 14px; }
+.bc-cargando__aviso--menor .bc-cargando__obra i { width: 4px; }
+select.bc-entrada[aria-busy="true"] { opacity: .55; }
+
+/* Historial: línea de tiempo continua entre eventos. */
+
+.bc-historial::before {
+  content: ''; position: absolute; left: 3.5px; top: 8px; bottom: 8px; width: 1px; background: var(--bc-linea);
+}
+
+/* --- Impresión y movimiento reducido --------------------------------------- */
+
+@media print {
+  body:has(> main.bc-pagina)::before { display: none; }
+  .bc-kpi::before, .bc-grafico::before, .bc-version::before, .bc-resultado::before,
+  .bc-vacio::after, .bc-cabecera-tablero::after { display: none; }
+  .bc-resultado:not(.bc-resultado--claro), .bc-kpi--destacado, .bc-vacio { background-image: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-pagina .bc-h1, .bc-cabecera-tablero::after, .bc-resultado__cifra, .bc-kpis--tablero > .bc-kpi,
+  .bc-kpi .bc-cifra, .bc-medidor span, .bc-barras__barra, .bc-apilada, .bc-etapa__relleno,
+  .bc-insights > .bc-grafico, .bc-tabla--tablero tbody tr, .bc-capa, .bc-modal,
+  .bc-lista--numerada > .bc-lista__fila, .bc-historial__evento { animation: none; }
+  .bc-atencion__item:hover { transform: none; }
+  .bc-nav a::after, .bc-pestana::after { transition: none; }
+}
+

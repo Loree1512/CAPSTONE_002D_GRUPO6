@@ -1,4 +1,9 @@
 -- Configuración inicial: CONFIGURACION_BASE de configuracion.ts. Requiere 001_schema_buildcast.sql.
+-- No modifica parámetros existentes.
+--
+-- El motor usa GG, utilidad, factores de comuna y tramos de pisos (estos dos, solo si la
+-- estimación activa los factores). Hora hombre, estándar y materialidad se guardan para
+-- uso posterior: hoy no afectan el costo.
 
 insert into public.parametros_calculo (clave, valor, descripcion)
 values

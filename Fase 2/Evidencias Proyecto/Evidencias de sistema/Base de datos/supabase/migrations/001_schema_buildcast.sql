@@ -59,6 +59,10 @@ create policy "categorias_partida_seleccionar_autenticados"
 
 
 -- 3. Banco de precios: versiones
+-- fecha_publicacion null     → borrador editable.
+-- fecha_publicacion not null → publicada alguna vez: sus precios no cambian nunca más.
+-- vigente = true             → la que usan las estimaciones nuevas (siempre publicada).
+-- Para cambiar precios se copia a un borrador, se edita y se publica.
 
 create table public.versiones_precios (
     id uuid primary key default gen_random_uuid(),
@@ -132,7 +136,6 @@ create table public.partidas (
     categoria_id integer not null
         references public.categorias_partida(id) on delete restrict,
 
-    -- Correlativo por categoría (04.01, 04.02…). No se edita: da trazabilidad.
     codigo text not null unique
         check (btrim(codigo) <> ''),
     nombre text not null
@@ -191,6 +194,7 @@ create table public.precios_partida (
     fecha_creacion timestamptz not null default now(),
     fecha_actualizacion timestamptz not null default now(),
 
+    -- Una fila vacía no sirve; el servicio la elimina.
     constraint precios_partida_con_valor_chk
         check (precio_unitario is not null or rendimiento_mo is not null),
 
@@ -206,7 +210,7 @@ create trigger precios_partida_actualizar_fecha
     execute function public.actualizar_fecha_actualizacion();
 
 -- Precios de una versión publicada: ni altas, ni cambios, ni bajas.
-
+-- Frena también al service role y a cambios manuales.
 create or replace function public.bloquear_precios_version_publicada()
 returns trigger
 language plpgsql
@@ -284,8 +288,10 @@ from public.precios_partida;
 grant select on public.partidas_con_precios to authenticated, service_role;
 
 
--- 6. Configuración del cálculo 
+-- 6. Configuración del cálculo
 
+-- Valores editables sin tocar código. El motor usa GG, utilidad, factores de
+-- comuna y tramos de pisos; el resto se conserva para uso posterior.
 create table public.parametros_calculo (
     clave text primary key
         check (btrim(clave) <> ''),
@@ -454,8 +460,10 @@ create policy "proyectos_actualizar_propios"
     with check (auth.uid() = usuario_id);
 
 
--- 9. Partidas del proyecto 
+-- 9. Partidas del proyecto
 
+-- La lista editable con que se calcula el presupuesto. Nombre y unidad se copian:
+-- editarlas no toca el catálogo global.
 create table public.proyecto_partidas (
     id uuid primary key default gen_random_uuid(),
 
@@ -604,7 +612,7 @@ create table public.estimaciones (
     factor_pisos numeric not null check (factor_pisos > 0),
     factor_ajuste numeric not null check (factor_ajuste > 0),
 
-    -- Montos en CLP entero; costo_m2 sin redondear.
+    -- Montos en CLP entero (ROUND_HALF_UP); costo_m2 sin redondear.
     costo_directo_base numeric not null check (costo_directo_base >= 0),
     costo_directo numeric not null check (costo_directo >= 0),
     gastos_generales_pct numeric not null
@@ -1061,6 +1069,7 @@ grant execute on function public.ordenar_partidas_proyecto(uuid, uuid[]) to auth
 
 
 -- 13. RPC: guardar una estimación (solo service role)
+-- Cabecera y líneas en una sola transacción.
 
 create or replace function public.crear_estimacion(
     p_usuario_id uuid,

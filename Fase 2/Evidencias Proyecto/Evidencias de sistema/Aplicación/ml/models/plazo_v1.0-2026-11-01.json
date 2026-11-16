@@ -1,0 +1,74 @@
+{
+  "version": "v1.0-2026-11-01",
+  "algoritmo": "parametrica",
+  "filas_entrenamiento": 13,
+  "mae_dias": 5.6,
+  "rmse_dias": 7.7,
+  "r2": 0.45,
+  "validado": true,
+  "ruta_artefacto": "ml/models/plazo_v1.0-2026-11-01.joblib",
+  "vigente": true,
+  "entrenado_en": "2026-11-01",
+  "provisional": true,
+  "filas_reales": 13,
+  "filas_sinteticas": 0,
+  "detalle": {
+    "evaluacion": "leave-one-out sobre 12 casos reales (14 utilizables − R08 − R07); métricas en días",
+    "sd_error_abs_dias": 5.52,
+    "rango_error_abs_dias": [
+      0.29,
+      19.76
+    ],
+    "seleccion": {
+      "veredicto_regla": {
+        "regla": "candidato supera si dif_mae > SE = DE(|e_base| - |e_cand|, ddof=1)/sqrt(n)",
+        "mejor_linea_base": "P2",
+        "mae_mejor_linea_base": 5.598,
+        "mejor_candidato": "ridge",
+        "mae_mejor_candidato": 4.373,
+        "n": 12,
+        "dif_mae": 1.225,
+        "de_dif_ddof1": 4.086,
+        "se_dif": 1.18,
+        "cociente_dif_se": 1.038,
+        "ganados_candidato": 6,
+        "ganados_linea_base": 6,
+        "empates": 0,
+        "wilcoxon_estadistico": 37.0,
+        "wilcoxon_p": 0.9097,
+        "wilcoxon_metodo": "exact",
+        "margen_sobre_se": 0.045,
+        "veredicto": "candidato_supera"
+      },
+      "decision": {
+        "metodo": "P2",
+        "motivo": "Se mantiene P2: P2 y Ridge son estadísticamente indistinguibles (6 casos ganados cada uno, Wilcoxon pareado exacto p = 0,91) y la ventaja de Ridge depende de incluir R08, cuyo plazo es una cota imprecisa (sin R08 en el entrenamiento, P2 4,93 frente a Ridge 5,27 días).",
+        "alternativa": "ridge",
+        "nota_alternativa": "Ridge queda como alternativa a reevaluar con más datos o cuando RAM confirme el plazo de R08.",
+        "fecha_decision": "2026-11-01",
+        "referencia": "ml/docs/model_card_v1.0-2026-11-01.md#selección"
+      }
+    },
+    "parametros": {
+      "alpha": -1.615,
+      "beta": 0.8902,
+      "gamma": 0.2686
+    },
+    "intervalo": {
+      "percentiles": [
+        10,
+        90
+      ],
+      "metodo_percentil": "weibull",
+      "q_inf_log": -0.741,
+      "q_sup_log": 1.639,
+      "factor_inf": 0.477,
+      "factor_sup": 5.147,
+      "cobertura_in_sample": 0.833,
+      "cobertura_loo_anidada": 0.833,
+      "n_residuos": 12
+    },
+    "mediana_respaldo_dias": 14.0,
+    "semilla_sinteticos": 20261101
+  }
+}

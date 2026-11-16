@@ -1,5 +1,6 @@
 -- Plantillas de presupuesto: las 12 combinaciones de tipo de obra × materialidad, vacías.
 -- Sus partidas se configuran desde Administración → Plantillas. Requiere 001_schema_buildcast.sql.
+-- Se puede ejecutar varias veces: no toca plantillas existentes.
 
 insert into public.plantillas_presupuesto (nombre, tipo_obra, materialidad)
 select t.tipo_obra || ' · ' || m.materialidad, t.tipo_obra, m.materialidad

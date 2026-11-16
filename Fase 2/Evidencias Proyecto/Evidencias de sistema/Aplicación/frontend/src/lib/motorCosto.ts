@@ -1,6 +1,6 @@
 import { factorPisos } from './configuracion'
 import type { Configuracion } from './configuracion'
-import type { EstadoPartida, EstandarTerminaciones, PartidaProyecto, Proyecto } from '../tipos/api'
+import type { EstadoPartida, PartidaProyecto, Proyecto } from '../tipos/api'
 
 /* Motor de costo de BuildCast: presupuesto por partidas del proyecto.
 
@@ -169,22 +169,4 @@ export function calcularPresupuesto(
     partidasSinCantidad,
     completa: partidasSinPrecio === 0 && partidasSinCantidad === 0,
   }
-}
-
-/* --- Plazo --------------------------------------------------------------- */
-
-/* Regla paramétrica documentada, NO un modelo entrenado.
-   Mientras el conjunto de datos de RAM no permita entrenar y validar el
-   modelo, el plazo se entrega así y la interfaz lo declara provisional.
-   Es el plan de contingencia acordado en la especificación. */
-export function estimarPlazo(superficie: number, pisos: number, estandar: EstandarTerminaciones) {
-  const base = 60
-  const porSuperficie = Math.pow(superficie, 0.52) * 8.4
-  const porPisos = (pisos - 1) * 16
-  const porEstandar = estandar === 'alto' ? 18 : estandar === 'economico' ? -12 : 0
-
-  const dias = Math.round(base + porSuperficie + porPisos + porEstandar)
-  const margen = Math.max(15, Math.round(dias * 0.135))
-
-  return { dias, min: dias - margen, max: dias + margen }
 }

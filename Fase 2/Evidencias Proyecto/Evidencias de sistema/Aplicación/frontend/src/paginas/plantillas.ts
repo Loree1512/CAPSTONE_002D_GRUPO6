@@ -1,8 +1,11 @@
 import Alpine from 'alpinejs'
-import '../estilos/base.css'
 import { api, ErrorApi } from '../lib/api'
+import { MENSAJE_GUARDAR_PLANTILLA, resolverGuardado } from '../lib/errores'
 import { marcarSimulacion } from '../lib/marcaSimulacion'
+import { prepararNavegacion } from '../lib/navegacion'
+import { iniciarBotonTema } from '../lib/tema'
 import { exigirSesion, salir } from '../lib/sesion'
+import { confirmar } from '../lib/confirmar'
 import { pesos } from '../lib/formato'
 import { MATERIALES, TIPOS_OBRA } from '../lib/catalogos'
 import type {
@@ -21,6 +24,8 @@ interface PantallaPlantillas {
   cambios: boolean
   busqueda: string
   cargando: boolean
+  /** Id de la plantilla que se está abriendo: da respuesta inmediata al pulsar «Editar». */
+  abriendo: string
   guardando: boolean
   error: string
   mensaje: string
@@ -37,7 +42,7 @@ interface PantallaPlantillas {
   cargar(): Promise<void>
   abrir(p: PlantillaResumen): Promise<void>
   mostrar(p: PlantillaDetalle): void
-  volver(): void
+  volver(): Promise<void>
   guardarDatos(): Promise<void>
   agregar(f: FilaBanco): void
   quitar(i: number): void
@@ -52,6 +57,9 @@ interface PantallaPlantillas {
 
 const mensajeDe = (e: unknown, porDefecto: string) => (e instanceof ErrorApi ? e.message : porDefecto)
 
+// El aviso queda arriba de los botones de guardar.
+const avisar = () => window.scrollTo({ top: 0, behavior: 'smooth' })
+
 Alpine.data('plantillas', (): PantallaPlantillas => ({
   plantillas: [],
   categorias: [],
@@ -62,6 +70,7 @@ Alpine.data('plantillas', (): PantallaPlantillas => ({
   cambios: false,
   busqueda: '',
   cargando: true,
+  abriendo: '',
   guardando: false,
   error: '',
   mensaje: '',
@@ -108,8 +117,10 @@ Alpine.data('plantillas', (): PantallaPlantillas => ({
   },
 
   async abrir(p) {
+    if (this.abriendo) return
     this.error = ''
     this.mensaje = ''
+    this.abriendo = p.id
     try {
       const [detalle, catalogo] = await Promise.all([
         api.obtenerPlantilla(p.id),
@@ -119,6 +130,8 @@ Alpine.data('plantillas', (): PantallaPlantillas => ({
       this.mostrar(detalle)
     } catch (e) {
       this.error = mensajeDe(e, 'No se pudo abrir la plantilla.')
+    } finally {
+      this.abriendo = ''
     }
   },
 
@@ -130,36 +143,56 @@ Alpine.data('plantillas', (): PantallaPlantillas => ({
     this.busqueda = ''
   },
 
-  volver() {
-    if (this.cambios && !window.confirm('Hay cambios sin guardar en las partidas. ¿Salir igual?')) return
+  async volver() {
+    if (this.cambios) {
+      const salirIgual = await confirmar({
+        rotulo: 'Plantillas', titulo: 'Cambios sin guardar',
+        mensaje: 'Hay cambios sin guardar en las partidas. ¿Salir igual?',
+        confirmar: 'Salir sin guardar', cancelar: 'Seguir editando',
+      })
+      if (!salirIgual) return
+    }
     this.seleccionada = null
     void this.cargar()
   },
 
   async guardarDatos() {
     if (!this.seleccionada) return
+    // Evita el doble envío.
+    if (this.guardando) return
     if (!this.datos.nombre.trim()) {
       this.error = 'Escribe el nombre de la plantilla.'
+      avisar()
       return
     }
     this.guardando = true
     this.error = ''
-    try {
-      const detalle = await api.editarPlantilla(this.seleccionada.id, { ...this.datos, nombre: this.datos.nombre.trim() })
-      // Conserva las partidas que se estén editando.
-      const lista = this.lista
-      const cambios = this.cambios
-      this.mostrar(detalle)
-      if (cambios) {
-        this.lista = lista
-        this.cambios = true
-      }
-      this.mensaje = 'Datos de la plantilla guardados.'
-    } catch (e) {
-      this.error = mensajeDe(e, 'No se pudo guardar la plantilla.')
-    } finally {
-      this.guardando = false
+    this.mensaje = ''
+    let detalle: PlantillaDetalle | undefined
+    const id = this.seleccionada.id
+    const nombre = this.datos.nombre.trim()
+    const resultado = await resolverGuardado(
+      async () => { detalle = await api.editarPlantilla(id, { ...this.datos, nombre }) },
+      'Datos de la plantilla guardados.',
+    )
+    this.guardando = false
+
+    // Si falla, el formulario queda como estaba.
+    if (!resultado.ok || !detalle) {
+      this.error = resultado.ok ? MENSAJE_GUARDAR_PLANTILLA : resultado.error
+      avisar()
+      return
     }
+    // Conserva las partidas que se estén editando.
+    const lista = this.lista
+    const cambios = this.cambios
+    this.mostrar(detalle)
+    if (cambios) {
+      this.lista = lista
+      this.cambios = true
+    }
+    this.mensaje = resultado.mensaje
+    avisar()
   },
 
   agregar(f) {
@@ -196,21 +229,28 @@ Alpine.data('plantillas', (): PantallaPlantillas => ({
   },
 
   async guardarPartidas() {
-    if (!this.seleccionada) return
+    if (!this.seleccionada || this.guardando) return
     this.guardando = true
     this.error = ''
-    try {
-      const detalle = await api.guardarPartidasPlantilla(
-        this.seleccionada.id,
-        this.lista.map((f) => ({ partida_id: f.partida_id, cantidad_sugerida: f.cantidad_sugerida })),
-      )
-      this.mostrar(detalle)
-      this.mensaje = 'Partidas guardadas. Los proyectos ya creados no cambian.'
-    } catch (e) {
-      this.error = mensajeDe(e, 'No se pudieron guardar las partidas.')
-    } finally {
-      this.guardando = false
+    this.mensaje = ''
+    let detalle: PlantillaDetalle | undefined
+    const id = this.seleccionada.id
+    const partidas = this.lista.map((f) => ({ partida_id: f.partida_id, cantidad_sugerida: f.cantidad_sugerida }))
+    const resultado = await resolverGuardado(
+      async () => { detalle = await api.guardarPartidasPlantilla(id, partidas) },
+      'Partidas guardadas. Los proyectos ya creados no cambian.',
+    )
+    this.guardando = false
+
+    // Si falla, se conservan los cambios pendientes.
+    if (!resultado.ok || !detalle) {
+      this.error = resultado.ok ? MENSAJE_GUARDAR_PLANTILLA : resultado.error
+      avisar()
+      return
     }
+    this.mostrar(detalle)
+    this.mensaje = resultado.mensaje
+    avisar()
   },
 
   abrirNueva() {
@@ -220,15 +260,31 @@ Alpine.data('plantillas', (): PantallaPlantillas => ({
   },
 
   async crear() {
+    if (this.guardando) return
     const nombre = this.nueva.nombre.trim() || `${this.nueva.tipo_obra} · ${this.nueva.materialidad}`
-    try {
-      const creada = await api.crearPlantilla({ ...this.nueva, nombre })
-      this.formNueva = false
-      this.catalogo = this.catalogo.length ? this.catalogo : await api.listarBanco()
-      this.mostrar(creada)
-    } catch (e) {
-      this.errorNueva = mensajeDe(e, 'No se pudo crear la plantilla.')
+    this.guardando = true
+    this.errorNueva = ''
+    let creada: PlantillaDetalle | undefined
+    const resultado = await resolverGuardado(
+      async () => { creada = await api.crearPlantilla({ ...this.nueva, nombre }) },
+      'Plantilla creada.',
+    )
+
+    if (!resultado.ok || !creada) {
+      this.guardando = false
+      this.errorNueva = resultado.ok ? MENSAJE_GUARDAR_PLANTILLA : resultado.error
+      return
     }
+    try {
+      this.catalogo = this.catalogo.length ? this.catalogo : await api.listarBanco()
+    } catch (e) {
+      // La plantilla ya existe: se abre igual.
+      this.error = mensajeDe(e, 'No se pudo cargar el catálogo de partidas.')
+    }
+    this.guardando = false
+    this.formNueva = false
+    this.mensaje = ''
+    this.mostrar(creada)
   },
 
   nombreCategoria(id) {
@@ -242,4 +298,6 @@ if (exigirSesion()) {
   window.Alpine = Alpine
   Alpine.start()
   marcarSimulacion()
+  void prepararNavegacion()
+  iniciarBotonTema()
 }

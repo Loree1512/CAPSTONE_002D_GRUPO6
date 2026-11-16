@@ -11,67 +11,27 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <style>
-    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
-       hoja completa. Evita ver la estructura sin estilos al navegar entre
-       páginas. Incluye el esqueleto de carga para no depender de base.css. */
-    :root { color-scheme: light; }
-    html { background: #F9F9F7; }
-    body {
-      margin: 0;
-      background: #F9F9F7;
-      color: #1A1A1A;
-      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: 15px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
-    img { display: block; max-width: 100%; }
-    [x-cloak] { display: none !important; }
-    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
-
-    .bc-esqueleto {
-      max-width: 1600px; margin: 0 auto;
-      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
-      display: flex; flex-direction: column; gap: 20px;
-    }
-    .bc-esqueleto span {
-      display: block;
-      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
-      background-size: 200% 100%;
-      animation: bc-latido 1.4s ease-in-out infinite;
-    }
-    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
-    .bc-esqueleto span:nth-child(2) { height: 120px; }
-    .bc-esqueleto span:nth-child(3) { height: 280px; }
-    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-    main:not([x-cloak]) ~ .bc-esqueleto,
-    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
-
-    body > * { animation: bc-entrar .22s ease-out both; }
-    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
-    @media (prefers-reduced-motion: reduce) {
-      body > * { animation: none; }
-      .bc-esqueleto span { animation: none; }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/estilos/base.css">
+  <link rel="stylesheet" href="/src/estilos/landing.css">
 </head>
 <body class="bc-landing">
+<svg width="0" height="0" class="bc-l-defs" aria-hidden="true" focusable="false"><defs>
+  <pattern id="bc-reticula" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M24 0H0V24" fill="none" stroke="#F9F9F7" stroke-opacity=".05"/></pattern>
+</defs></svg>
 
 <div>
-  <header data-navbar="1" style="position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px clamp(20px,4vw,48px);transition:background .5s,backdrop-filter .5s">
-      <div style="display:flex;align-items:center;gap:clamp(16px,3vw,48px)">
+  <header data-navbar="1" class="bc-l-cabecera">
+      <div class="bc-l-cabecera__marca">
         <a href="#" aria-label="BuildCast"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo bc-logo--grande"></a>
-        <span data-chapter="1" style="font-family:'Space Grotesk';font-size:12px;letter-spacing:.2em;color:#8F8F8F">01 / 06</span>
+        <span data-chapter="1" class="bc-capitulo" aria-hidden="true">01 / 06 · Proyecto</span>
       </div>
 
-      <nav class="bc-menu" data-menu-panel id="menu-principal" style="display:flex;align-items:center;gap:clamp(14px,2vw,32px);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">
+      <nav class="bc-menu" data-menu-panel id="menu-principal">
         <a href="#problema">El problema</a>
         <a href="#como-funciona">Cómo funciona</a>
         <a href="#plataforma">La plataforma</a>
         <a href="#para-quien">Para quién</a>
-        <button data-ir="/acceso.html" class="bc-menu__entrar" style="font-family:'Manrope';font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:14px 22px;border:1px solid #1A1A1A;background:transparent;color:#1A1A1A;cursor:pointer;transition:background .3s,color .3s" data-hover="background:#1A1A1A;color:#F9F9F7">Ingresar</button>
+        <button data-ir="/acceso.html" class="bc-menu__entrar">Ingresar</button>
       </nav>
 
       <button class="bc-hamburguesa" data-menu aria-expanded="false" aria-controls="menu-principal" aria-label="Abrir menú">
@@ -79,430 +39,812 @@
       </button>
     </header>
 
-  <section style="position:relative;width:100%;height:100vh;min-height:760px;overflow:hidden;padding-top:128px">
-    <div data-hero="1" style="position:absolute;inset:0;z-index:0">
-      <div class="bc-foto" style="width:100%;height:100%;opacity:.4"><img src="/images/bc-hero.svg" alt="" onerror="this.style.display='none'"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(to bottom,rgba(249,249,247,.2),rgba(249,249,247,.55),#F9F9F7);pointer-events:none"></div>
+  <section class="bc-pantalla bc-l-portada">
+    <div data-hero="1" class="bc-l-portada__fondo">
+      <div class="bc-foto bc-l-portada__foto"><img src="/images/bc-hero.svg" alt="" onerror="this.style.display='none'"></div>
+      <div class="bc-l-portada__velo"></div>
     </div>
-    <div style="position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column;justify-content:flex-end;padding:0 clamp(24px,4vw,48px) clamp(72px,10vh,128px);max-width:1600px;margin:0 auto;pointer-events:none">
-      <div data-reveal="up" style="pointer-events:auto">
-        <span style="display:block;font-family:'Space Grotesk';color:#FF5E00;letter-spacing:.3em;text-transform:uppercase;font-size:14px;margin-bottom:24px">BuildCast</span>
-        <h1 style="font-size:clamp(46px,10.5vw,190px);line-height:.85;letter-spacing:-0.04em;font-weight:600">Todo proyecto<br>comienza con<br>un número.</h1>
+    <div class="bc-l-portada__contenido">
+      <div data-reveal="up" class="bc-l-portada__encabezado">
+        <span class="bc-l-rotulo bc-l-portada__marca">BuildCast</span>
+        <h1 class="bc-l-cifra bc-l-portada__titulo">Todo proyecto<br>comienza con<br>un número.</h1>
       </div>
-      <div data-reveal="up" data-delay="0.35" style="margin-top:clamp(40px,6vh,96px);display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:32px;align-items:end;pointer-events:auto">
-        <p style="margin:0;font-size:clamp(17px,1.4vw,21px);font-weight:500;line-height:1.55;color:rgba(26,26,26,.8);max-width:460px;text-wrap:pretty">Seis datos de la obra bastan para obtener el costo desglosado por partida y el plazo estimado con su intervalo.</p>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:flex-end">
-          <button data-ir="/acceso.html" style="display:inline-flex;align-items:center;gap:14px;background:#1A1A1A;color:#F9F9F7;border:1px solid #1A1A1A;padding:20px 30px;font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s,border-color .3s" data-hover="background:#FF5E00;border-color:#FF5E00">Entrar a la plataforma →</button>
-          <a href="#como-funciona" style="display:inline-flex;align-items:center;padding:20px 30px;border:1px solid #1A1A1A;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;transition:background .3s,color .3s" data-hover="background:#1A1A1A;color:#F9F9F7">Ver cómo funciona</a>
+      <div data-reveal="up" data-delay="0.35" class="bc-l-portada__pie">
+        <p class="bc-l-portada__bajada">Seis datos de la obra bastan para obtener el costo desglosado por partida y el plazo estimado con su intervalo.</p>
+        <div class="bc-l-portada__botones">
+          <button data-ir="/acceso.html" class="bc-l-boton">Entrar a la plataforma →</button>
+          <a href="#como-funciona" class="bc-l-boton-linea">Ver cómo funciona</a>
         </div>
       </div>
     </div>
   </section>
 
-  <section style="position:relative;width:100%;padding:clamp(80px,12vw,180px) clamp(24px,4vw,48px);overflow:hidden">
-    <div style="max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(32px,5vw,96px);align-items:center">
+  <section class="bc-l-intro">
+    <div class="bc-l-intro__rejilla">
       <div data-reveal="up">
-        <h2 style="font-size:clamp(38px,6vw,100px);line-height:.9;letter-spacing:-0.035em;margin-bottom:40px;font-weight:600">Construir es complejo.<br><span style="color:#8F8F8F">Presupuestar no debería serlo.</span></h2>
-        <div style="display:flex;flex-direction:column;gap:28px;max-width:560px;font-size:clamp(16px,1.3vw,20px);font-weight:500;line-height:1.6;color:rgba(26,26,26,.8)">
-          <p style="margin:0">Cada consulta empieza con una planilla nueva, precios buscados a mano y criterios que viven en la cabeza de quien estima.</p>
-          <p style="margin:0">BuildCast reúne ese trabajo en un solo lugar y lo vuelve reproducible.</p>
+        <h2 class="bc-l-titular bc-l-intro__titulo">Construir es complejo.<br><span class="bc-l-intro__gris">Presupuestar no debería serlo.</span></h2>
+        <div class="bc-l-intro__texto">
+          <p>Cada consulta empieza con una planilla nueva, precios buscados a mano y criterios que viven en la cabeza de quien estima.</p>
+          <p>BuildCast reúne ese trabajo en un solo lugar y lo vuelve reproducible.</p>
         </div>
       </div>
-      <div style="position:relative;height:clamp(320px,60vh,760px);overflow:hidden">
-        <div class="bc-foto" style="width:100%;height:100%"><img src="/images/bc-intro.svg" alt="" onerror="this.style.display='none'"></div>
+      <!-- Planilla, precios y criterios confluyen en BuildCast; sale el mismo presupuesto cada vez -->
+      <div class="bc-flujo-marco" data-reveal="up" data-delay="0.15">
+        <figure class="bc-flujo" aria-label="La planilla, los precios y los criterios confluyen en BuildCast y dan un presupuesto reproducible">
+          <ul class="bc-flujo__entradas">
+            <li><span class="bc-flujo__entrada"><span class="bc-flujo__glifo bc-flujo__glifo--planilla" aria-hidden="true"></span>Planilla</span></li>
+            <li><span class="bc-flujo__entrada"><span class="bc-flujo__glifo bc-flujo__glifo--precios" aria-hidden="true">$</span>Precios</span></li>
+            <li><span class="bc-flujo__entrada"><span class="bc-flujo__glifo bc-flujo__glifo--criterios" aria-hidden="true"></span>Criterios</span></li>
+          </ul>
+          <svg class="bc-flujo__union bc-flujo__union--lateral" viewBox="0 0 100 300" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 50 C55 50 45 150 100 150 M0 150 L100 150 M0 250 C55 250 45 150 100 150"/>
+          </svg>
+          <svg class="bc-flujo__union bc-flujo__union--vertical" viewBox="0 0 300 60" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M50 0 C50 33 150 27 150 60 M150 0 L150 60 M250 0 C250 33 150 27 150 60"/>
+          </svg>
+          <div class="bc-flujo__motor">BuildCast</div>
+          <span class="bc-flujo__flecha" aria-hidden="true"></span>
+          <div class="bc-flujo__resultado">
+            <div class="bc-flujo__hojas" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span class="bc-flujo__etiqueta">Presupuesto</span>
+          </div>
+        </figure>
       </div>
     </div>
   </section>
 
-  <section data-seq="journey" style="position:relative;height:600vh;background:#111;color:#F9F9F7">
-    <div style="position:sticky;top:0;height:100vh;width:100%;overflow:hidden;display:flex;flex-direction:column;justify-content:center">
-      <div style="position:absolute;top:0;left:0;width:100%;height:3px;background:rgba(143,143,143,.25);z-index:30">
-        <div data-seq-bar="1" style="height:100%;background:#FF5E00;transform:scaleX(0);transform-origin:0 50%"></div>
+  <section data-seq="journey" class="bc-l-recorrido">
+    <div class="bc-l-recorrido__capa">
+      <div class="bc-capa__pista">
+        <div data-seq-bar="1" class="bc-l-recorrido__barra"></div>
       </div>
-      <div style="position:absolute;top:clamp(56px,10vh,96px);left:clamp(24px,4vw,48px);z-index:20">
-        <h2 style="font-size:13px;letter-spacing:.3em;color:#8F8F8F;font-weight:400">El camino hacia el presupuesto</h2>
+      <div class="bc-recorrido__rotulo">
+        <h2 class="bc-l-rotulo bc-l-recorrido__titulo">El camino hacia el presupuesto</h2>
       </div>
-      <div data-seq-item="0" style="position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(24px,4vw,48px);opacity:0">
-        <div style="max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
-          <div><div style="font-family:'Space Grotesk';font-size:clamp(84px,12vw,190px);line-height:.85;color:#FF5E00;letter-spacing:-0.05em">01</div><h3 style="font-size:clamp(36px,5vw,76px);margin-top:12px;font-weight:600">Proyecto</h3><p style="margin-top:24px;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:#8F8F8F;max-width:420px">La idea inicial. El concepto. El punto de partida de toda gran obra.</p></div>
-          <div style="height:clamp(200px,50vh,560px);border:1px solid rgba(249,249,247,.18);display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(249,249,247,.45)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="170" y="120" width="260" height="200" stroke="#F9F9F7" stroke-opacity="0.35" stroke-width="2" fill="none"/><rect x="230" y="180" width="140" height="140" stroke="#F9F9F7" stroke-opacity="0.2" stroke-width="2" fill="none"/><line x1="170" y1="120" x2="300" y2="50" stroke="#F9F9F7" stroke-opacity="0.45" stroke-width="2"/><line x1="430" y1="120" x2="300" y2="50" stroke="#F9F9F7" stroke-opacity="0.45" stroke-width="2"/><line x1="300" y1="50" x2="300" y2="180" stroke="#F9F9F7" stroke-opacity="0.25" stroke-width="2"/><circle cx="300" cy="50" r="7" fill="#FF5E00"/></svg></div>
+      <div class="bc-capa-item bc-l-recorrido__lamina" data-seq-item="0" data-anima>
+        <div class="bc-recorrido__fila">
+          <div class="bc-recorrido__texto"><div class="bc-l-cifra bc-recorrido__numero">01</div><h3 class="bc-l-subtitular bc-recorrido__titulo">Proyecto</h3><p class="bc-recorrido__bajada">Todo parte de una obra concreta: qué se construye, dónde y con qué dimensiones.</p></div>
+          <figure class="bc-lamina bc-recorrido__marco"><svg class="bc-lamina__svg" viewBox="0 0 600 420" role="img" aria-labelledby="etapa-0-desc" xmlns="http://www.w3.org/2000/svg"><title id="etapa-0-desc">Croquis axonométrico de una vivienda de dos pisos, 10,40 por 6,00 metros, con su punto de origen marcado en naranja.</title><rect width="600" height="420" fill="url(#bc-reticula)"/><text class="bc-svg-mono" x="24" y="30" font-size="11" fill="#F9F9F7" fill-opacity=".45">BC-2026-0142</text><text class="bc-svg-rotulo" x="576" y="30" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">VIVIENDA · VIÑA DEL MAR · DEMO</text><path d="M24 42H576" stroke="#F9F9F7" stroke-opacity=".1"/><text class="bc-svg-rotulo" x="24" y="64" font-size="9" fill="#FF5E00">01 · PROYECTO</text>
+<g class="bc-a" style="--d:0s" stroke="#F9F9F7" stroke-opacity=".12" stroke-width="1" fill="none">
+  <path d="M80 320H560"/><path d="M200 90V360"/><path d="M380 90V360"/>
+</g>
+<circle class="bc-a" style="--d:0s" cx="200" cy="320" r="6" fill="#FF5E00"/>
+<circle class="bc-a" style="--d:0.1s" cx="200" cy="320" r="14" fill="none" stroke="#FF5E00" stroke-opacity=".4"/>
+<text class="bc-a bc-svg-mono" style="--d:0.15s" x="186" y="344" font-size="10" text-anchor="end" fill="#FF5E00">0,0</text>
+<path class="bc-trazo" pathLength="1" style="--d:0.2s" d="M200 320H380" stroke="#F9F9F7" stroke-width="2" fill="none"/>
+<g stroke="#F9F9F7" stroke-width="2" fill="none" stroke-linejoin="round">
+  <path class="bc-trazo" pathLength="1" style="--d:0.45s" d="M380 320V200H200V320" />
+  <path class="bc-trazo" pathLength="1" style="--d:0.75s" d="M380 320L470 275V155L380 200" stroke-opacity=".8"/>
+  <path class="bc-trazo" pathLength="1" style="--d:1s" d="M200 200L290 140L380 200" />
+  <path class="bc-trazo" pathLength="1" style="--d:1.2s" d="M290 140L380 95L470 155" stroke-opacity=".8"/>
+</g>
+<g class="bc-a" style="--d:1.4s" stroke="#F9F9F7" stroke-opacity=".35" stroke-width="1" fill="none">
+  <path d="M200 260H380"/><path d="M380 260L470 215"/>
+  <path d="M276 320V284H304V320"/>
+  <path d="M220 222h34v22h-34z"/><path d="M326 222h34v22h-34z"/><path d="M220 280h34v22h-34z"/>
+  <path d="M398 226l26-13v22l-26 13z"/>
+</g>
+<g class="bc-a" style="--d:1.5s" stroke="#F9F9F7" stroke-opacity=".22" stroke-width="1" stroke-dasharray="4 5" fill="none">
+  <path d="M200 320L290 275L470 275"/><path d="M290 275V155"/><path d="M200 200L290 155L380 95"/>
+</g>
+<g class="bc-a" style="--d:1.7s">
+  <g stroke="#FF5E00" stroke-width="1" fill="none"><path d="M200 346H380"/><path d="M200 340v12M380 340v12"/>
+    <path d="M392 336L482 291"/><path d="M388 330l8 12M478 285l8 12"/>
+    <path d="M176 320V200"/><path d="M170 320h12M170 200h12"/></g>
+  <text class="bc-svg-mono" x="290" y="366" font-size="12" text-anchor="middle" fill="#FF5E00">10,40</text>
+  <text class="bc-svg-mono" x="452" y="328" font-size="12" fill="#FF5E00">6,00</text>
+  <text class="bc-svg-mono" x="166" y="264" font-size="11" text-anchor="end" fill="#FF5E00">2 P</text>
+</g>
+<g class="bc-a" style="--d:1.9s">
+  <text class="bc-svg-rotulo" x="560" y="110" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".5">ORIGEN DEL PROYECTO</text>
+  <text class="bc-svg-mono" x="560" y="126" font-size="10" text-anchor="end" fill="#F9F9F7" fill-opacity=".35">33°01′S · 71°33′O</text>
+</g><g class="bc-riel" aria-hidden="true"><path d="M60 392H540" stroke="#F9F9F7" stroke-opacity=".16" stroke-width="1"/><text class="bc-svg-mono" x="60" y="410" font-size="9" text-anchor="middle" fill="#FF5E00" fill-opacity="1">01</text><circle cx="156" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="156" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">02</text><circle cx="252" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="252" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">03</text><circle cx="348" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="348" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">04</text><circle cx="444" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="444" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">05</text><circle cx="540" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="540" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">06</text><circle class="bc-a bc-punto" style="--d:0.5s" cx="60" cy="392" r="5" fill="#FF5E00"/></g></svg></figure>
         </div>
       </div>
-      <div data-seq-item="1" style="position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(24px,4vw,48px);opacity:0">
-        <div style="max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
-          <div><div style="font-family:'Space Grotesk';font-size:clamp(84px,12vw,190px);line-height:.85;color:#FF5E00;letter-spacing:-0.05em">02</div><h3 style="font-size:clamp(36px,5vw,76px);margin-top:12px;font-weight:600">Documentos</h3><p style="margin-top:24px;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:#8F8F8F;max-width:420px">Comuna, tipo de obra, materialidad, superficie, pisos y estándar de terminaciones.</p></div>
-          <div style="height:clamp(200px,50vh,560px);border:1px solid rgba(249,249,247,.18);display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(249,249,247,.45)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="150" y="110" width="140" height="52" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="310" y="110" width="140" height="52" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="150" y="190" width="140" height="52" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="310" y="190" width="140" height="52" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="150" y="270" width="140" height="52" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="310" y="270" width="140" height="52" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="166" y="128" width="90" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="326" y="128" width="60" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="166" y="208" width="60" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="326" y="208" width="90" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="166" y="288" width="60" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="326" y="288" width="60" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="150" y="110" width="4" height="52" fill="#FF5E00"/></svg></div>
+      <div class="bc-capa-item bc-l-recorrido__lamina" data-seq-item="1" data-anima>
+        <div class="bc-recorrido__fila">
+          <div class="bc-recorrido__texto"><div class="bc-l-cifra bc-recorrido__numero">02</div><h3 class="bc-l-subtitular bc-recorrido__titulo">Documentos</h3><p class="bc-recorrido__bajada">Comuna, tipo de obra, materialidad, superficie, pisos y estándar de terminaciones.</p></div>
+          <figure class="bc-lamina bc-recorrido__marco"><svg class="bc-lamina__svg" viewBox="0 0 600 420" role="img" aria-labelledby="etapa-1-desc" xmlns="http://www.w3.org/2000/svg"><title id="etapa-1-desc">Ficha técnica del proyecto: Viña del Mar, vivienda unifamiliar, albañilería confinada, 125 metros cuadrados, 2 pisos, terminaciones estándar medio.</title><rect width="600" height="420" fill="url(#bc-reticula)"/><text class="bc-svg-mono" x="24" y="30" font-size="11" fill="#F9F9F7" fill-opacity=".45">BC-2026-0142</text><text class="bc-svg-rotulo" x="576" y="30" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">VIVIENDA · VIÑA DEL MAR · DEMO</text><path d="M24 42H576" stroke="#F9F9F7" stroke-opacity=".1"/><text class="bc-svg-rotulo" x="24" y="64" font-size="9" fill="#FF5E00">02 · DOCUMENTOS</text>
+<g class="bc-a" style="--d:0s">
+  <g transform="translate(-54 120) scale(.42)" stroke="#F9F9F7" stroke-opacity=".6" stroke-width="3.6" fill="none" stroke-linejoin="round">
+<path  d="M200 320H380V200H200Z" />
+<path  d="M380 320L470 275V155L380 200" />
+<path  d="M200 200L290 140L380 200" />
+<path  d="M290 140L380 95L470 155" /></g>
+</g>
+<circle class="bc-a" style="--d:0.1s" cx="30" cy="254" r="4" fill="#FF5E00"/>
+<text class="bc-a bc-svg-rotulo" style="--d:0.2s" x="30" y="290" font-size="9" fill="#F9F9F7" fill-opacity=".45">PROYECTO</text>
+<path class="bc-trazo" pathLength="1" style="--d:0.25s" d="M156 214H236" stroke="#FF5E00" stroke-width="1.2" fill="none"/>
+<path class="bc-a" style="--d:0.4s" d="M230 209l7 5-7 5" stroke="#FF5E00" stroke-width="1.2" fill="none"/>
+<g class="bc-a" style="--d:0.3s">
+  <path d="M246 86H572V356H246Z" stroke="#F9F9F7" stroke-opacity=".25" fill="#F9F9F7" fill-opacity=".03"/>
+  <text class="bc-svg-rotulo" x="262" y="104" font-size="9" fill="#F9F9F7" fill-opacity=".7">FICHA DEL PROYECTO</text>
+  <text class="bc-svg-mono" x="556" y="104" font-size="9" text-anchor="end" fill="#FF5E00">6 / 6 DATOS</text>
+</g>
+<g class="bc-a" style="--d:0.5s;--dx:-12px;--dy:0px">
+  <circle cx="262" cy="124" r="3" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="276" y="128" font-size="9" fill="#F9F9F7" fill-opacity=".5">COMUNA</text>
+  <text x="556" y="128" font-size="14" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">Viña del Mar</text>
+  <path d="M276 142H556" stroke="#F9F9F7" stroke-opacity=".1"/>
+</g><g class="bc-a" style="--d:0.6799999999999999s;--dx:-12px;--dy:0px">
+  <circle cx="262" cy="162" r="3" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="276" y="166" font-size="9" fill="#F9F9F7" fill-opacity=".5">TIPO DE OBRA</text>
+  <text x="556" y="166" font-size="14" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">Vivienda unifamiliar</text>
+  <path d="M276 180H556" stroke="#F9F9F7" stroke-opacity=".1"/>
+</g><g class="bc-a" style="--d:0.86s;--dx:-12px;--dy:0px">
+  <circle cx="262" cy="200" r="3" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="276" y="204" font-size="9" fill="#F9F9F7" fill-opacity=".5">MATERIALIDAD</text>
+  <text x="556" y="204" font-size="14" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">Albañilería confinada</text>
+  <path d="M276 218H556" stroke="#F9F9F7" stroke-opacity=".1"/>
+</g><g class="bc-a" style="--d:1.04s;--dx:-12px;--dy:0px">
+  <circle cx="262" cy="238" r="3" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="276" y="242" font-size="9" fill="#F9F9F7" fill-opacity=".5">SUPERFICIE</text>
+  <text x="556" y="242" font-size="14" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">125 m²</text>
+  <path d="M276 256H556" stroke="#F9F9F7" stroke-opacity=".1"/>
+</g><g class="bc-a" style="--d:1.22s;--dx:-12px;--dy:0px">
+  <circle cx="262" cy="276" r="3" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="276" y="280" font-size="9" fill="#F9F9F7" fill-opacity=".5">PISOS</text>
+  <text x="556" y="280" font-size="14" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">2</text>
+  <path d="M276 294H556" stroke="#F9F9F7" stroke-opacity=".1"/>
+</g><g class="bc-a" style="--d:1.4s;--dx:-12px;--dy:0px">
+  <circle cx="262" cy="314" r="3" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="276" y="318" font-size="9" fill="#F9F9F7" fill-opacity=".5">TERMINACIONES</text>
+  <text x="556" y="318" font-size="14" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">Estándar medio</text>
+  <path d="M276 332H556" stroke="#F9F9F7" stroke-opacity=".1"/>
+</g><g class="bc-riel" aria-hidden="true"><path d="M60 392H540" stroke="#F9F9F7" stroke-opacity=".16" stroke-width="1"/><path d="M60 392H60" stroke="#FF5E00" stroke-opacity=".55" stroke-width="1.5"/><path class="bc-trazo" pathLength="1" style="--d:0.1s" d="M60 392H156" stroke="#FF5E00" stroke-width="1.5"/><circle cx="60" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="60" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">01</text><text class="bc-svg-mono" x="156" y="410" font-size="9" text-anchor="middle" fill="#FF5E00" fill-opacity="1">02</text><circle cx="252" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="252" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">03</text><circle cx="348" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="348" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">04</text><circle cx="444" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="444" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">05</text><circle cx="540" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="540" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">06</text><circle class="bc-a bc-punto" style="--d:0.5s" cx="156" cy="392" r="5" fill="#FF5E00"/></g></svg></figure>
         </div>
       </div>
-      <div data-seq-item="2" style="position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(24px,4vw,48px);opacity:0">
-        <div style="max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
-          <div><div style="font-family:'Space Grotesk';font-size:clamp(84px,12vw,190px);line-height:.85;color:#FF5E00;letter-spacing:-0.05em">03</div><h3 style="font-size:clamp(36px,5vw,76px);margin-top:12px;font-weight:600">Análisis</h3><p style="margin-top:24px;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:#8F8F8F;max-width:420px">Cada partida se cubica con cuantías paramétricas sobre la superficie y la planta.</p></div>
-          <div style="height:clamp(200px,50vh,560px);border:1px solid rgba(249,249,247,.18);display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(249,249,247,.45)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="150" y="120" width="300" height="200" stroke="#F9F9F7" stroke-opacity="0.5" stroke-width="3" fill="none"/><line x1="300" y1="120" x2="300" y2="320" stroke="#F9F9F7" stroke-opacity="0.25" stroke-width="2"/><line x1="150" y1="230" x2="300" y2="230" stroke="#F9F9F7" stroke-opacity="0.25" stroke-width="2"/><line x1="150" y1="350" x2="450" y2="350" stroke="#FF5E00" stroke-opacity="0.5" stroke-width="1.5"/><line x1="150" y1="342" x2="150" y2="358" stroke="#FF5E00" stroke-opacity="0.5" stroke-width="1.5"/><line x1="450" y1="342" x2="450" y2="358" stroke="#FF5E00" stroke-opacity="0.5" stroke-width="1.5"/><text x="300" y="382" fill="#FF5E00" font-family="monospace" font-size="20" text-anchor="middle">12,40 m</text></svg></div>
+      <div class="bc-capa-item bc-l-recorrido__lamina" data-seq-item="2" data-anima>
+        <div class="bc-recorrido__fila">
+          <div class="bc-recorrido__texto"><div class="bc-l-cifra bc-recorrido__numero">03</div><h3 class="bc-l-subtitular bc-recorrido__titulo">Análisis</h3><p class="bc-recorrido__bajada">La plantilla según tipo de obra y materialidad propone las partidas iniciales del presupuesto.</p></div>
+          <figure class="bc-lamina bc-recorrido__marco"><svg class="bc-lamina__svg" viewBox="0 0 600 420" role="img" aria-labelledby="etapa-2-desc" xmlns="http://www.w3.org/2000/svg"><title id="etapa-2-desc">Planta de 10,40 por 6,00 metros con estar-comedor de 31,2 metros cuadrados destacado; la plantilla de vivienda en albañilería confinada propone 45 partidas.</title><rect width="600" height="420" fill="url(#bc-reticula)"/><text class="bc-svg-mono" x="24" y="30" font-size="11" fill="#F9F9F7" fill-opacity=".45">BC-2026-0142</text><text class="bc-svg-rotulo" x="576" y="30" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">VIVIENDA · VIÑA DEL MAR · DEMO</text><path d="M24 42H576" stroke="#F9F9F7" stroke-opacity=".1"/><text class="bc-svg-rotulo" x="24" y="64" font-size="9" fill="#FF5E00">03 · ANÁLISIS</text>
+<path class="bc-a" style="--d:0.9s" d="M70 132H216V300H70Z" fill="#FF5E00" fill-opacity=".14"/>
+<path class="bc-trazo" pathLength="1" style="--d:0.1s" d="M70 300V132H361V300H70" stroke="#F9F9F7" stroke-width="3" fill="none"/>
+<g stroke="#F9F9F7" stroke-width="1.6" fill="none">
+  <path class="bc-trazo" pathLength="1" style="--d:0.55s" d="M216 132V196M216 230V300"/>
+  <path class="bc-trazo" pathLength="1" style="--d:0.65s" d="M216 222H260M290 222H361"/>
+  <path class="bc-trazo" pathLength="1" style="--d:0.75s" d="M280 222V250M280 276V300"/>
+</g>
+<g class="bc-a" style="--d:0.9s" stroke="#F9F9F7" stroke-opacity=".35" fill="none">
+  <path d="M216 196a34 34 0 0 1 0 34"/><path d="M110 300a26 26 0 0 0 26-26"/>
+</g>
+<circle class="bc-a" style="--d:0s" cx="70" cy="300" r="5" fill="#FF5E00"/>
+<g class="bc-a" style="--d:1.05s">
+  <text class="bc-svg-rotulo" x="143" y="208" font-size="9" text-anchor="middle" fill="#FF5E00">ESTAR · COMEDOR</text>
+  <text class="bc-svg-mono" x="143" y="226" font-size="13" text-anchor="middle" fill="#FF5E00">31,2 m²</text>
+  <text class="bc-svg-rotulo" x="288" y="178" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity=".55">COCINA</text>
+  <text class="bc-svg-rotulo" x="248" y="266" font-size="8" text-anchor="middle" fill="#F9F9F7" fill-opacity=".55">BAÑO</text>
+  <text class="bc-svg-rotulo" x="320" y="266" font-size="8" text-anchor="middle" fill="#F9F9F7" fill-opacity=".55">DORM.</text>
+</g>
+<g class="bc-a" style="--d:1.2s">
+  <g stroke="#FF5E00" stroke-width="1" fill="none"><path d="M70 112H361M70 106v12M361 106v12"/><path d="M48 132V300M42 132h12M42 300h12"/></g>
+  <text class="bc-svg-mono" x="215" y="104" font-size="11" text-anchor="middle" fill="#FF5E00">10,40</text>
+  <g><text class="bc-svg-mono" x="40" y="220" font-size="11" text-anchor="end" fill="#FF5E00">6,00</text></g>
+</g>
+<g class="bc-a" style="--d:1.35s;--dx:12px;--dy:0px">
+  <path d="M396 120H572" stroke="#F9F9F7" stroke-opacity=".2"/>
+  <text class="bc-svg-rotulo" x="396" y="140" font-size="9" fill="#F9F9F7" fill-opacity=".5">SUPERFICIE</text>
+  <text class="bc-svg-mono" x="572" y="140" font-size="12" text-anchor="end" fill="#F9F9F7">62,4 m² × 2</text>
+  <text class="bc-svg-rotulo" x="396" y="166" font-size="9" fill="#F9F9F7" fill-opacity=".5">MATERIALIDAD</text>
+  <text x="572" y="166" font-size="12" text-anchor="end" fill="#F9F9F7" class="bc-svg-texto">Albañilería conf.</text>
+  <path d="M396 182H572" stroke="#F9F9F7" stroke-opacity=".2"/>
+</g>
+<g class="bc-a" style="--d:1.55s;--dx:12px;--dy:0px">
+  <text class="bc-svg-rotulo" x="396" y="214" font-size="9" fill="#FF5E00">PLANTILLA APLICADA</text>
+  <text x="396" y="236" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Vivienda unifamiliar</text>
+  <text x="396" y="254" font-size="13" fill="#F9F9F7" fill-opacity=".7" class="bc-svg-texto">Albañilería confinada</text>
+  <path d="M396 276H426" stroke="#FF5E00" stroke-width="2"/>
+  <text class="bc-svg-mono" x="396" y="302" font-size="24" fill="#F9F9F7">45</text>
+  <text class="bc-svg-rotulo" x="436" y="301" font-size="9" fill="#F9F9F7" fill-opacity=".55">PARTIDAS INICIALES</text>
+</g><g class="bc-riel" aria-hidden="true"><path d="M60 392H540" stroke="#F9F9F7" stroke-opacity=".16" stroke-width="1"/><path d="M60 392H156" stroke="#FF5E00" stroke-opacity=".55" stroke-width="1.5"/><path class="bc-trazo" pathLength="1" style="--d:0.1s" d="M156 392H252" stroke="#FF5E00" stroke-width="1.5"/><circle cx="60" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="60" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">01</text><circle cx="156" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="156" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">02</text><text class="bc-svg-mono" x="252" y="410" font-size="9" text-anchor="middle" fill="#FF5E00" fill-opacity="1">03</text><circle cx="348" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="348" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">04</text><circle cx="444" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="444" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">05</text><circle cx="540" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="540" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">06</text><circle class="bc-a bc-punto" style="--d:0.5s" cx="252" cy="392" r="5" fill="#FF5E00"/></g></svg></figure>
         </div>
       </div>
-      <div data-seq-item="3" style="position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(24px,4vw,48px);opacity:0">
-        <div style="max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
-          <div><div style="font-family:'Space Grotesk';font-size:clamp(84px,12vw,190px);line-height:.85;color:#FF5E00;letter-spacing:-0.05em">04</div><h3 style="font-size:clamp(36px,5vw,76px);margin-top:12px;font-weight:600">Cantidades</h3><p style="margin-top:24px;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:#8F8F8F;max-width:420px">Cantidades por partida: metros cúbicos, kilos de fierro, metros cuadrados de estuco.</p></div>
-          <div style="height:clamp(200px,50vh,560px);border:1px solid rgba(249,249,247,.18);display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(249,249,247,.45)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="150" y="110" width="300" height="22" fill="#F9F9F7" fill-opacity="0.35"/><rect x="150" y="156" width="256" height="22" fill="#F9F9F7" fill-opacity="0.31"/><rect x="150" y="202" width="212" height="22" fill="#F9F9F7" fill-opacity="0.26999999999999996"/><rect x="150" y="248" width="168" height="22" fill="#F9F9F7" fill-opacity="0.22999999999999998"/><rect x="150" y="294" width="124" height="22" fill="#F9F9F7" fill-opacity="0.18999999999999997"/><rect x="150" y="248" width="168" height="22" fill="#FF5E00"/></svg></div>
+      <div class="bc-capa-item bc-l-recorrido__lamina" data-seq-item="3" data-anima>
+        <div class="bc-recorrido__fila">
+          <div class="bc-recorrido__texto"><div class="bc-l-cifra bc-recorrido__numero">04</div><h3 class="bc-l-subtitular bc-recorrido__titulo">Cantidades</h3><p class="bc-recorrido__bajada">Cada partida con su unidad y cantidad: metros cúbicos de hormigón, kilos de acero, metros cuadrados de muro.</p></div>
+          <figure class="bc-lamina bc-recorrido__marco"><svg class="bc-lamina__svg" viewBox="0 0 600 420" role="img" aria-labelledby="etapa-3-desc" xmlns="http://www.w3.org/2000/svg"><title id="etapa-3-desc">Cubicación de demostración: excavación 21,6 metros cúbicos, hormigón de cimientos 18,4 metros cúbicos, enfierradura 1.240 kilos, albañilería 96 metros cuadrados, revestimiento 112 metros cuadrados.</title><rect width="600" height="420" fill="url(#bc-reticula)"/><text class="bc-svg-mono" x="24" y="30" font-size="11" fill="#F9F9F7" fill-opacity=".45">BC-2026-0142</text><text class="bc-svg-rotulo" x="576" y="30" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">VIVIENDA · VIÑA DEL MAR · DEMO</text><path d="M24 42H576" stroke="#F9F9F7" stroke-opacity=".1"/><text class="bc-svg-rotulo" x="24" y="64" font-size="9" fill="#FF5E00">04 · CANTIDADES</text>
+<g class="bc-a" style="--d:0s">
+  <text class="bc-svg-rotulo" x="52" y="96" font-size="9" fill="#F9F9F7" fill-opacity=".5">CÓDIGO</text>
+  <text class="bc-svg-rotulo" x="104" y="96" font-size="9" fill="#F9F9F7" fill-opacity=".5">PARTIDA</text>
+  <text class="bc-svg-rotulo" x="452" y="96" font-size="9" fill="#F9F9F7" fill-opacity=".5">UNIDAD</text>
+  <text class="bc-svg-rotulo" x="560" y="96" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".5">CANTIDAD</text>
+  <path d="M24 106H576" stroke="#F9F9F7" stroke-opacity=".3"/>
+</g>
+<g class="bc-a" style="--d:0.25s">
+  
+  <text class="bc-svg-mono" x="52" y="130" font-size="11" fill="#F9F9F7" fill-opacity="0.45">02.02</text>
+  <text x="104" y="130" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Excavación</text>
+  <text class="bc-svg-mono" x="452" y="130" font-size="11" fill="#F9F9F7" fill-opacity=".5">m³</text>
+  <text class="bc-a bc-svg-mono" style="--d:0.8s" x="560" y="130" font-size="15" text-anchor="end" fill="#F9F9F7">21,6</text>
+  <path d="M104 139H436" stroke="#F9F9F7" stroke-opacity=".1"/>
+  <path class="bc-crece" style="--d:0.4s" d="M104 139H204" stroke="#F9F9F7" stroke-opacity="0.55" stroke-width="2"/>
+</g><g class="bc-a" style="--d:0.41000000000000003s">
+  <path d="M24 154H576V194H24Z" fill="#FF5E00" fill-opacity=".08"/><circle cx="36" cy="172" r="4" fill="#FF5E00"/>
+  <text class="bc-svg-mono" x="52" y="176" font-size="11" fill="#FF5E00" fill-opacity="1">03.02</text>
+  <text x="104" y="176" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Hormigón de cimientos</text>
+  <text class="bc-svg-mono" x="452" y="176" font-size="11" fill="#F9F9F7" fill-opacity=".5">m³</text>
+  <text class="bc-a bc-svg-mono" style="--d:0.9600000000000001s" x="560" y="176" font-size="15" text-anchor="end" fill="#FF5E00">18,4</text>
+  <path d="M104 185H436" stroke="#F9F9F7" stroke-opacity=".1"/>
+  <path class="bc-crece" style="--d:0.56s" d="M104 185H190" stroke="#FF5E00" stroke-opacity="1" stroke-width="2"/>
+</g><g class="bc-a" style="--d:0.5700000000000001s">
+  
+  <text class="bc-svg-mono" x="52" y="222" font-size="11" fill="#F9F9F7" fill-opacity="0.45">04.03</text>
+  <text x="104" y="222" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Enfierradura</text>
+  <text class="bc-svg-mono" x="452" y="222" font-size="11" fill="#F9F9F7" fill-opacity=".5">kg</text>
+  <text class="bc-a bc-svg-mono" style="--d:1.12s" x="560" y="222" font-size="15" text-anchor="end" fill="#F9F9F7">1.240</text>
+  <path d="M104 231H436" stroke="#F9F9F7" stroke-opacity=".1"/>
+  <path class="bc-crece" style="--d:0.7200000000000001s" d="M104 231H390" stroke="#F9F9F7" stroke-opacity="0.55" stroke-width="2"/>
+</g><g class="bc-a" style="--d:0.73s">
+  
+  <text class="bc-svg-mono" x="52" y="268" font-size="11" fill="#F9F9F7" fill-opacity="0.45">04.01</text>
+  <text x="104" y="268" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Albañilería</text>
+  <text class="bc-svg-mono" x="452" y="268" font-size="11" fill="#F9F9F7" fill-opacity=".5">m²</text>
+  <text class="bc-a bc-svg-mono" style="--d:1.28s" x="560" y="268" font-size="15" text-anchor="end" fill="#F9F9F7">96,0</text>
+  <path d="M104 277H436" stroke="#F9F9F7" stroke-opacity=".1"/>
+  <path class="bc-crece" style="--d:0.88s" d="M104 277H310" stroke="#F9F9F7" stroke-opacity="0.55" stroke-width="2"/>
+</g><g class="bc-a" style="--d:0.89s">
+  
+  <text class="bc-svg-mono" x="52" y="314" font-size="11" fill="#F9F9F7" fill-opacity="0.45">06.02</text>
+  <text x="104" y="314" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Revestimiento</text>
+  <text class="bc-svg-mono" x="452" y="314" font-size="11" fill="#F9F9F7" fill-opacity=".5">m²</text>
+  <text class="bc-a bc-svg-mono" style="--d:1.44s" x="560" y="314" font-size="15" text-anchor="end" fill="#F9F9F7">112,0</text>
+  <path d="M104 323H436" stroke="#F9F9F7" stroke-opacity=".1"/>
+  <path class="bc-crece" style="--d:1.04s" d="M104 323H343" stroke="#F9F9F7" stroke-opacity="0.55" stroke-width="2"/>
+</g>
+<text class="bc-a bc-svg-rotulo" style="--d:1.3s" x="24" y="364" font-size="9" fill="#F9F9F7" fill-opacity=".38">+ 40 PARTIDAS · DESDE LA PLANTA 10,40 × 6,00 · 2 PISOS</text><g class="bc-riel" aria-hidden="true"><path d="M60 392H540" stroke="#F9F9F7" stroke-opacity=".16" stroke-width="1"/><path d="M60 392H252" stroke="#FF5E00" stroke-opacity=".55" stroke-width="1.5"/><path class="bc-trazo" pathLength="1" style="--d:0.1s" d="M252 392H348" stroke="#FF5E00" stroke-width="1.5"/><circle cx="60" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="60" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">01</text><circle cx="156" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="156" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">02</text><circle cx="252" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="252" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">03</text><text class="bc-svg-mono" x="348" y="410" font-size="9" text-anchor="middle" fill="#FF5E00" fill-opacity="1">04</text><circle cx="444" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="444" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">05</text><circle cx="540" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="540" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">06</text><circle class="bc-a bc-punto" style="--d:0.5s" cx="348" cy="392" r="5" fill="#FF5E00"/></g></svg></figure>
         </div>
       </div>
-      <div data-seq-item="4" style="position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(24px,4vw,48px);opacity:0">
-        <div style="max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
-          <div><div style="font-family:'Space Grotesk';font-size:clamp(84px,12vw,190px);line-height:.85;color:#FF5E00;letter-spacing:-0.05em">05</div><h3 style="font-size:clamp(36px,5vw,76px);margin-top:12px;font-weight:600">Costos</h3><p style="margin-top:24px;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:#8F8F8F;max-width:420px">Precio unitario del banco vigente más el rendimiento de mano de obra de cada partida.</p></div>
-          <div style="height:clamp(200px,50vh,560px);border:1px solid rgba(249,249,247,.18);display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(249,249,247,.45)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="150" y="140" width="180" height="70" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="380" y="140" width="110" height="70" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><text x="240" y="186" fill="#F9F9F7" fill-opacity=".55" font-family="monospace" font-size="26" text-anchor="middle">145 m³</text><text x="355" y="186" fill="#FF5E00" font-family="monospace" font-size="30" text-anchor="middle">×</text><text x="435" y="186" fill="#F9F9F7" fill-opacity=".55" font-family="monospace" font-size="22" text-anchor="middle">$95k</text><line x1="150" y1="250" x2="490" y2="250" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2"/><text x="490" y="300" fill="#FF5E00" font-family="monospace" font-size="30" text-anchor="end">$13.775.000</text></svg></div>
+      <div class="bc-capa-item bc-l-recorrido__lamina" data-seq-item="4" data-anima>
+        <div class="bc-recorrido__fila">
+          <div class="bc-recorrido__texto"><div class="bc-l-cifra bc-recorrido__numero">05</div><h3 class="bc-l-subtitular bc-recorrido__titulo">Costos</h3><p class="bc-recorrido__bajada">Cantidad × precio unitario del banco vigente, partida por partida. La suma es el costo directo.</p></div>
+          <figure class="bc-lamina bc-recorrido__marco"><svg class="bc-lamina__svg" viewBox="0 0 600 420" role="img" aria-labelledby="etapa-4-desc" xmlns="http://www.w3.org/2000/svg"><title id="etapa-4-desc">Cantidad por precio unitario: 18,4 metros cúbicos por 98.500 pesos el metro cúbico da un subtotal de 1.812.400 pesos; sumando las 45 partidas, el costo directo es 61.240.500 pesos.</title><rect width="600" height="420" fill="url(#bc-reticula)"/><text class="bc-svg-mono" x="24" y="30" font-size="11" fill="#F9F9F7" fill-opacity=".45">BC-2026-0142</text><text class="bc-svg-rotulo" x="576" y="30" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">VIVIENDA · VIÑA DEL MAR · DEMO</text><path d="M24 42H576" stroke="#F9F9F7" stroke-opacity=".1"/><text class="bc-svg-rotulo" x="24" y="64" font-size="9" fill="#FF5E00">05 · COSTOS</text>
+<g class="bc-a" style="--d:0.1s;--dx:-24px;--dy:0px">
+  <path d="M24 88H214V156H24Z" stroke="#F9F9F7" stroke-opacity=".3" fill="none"/>
+  <text class="bc-svg-rotulo" x="38" y="106" font-size="8" fill="#F9F9F7" fill-opacity=".5">CANTIDAD</text>
+  <text class="bc-svg-mono" x="200" y="142" font-size="26" text-anchor="end" fill="#F9F9F7">18,4 m³</text>
+</g>
+<circle class="bc-a" style="--d:0.55s" cx="248" cy="122" r="16" fill="#FF5E00" fill-opacity=".12"/>
+<text class="bc-a bc-svg-mono" style="--d:0.55s" x="248" y="131" font-size="26" text-anchor="middle" fill="#FF5E00">×</text>
+<g class="bc-a" style="--d:0.1s;--dx:24px;--dy:0px">
+  <path d="M282 88H576V156H282Z" stroke="#F9F9F7" stroke-opacity=".3" fill="none"/>
+  <text class="bc-svg-rotulo" x="296" y="106" font-size="8" fill="#F9F9F7" fill-opacity=".5">PRECIO UNITARIO · BANCO VIGENTE</text>
+  <text class="bc-svg-mono" x="562" y="142" font-size="26" text-anchor="end" fill="#F9F9F7">$ 98.500 / m³</text>
+</g>
+<path class="bc-trazo" pathLength="1" style="--d:0.8s" d="M24 184H576" stroke="#F9F9F7" stroke-opacity=".45" fill="none"/>
+<g class="bc-a" style="--d:1s">
+  <text class="bc-svg-rotulo" x="24" y="216" font-size="9" fill="#F9F9F7" fill-opacity=".6">SUBTOTAL PARTIDA</text>
+  <text class="bc-svg-mono" x="24" y="234" font-size="11" fill="#FF5E00">03.02 HORMIGÓN DE CIMIENTOS</text>
+  <text class="bc-svg-mono" x="576" y="232" font-size="34" text-anchor="end" fill="#FF5E00">$ 1.812.400</text>
+</g>
+<g class="bc-a" style="--d:1.3s">
+  <text class="bc-svg-mono" x="24" y="268" font-size="11" fill="#F9F9F7" fill-opacity=".38">02.02 Excavación</text>
+  <text class="bc-svg-mono" x="576" y="268" font-size="11" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">$ 306.720</text></g><g class="bc-a" style="--d:1.42s">
+  <text class="bc-svg-mono" x="24" y="288" font-size="11" fill="#F9F9F7" fill-opacity=".38">04.03 Enfierradura</text>
+  <text class="bc-svg-mono" x="576" y="288" font-size="11" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">$ 1.798.000</text></g><g class="bc-a" style="--d:1.54s">
+  <text class="bc-svg-mono" x="24" y="308" font-size="11" fill="#F9F9F7" fill-opacity=".38">04.01 Albañilería</text>
+  <text class="bc-svg-mono" x="576" y="308" font-size="11" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">$ 3.072.000</text></g>
+<text class="bc-a bc-svg-mono" style="--d:1.66s" x="24" y="328" font-size="11" fill="#F9F9F7" fill-opacity=".25">+ 41 partidas más</text>
+<path class="bc-trazo" pathLength="1" style="--d:1.75s" d="M24 340H576" stroke="#F9F9F7" stroke-width="1.5" fill="none"/>
+<g class="bc-a" style="--d:1.95s">
+  <text class="bc-svg-rotulo" x="24" y="366" font-size="10" fill="#F9F9F7">COSTO DIRECTO · 45 PARTIDAS</text>
+  <text class="bc-svg-mono" x="576" y="368" font-size="20" text-anchor="end" fill="#F9F9F7">$ 61.240.500</text>
+</g><g class="bc-riel" aria-hidden="true"><path d="M60 392H540" stroke="#F9F9F7" stroke-opacity=".16" stroke-width="1"/><path d="M60 392H348" stroke="#FF5E00" stroke-opacity=".55" stroke-width="1.5"/><path class="bc-trazo" pathLength="1" style="--d:0.1s" d="M348 392H444" stroke="#FF5E00" stroke-width="1.5"/><circle cx="60" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="60" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">01</text><circle cx="156" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="156" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">02</text><circle cx="252" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="252" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">03</text><circle cx="348" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="348" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">04</text><text class="bc-svg-mono" x="444" y="410" font-size="9" text-anchor="middle" fill="#FF5E00" fill-opacity="1">05</text><circle cx="540" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".2"/><text class="bc-svg-mono" x="540" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.25">06</text><circle class="bc-a bc-punto" style="--d:0.5s" cx="444" cy="392" r="5" fill="#FF5E00"/></g></svg></figure>
         </div>
       </div>
-      <div data-seq-item="5" data-hold="1" style="position:absolute;inset:0;display:flex;align-items:center;padding:0 clamp(24px,4vw,48px);opacity:0">
-        <div style="max-width:1600px;width:100%;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(24px,4vw,64px);align-items:center">
-          <div><div style="font-family:'Space Grotesk';font-size:clamp(84px,12vw,190px);line-height:.85;color:#FF5E00;letter-spacing:-0.05em">06</div><h3 style="font-size:clamp(36px,5vw,76px);margin-top:12px;font-weight:600">Presupuesto</h3><p style="margin-top:24px;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:#8F8F8F;max-width:420px">Costo por capítulo, plazo con su intervalo y documento con folio para el mandante.</p></div>
-          <div style="height:clamp(200px,50vh,560px);border:1px solid rgba(249,249,247,.18);display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(249,249,247,.45)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="190" y="90" width="230" height="290" stroke="#F9F9F7" stroke-opacity="0.4" stroke-width="2" fill="none"/><rect x="215" y="130" width="180" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="215" y="164" width="130" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="215" y="198" width="80" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="215" y="232" width="180" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="215" y="266" width="130" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="215" y="300" width="80" height="8" fill="#F9F9F7" fill-opacity=".3"/><rect x="215" y="330" width="120" height="16" fill="#FF5E00"/><text x="215" y="118" fill="#FF5E00" font-family="monospace" font-size="16">BC-2026-0142</text></svg></div>
+      <div class="bc-capa-item bc-l-recorrido__lamina" data-seq-item="5" data-anima data-hold="1">
+        <div class="bc-recorrido__fila">
+          <div class="bc-recorrido__texto"><div class="bc-l-cifra bc-recorrido__numero">06</div><h3 class="bc-l-subtitular bc-recorrido__titulo">Presupuesto</h3><p class="bc-recorrido__bajada">Costo por capítulo, plazo con su intervalo y documento con folio para el mandante.</p></div>
+          <figure class="bc-lamina bc-recorrido__marco"><svg class="bc-lamina__svg" viewBox="0 0 600 420" role="img" aria-labelledby="etapa-5-desc" xmlns="http://www.w3.org/2000/svg"><title id="etapa-5-desc">Documento de entrega con folio BC-2026-0142: costo por capítulo, costo total de 76.550.625 pesos con gastos generales y utilidad, y plazo referencial de 126 días con intervalo de 108 a 148 días.</title><rect width="600" height="420" fill="url(#bc-reticula)"/><text class="bc-a bc-svg-mono" style="--d:0.2s" x="24" y="30" font-size="11" fill="#FF5E00">BC-2026-0142</text><text class="bc-svg-rotulo" x="576" y="30" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".38">VIVIENDA · VIÑA DEL MAR · DEMO</text><path d="M24 42H576" stroke="#F9F9F7" stroke-opacity=".1"/><text class="bc-svg-rotulo" x="24" y="64" font-size="9" fill="#FF5E00">06 · PRESUPUESTO</text>
+<path class="bc-a" style="--d:0s" d="M170 78H430V376H170Z" fill="#F9F9F7"/>
+<path class="bc-trazo" pathLength="1" style="--d:0s" d="M170 78H430V376H170Z" stroke="#FF5E00" stroke-width="1" fill="none"/>
+<g class="bc-a" style="--d:0.3s">
+  <text x="186" y="100" font-size="10" font-weight="700" letter-spacing="2.4" fill="#1A1A1A" class="bc-svg-texto">BUILDCAST</text>
+  <text class="bc-svg-mono" x="414" y="100" font-size="10" text-anchor="end" fill="#FF5E00">BC-2026-0142</text>
+  <text x="186" y="122" font-size="11.5" font-weight="700" fill="#1A1A1A" class="bc-svg-texto">Vivienda unifamiliar · Viña del Mar</text>
+  <text x="186" y="137" font-size="9" fill="#1A1A1A" fill-opacity=".55" class="bc-svg-texto">125 m² · 2 pisos · Albañilería confinada</text>
+  <path d="M186 148H414" stroke="#1A1A1A" stroke-opacity=".8"/>
+</g>
+<g class="bc-a" style="--d:0.5s;--dx:-8px;--dy:0px">
+  <text x="186" y="168" font-size="9.5" fill="#1A1A1A" fill-opacity=".75" class="bc-svg-texto">Obras preliminares</text>
+  <text class="bc-svg-mono" x="414" y="168" font-size="9.5" text-anchor="end" fill="#1A1A1A">$ 2,1 M</text>
+  <path d="M186 173H414" stroke="#1A1A1A" stroke-opacity=".08"/></g><g class="bc-a" style="--d:0.6s;--dx:-8px;--dy:0px">
+  <text x="186" y="186" font-size="9.5" fill="#1A1A1A" fill-opacity=".75" class="bc-svg-texto">Obra gruesa</text>
+  <text class="bc-svg-mono" x="414" y="186" font-size="9.5" text-anchor="end" fill="#1A1A1A">$ 24,8 M</text>
+  <path d="M186 191H414" stroke="#1A1A1A" stroke-opacity=".08"/></g><g class="bc-a" style="--d:0.7s;--dx:-8px;--dy:0px">
+  <text x="186" y="204" font-size="9.5" fill="#1A1A1A" fill-opacity=".75" class="bc-svg-texto">Terminaciones</text>
+  <text class="bc-svg-mono" x="414" y="204" font-size="9.5" text-anchor="end" fill="#1A1A1A">$ 17,6 M</text>
+  <path d="M186 209H414" stroke="#1A1A1A" stroke-opacity=".08"/></g><g class="bc-a" style="--d:0.8s;--dx:-8px;--dy:0px">
+  <text x="186" y="222" font-size="9.5" fill="#1A1A1A" fill-opacity=".75" class="bc-svg-texto">Instalaciones</text>
+  <text class="bc-svg-mono" x="414" y="222" font-size="9.5" text-anchor="end" fill="#1A1A1A">$ 9,4 M</text>
+  <path d="M186 227H414" stroke="#1A1A1A" stroke-opacity=".08"/></g><g class="bc-a" style="--d:0.9s;--dx:-8px;--dy:0px">
+  <text x="186" y="240" font-size="9.5" fill="#1A1A1A" fill-opacity=".75" class="bc-svg-texto">Otros capítulos</text>
+  <text class="bc-svg-mono" x="414" y="240" font-size="9.5" text-anchor="end" fill="#1A1A1A">$ 7,3 M</text>
+  <path d="M186 245H414" stroke="#1A1A1A" stroke-opacity=".08"/></g>
+<text class="bc-a bc-svg-mono" style="--d:1s" x="186" y="268" font-size="8.5" fill="#1A1A1A" fill-opacity=".5">COSTO DIRECTO $ 61,2 M · GG 15 % · UTILIDAD 10 %</text>
+<path class="bc-crece" style="--d:1.15s" d="M186 278H414V312H186Z" fill="#FF5E00"/>
+<g class="bc-a" style="--d:1.45s">
+  <text class="bc-svg-rotulo" x="196" y="299" font-size="8.5" fill="#fff">COSTO TOTAL</text>
+  <text class="bc-svg-mono" x="406" y="301" font-size="15" text-anchor="end" fill="#fff">$ 76.550.625</text>
+</g>
+<g class="bc-a" style="--d:1.65s">
+  <text class="bc-svg-rotulo" x="186" y="334" font-size="8.5" fill="#1A1A1A" fill-opacity=".6">PLAZO REFERENCIAL</text>
+  <text class="bc-svg-mono" x="414" y="335" font-size="12" text-anchor="end" fill="#1A1A1A">126 días</text>
+  <path d="M186 352H414" stroke="#1A1A1A" stroke-opacity=".15" stroke-width="4"/>
+  <path d="M250 352H342" stroke="#1A1A1A" stroke-opacity=".55" stroke-width="4"/>
+  <circle cx="293" cy="352" r="4" fill="#FF5E00"/>
+  <text class="bc-svg-mono" x="250" y="368" font-size="8" text-anchor="middle" fill="#1A1A1A" fill-opacity=".5">108</text>
+  <text class="bc-svg-mono" x="342" y="368" font-size="8" text-anchor="middle" fill="#1A1A1A" fill-opacity=".5">148</text>
+</g>
+<g class="bc-a" style="--d:0.6s;--dx:-10px;--dy:0px" stroke="#F9F9F7" stroke-opacity=".25" fill="none">
+  <path d="M120 129H164"/><path d="M120 200H164"/><path d="M120 295H164"/><path d="M120 340H164"/>
+</g>
+<g class="bc-a" style="--d:0.6s;--dx:-10px;--dy:0px">
+  <text class="bc-svg-mono" x="114" y="132" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".5">01–02 DATOS</text>
+  <text class="bc-svg-mono" x="114" y="203" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".5">03–04 PARTIDAS</text>
+  <text class="bc-svg-mono" x="114" y="298" font-size="9" text-anchor="end" fill="#FF5E00">05 COSTO</text>
+  <text class="bc-svg-mono" x="114" y="343" font-size="9" text-anchor="end" fill="#F9F9F7" fill-opacity=".5">PLAZO</text>
+</g>
+<g class="bc-a" style="--d:1.9s;--dx:10px;--dy:0px">
+  <circle cx="470" cy="300" r="22" fill="none" stroke="#FF5E00" stroke-width="1.2"/>
+  <circle cx="470" cy="300" r="5" fill="#FF5E00"/>
+  <text class="bc-svg-rotulo" x="470" y="342" font-size="8" text-anchor="middle" fill="#FF5E00">ENTREGABLE</text>
+</g><g class="bc-riel" aria-hidden="true"><path d="M60 392H540" stroke="#F9F9F7" stroke-opacity=".16" stroke-width="1"/><path d="M60 392H444" stroke="#FF5E00" stroke-opacity=".55" stroke-width="1.5"/><path class="bc-trazo" pathLength="1" style="--d:0.1s" d="M444 392H540" stroke="#FF5E00" stroke-width="1.5"/><circle cx="60" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="60" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">01</text><circle cx="156" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="156" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">02</text><circle cx="252" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="252" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">03</text><circle cx="348" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="348" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">04</text><circle cx="444" cy="392" r="2.5" fill="#F9F9F7" fill-opacity=".55"/><text class="bc-svg-mono" x="444" y="410" font-size="9" text-anchor="middle" fill="#F9F9F7" fill-opacity="0.5">05</text><text class="bc-svg-mono" x="540" y="410" font-size="9" text-anchor="middle" fill="#FF5E00" fill-opacity="1">06</text><circle class="bc-a bc-punto" style="--d:0.5s" cx="540" cy="392" r="5" fill="#FF5E00"/></g></svg></figure>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="problema" data-seq="problema" style="position:relative;height:300vh;background:#F9F9F7;overflow:hidden">
-    <div style="position:sticky;top:0;height:100vh;width:100%;display:flex;align-items:center;justify-content:center">
-      <div data-chaos="0" style="position:absolute;top:20%;left:8%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Planos</div>
-      <div data-chaos="1" style="position:absolute;top:62%;left:72%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">PDFs</div>
-      <div data-chaos="2" style="position:absolute;top:14%;left:64%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Excel</div>
-      <div data-chaos="3" style="position:absolute;top:80%;left:14%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Correos</div>
-      <div data-chaos="4" style="position:absolute;top:40%;left:6%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Cotizaciones</div>
-      <div data-chaos="5" style="position:absolute;top:30%;left:78%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Partidas</div>
-      <div data-chaos="6" style="position:absolute;top:74%;left:52%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Versiones</div>
-      <div data-chaos="7" style="position:absolute;top:50%;left:36%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Cambios</div>
-      <div data-chaos="8" style="position:absolute;top:88%;left:70%;font-family:'Space Grotesk';font-size:clamp(28px,5vw,64px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(143,143,143,.45);opacity:0">Revisiones</div>
-      <div style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px">
-        <h3 style="font-size:13px;letter-spacing:.3em;color:#FF5E00;margin-bottom:48px;font-weight:400">La forma tradicional</h3>
-        <div style="position:relative;height:clamp(180px,26vh,240px);width:100%;max-width:960px;display:flex;align-items:center;justify-content:center">
-          <h2 data-seq-item="0" data-from="0.24" data-to="0.45" style="position:absolute;font-size:clamp(40px,8vw,130px);line-height:.92;letter-spacing:-0.045em;opacity:0;font-weight:600">Demasiada<br>información.</h2>
-          <h2 data-seq-item="1" data-from="0.5" data-to="0.68" style="position:absolute;font-size:clamp(40px,8vw,130px);line-height:.92;letter-spacing:-0.045em;opacity:0;font-weight:600">Demasiado<br>tiempo.</h2>
-          <h2 data-seq-item="2" data-from="0.74" data-to="0.94" data-hold="1" style="position:absolute;font-size:clamp(40px,8vw,130px);line-height:.92;letter-spacing:-0.045em;opacity:0;font-weight:600">Demasiado<br>trabajo manual.</h2>
+  <!-- El recorte va en la capa fijada: con overflow:hidden en la sección, sticky no se fija. -->
+  <section id="problema" data-seq="problema" class="bc-l-problema">
+    <div class="bc-l-problema__capa">
+      <!-- Posición, tamaño y estado inicial (opacidad 0) en landing.css (.bc-caos) -->
+      <div class="bc-caos bc-caos--planos" data-chaos="0">Planos</div>
+      <div class="bc-caos bc-caos--pdfs" data-chaos="1">PDFs</div>
+      <div class="bc-caos bc-caos--excel" data-chaos="2">Excel</div>
+      <div class="bc-caos bc-caos--correos" data-chaos="3">Correos</div>
+      <div class="bc-caos bc-caos--cotizaciones" data-chaos="4">Cotizaciones</div>
+      <div class="bc-caos bc-caos--partidas" data-chaos="5">Partidas</div>
+      <div class="bc-caos bc-caos--versiones" data-chaos="6">Versiones</div>
+      <div class="bc-caos bc-caos--cambios" data-chaos="7">Cambios</div>
+      <div class="bc-caos bc-caos--revisiones" data-chaos="8">Revisiones</div>
+      <div class="bc-l-problema__centro">
+        <h3 class="bc-l-rotulo bc-l-problema__rotulo">La forma tradicional</h3>
+        <div class="bc-titulares bc-l-problema__titulares">
+          <h2 class="bc-l-titular bc-l-problema__frase" data-seq-item="0" data-from="0.24" data-to="0.45">Demasiada<br>información.</h2>
+          <h2 class="bc-l-titular bc-l-problema__frase" data-seq-item="1" data-from="0.5" data-to="0.68">Demasiado<br>tiempo.</h2>
+          <h2 class="bc-l-titular bc-l-problema__frase" data-seq-item="2" data-from="0.74" data-to="0.94" data-hold="1">Demasiado<br>trabajo manual.</h2>
         </div>
       </div>
     </div>
   </section>
 
-  <section data-seq="cambio" style="position:relative;height:200vh;background:#ffffff">
-    <div style="position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 24px">
-      <div style="position:relative;height:clamp(200px,30vh,320px);width:100%;display:flex;align-items:center;justify-content:center">
-        <h2 data-seq-item="0" data-from="0.18" data-to="0.5" style="position:absolute;font-size:clamp(34px,6.5vw,110px);line-height:.92;letter-spacing:-0.04em;opacity:0;font-weight:600">¿Y si el proceso<br>pudiera hacerse<br>más simple?</h2>
-        <h2 data-seq-item="1" data-from="0.58" data-to="0.9" data-hold="1" style="position:absolute;font-size:clamp(46px,9vw,150px);line-height:.9;letter-spacing:-0.05em;color:#FF5E00;opacity:0;font-weight:600">Conoce<br>BuildCast.</h2>
+  <section data-seq="cambio" class="bc-l-cambio">
+    <div class="bc-l-cambio__capa">
+      <div class="bc-l-marco bc-titulares bc-l-cambio__marco">
+        <h2 class="bc-l-titular bc-l-cambio__pregunta" data-seq-item="0" data-from="0.18" data-to="0.5">¿Y si el proceso<br>pudiera hacerse<br>más simple?</h2>
+        <h2 class="bc-l-cifra bc-l-cambio__nombre" data-seq-item="1" data-from="0.58" data-to="0.9" data-hold="1">Conoce<br>BuildCast.</h2>
       </div>
     </div>
   </section>
 
-  <section style="padding:clamp(80px,12vw,180px) clamp(24px,4vw,48px);background:#F9F9F7">
-    <div style="max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(40px,5vw,96px)">
-      <div style="display:flex;flex-direction:column;justify-content:center">
-        <h2 data-reveal="up" style="font-size:clamp(38px,6vw,100px);line-height:.9;letter-spacing:-0.035em;margin-bottom:32px;font-weight:600">BuildCast<br>entiende<br>el proyecto.</h2>
-        <p data-reveal="up" data-delay="0.2" style="margin:0;font-size:clamp(17px,1.5vw,23px);font-weight:500;line-height:1.55;color:rgba(26,26,26,.7);max-width:520px;text-wrap:pretty">BuildCast calcula el costo con un banco de precios versionado y un módulo de rendimientos, y deja registro de qué versión usó en cada estimación.</p>
+  <section class="bc-l-entiende">
+    <div class="bc-l-entiende__rejilla">
+      <div class="bc-perfil-lista" role="tablist" aria-label="Perfiles" aria-orientation="vertical">
+            <h2 class="bc-l-titular bc-l-entiende__titulo" data-reveal="up">BuildCast<br>entiende<br>el proyecto.</h2>
+        <p class="bc-l-entiende__bajada" data-reveal="up" data-delay="0.2">BuildCast calcula el costo con un banco de precios versionado y un módulo de rendimientos, y deja registro de qué versión usó en cada estimación.</p>
       </div>
-      <div style="display:flex;justify-content:center;align-items:center">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:clamp(32px,5vw,56px) clamp(32px,8vw,110px);border:1px solid #E5E5E5;background:#fff;width:100%;max-width:520px">
-          <div data-reveal="up" style="font-family:'Space Grotesk';font-size:clamp(22px,2.6vw,38px);text-transform:uppercase;letter-spacing:.1em">Documentos</div>
-          <div style="color:rgba(143,143,143,.7);font-size:20px;line-height:1">↓</div>
-          <div data-reveal="up" data-delay="0.12" style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(22px,2.6vw,38px);text-transform:uppercase;letter-spacing:.1em;color:#FF5E00">BuildCast</div>
-          <div style="color:rgba(143,143,143,.7);font-size:20px;line-height:1">↓</div>
-          <div data-reveal="up" data-delay="0.24" style="font-family:'Space Grotesk';font-size:clamp(22px,2.6vw,38px);text-transform:uppercase;letter-spacing:.1em">Análisis</div>
-          <div style="color:rgba(143,143,143,.7);font-size:20px;line-height:1">↓</div>
-          <div data-reveal="up" data-delay="0.36" style="font-family:'Space Grotesk';font-size:clamp(22px,2.6vw,38px);text-transform:uppercase;letter-spacing:.1em">Cantidades</div>
-          <div style="color:rgba(143,143,143,.7);font-size:20px;line-height:1">↓</div>
-          <div data-reveal="up" data-delay="0.48" style="font-family:'Space Grotesk';font-size:clamp(22px,2.6vw,38px);text-transform:uppercase;letter-spacing:.1em">Costos</div>
-          <div style="color:rgba(143,143,143,.7);font-size:20px;line-height:1">↓</div>
-          <div data-reveal="up" data-delay="0.6" style="font-family:'Space Grotesk';font-size:clamp(22px,2.6vw,38px);text-transform:uppercase;letter-spacing:.1em">Presupuesto</div>
+      <div class="bc-l-entiende__lado">
+        <div class="bc-l-pasos-v">
+          <div class="bc-l-pasos-v__paso" data-reveal="up">Documentos</div>
+          <div class="bc-l-pasos-v__flecha">↓</div>
+          <div class="bc-l-pasos-v__paso bc-l-pasos-v__paso--marca" data-reveal="up" data-delay="0.12">BuildCast</div>
+          <div class="bc-l-pasos-v__flecha">↓</div>
+          <div class="bc-l-pasos-v__paso" data-reveal="up" data-delay="0.24">Análisis</div>
+          <div class="bc-l-pasos-v__flecha">↓</div>
+          <div class="bc-l-pasos-v__paso" data-reveal="up" data-delay="0.36">Cantidades</div>
+          <div class="bc-l-pasos-v__flecha">↓</div>
+          <div class="bc-l-pasos-v__paso" data-reveal="up" data-delay="0.48">Costos</div>
+          <div class="bc-l-pasos-v__flecha">↓</div>
+          <div class="bc-l-pasos-v__paso" data-reveal="up" data-delay="0.6">Presupuesto</div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="plataforma" data-cross="1" style="position:relative;padding:clamp(80px,12vw,180px) 0;background:#111;overflow:hidden">
-    <div style="max-width:1600px;margin:0 auto;padding:0 clamp(24px,4vw,48px);margin-bottom:clamp(48px,8vw,128px)">
-      <h2 style="font-size:13px;letter-spacing:.3em;color:#8F8F8F;margin-bottom:28px;font-weight:400">La plataforma</h2>
-      <h3 style="font-size:clamp(38px,6.5vw,110px);line-height:.92;letter-spacing:-0.04em;color:#fff;font-weight:600">De los planos<br>a los números.</h3>
+  <section id="plataforma" data-cross="1" class="bc-l-plataforma">
+    <div class="bc-l-plataforma__cabecera">
+      <h2 class="bc-l-rotulo bc-l-plataforma__rotulo">La plataforma</h2>
+      <h3 class="bc-l-titular bc-l-plataforma__titulo">De los planos<br>a los números.</h3>
     </div>
-    <div style="position:relative;width:100%;padding:0 clamp(24px,4vw,48px);max-width:1600px;margin:0 auto">
-      <div data-cross-scale="1" style="position:relative;width:100%;height:clamp(420px,78vh,900px);transform-origin:bottom center">
-        <div data-cross-out="1" style="position:absolute;inset:0;z-index:10;background:#F9F9F7">
-          <div class="bc-foto" style="width:100%;height:100%;opacity:.7"><img src="/images/bc-planos.svg" alt="" onerror="this.style.display='none'"></div>
+    <div class="bc-l-plataforma__escena">
+      <div class="bc-l-marco bc-l-plataforma__marco" data-cross-scale="1">
+        <div data-cross-out="1" class="bc-l-plataforma__planos">
+          <div class="bc-foto bc-l-plataforma__foto"><img src="/images/bc-planos.svg" alt="" onerror="this.style.display='none'"></div>
         </div>
-        <div data-cross-in="1" style="position:absolute;inset:0;z-index:20;background:#fff;border:1px solid #E5E5E5;display:flex;flex-direction:column;opacity:0;overflow:hidden">
-          <div style="height:56px;flex:none;border-bottom:1px solid #E5E5E5;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 24px;background:#F9F9F7">
-            <div style="font-family:'Space Grotesk';font-weight:700;letter-spacing:.2em;text-transform:uppercase;font-size:14px">BuildCast</div>
-            <div style="display:flex;gap:20px;font-size:11px;font-weight:700;letter-spacing:.12em;color:#8F8F8F;text-transform:uppercase;flex-wrap:wrap;justify-content:flex-end">
+        <div data-cross-in="1" class="bc-maqueta">
+          <div class="bc-maqueta__cabecera">
+            <div class="bc-maqueta__marca">BuildCast</div>
+            <div class="bc-maqueta__datos">
               <span>Proyecto: Casa Bravo</span><span>Estado: estimación vigente</span>
             </div>
           </div>
-          <div style="flex:1;display:flex;overflow:hidden;min-height:0">
-            <div style="width:240px;flex:none;border-right:1px solid #E5E5E5;padding:24px;background:rgba(249,249,247,.6);display:flex;flex-direction:column;gap:16px;font-size:13px;font-weight:600;color:rgba(26,26,26,.6)">
-              <span style="color:#1A1A1A;font-weight:800">Resumen</span>
+          <div class="bc-maqueta__cuerpo">
+            <div class="bc-maqueta__lateral">
+              <span class="bc-maqueta__actual">Resumen</span>
               <span>Documentos y planos</span><span>Cantidades extraídas</span><span>Análisis de costos</span><span>Márgenes</span><span>Presupuesto final</span>
             </div>
-            <div style="flex:1;min-width:0;padding:clamp(20px,3vw,48px);display:flex;flex-direction:column;overflow:hidden">
-              <div style="margin-bottom:28px">
-                <h4 style="font-size:clamp(20px,2vw,28px);line-height:1.16;margin-bottom:6px;font-weight:600">Presupuesto estructurado</h4>
-                <p style="margin:0;font-size:13px;color:#8F8F8F;font-weight:500">Calculado a partir de seis datos de la obra y del banco de precios 2026-T3.</p>
+            <div class="bc-maqueta__contenido">
+              <div class="bc-maqueta__encabezado">
+                <h4 class="bc-maqueta__titulo">Presupuesto estructurado</h4>
+                <p class="bc-maqueta__nota">Calculado a partir de seis datos de la obra y del banco de precios 2026-T3.</p>
               </div>
-              <div style="border:1px solid #E5E5E5;display:flex;flex-direction:column;min-height:0">
-                <div style="display:grid;grid-template-columns:90px minmax(0,1fr) 110px 120px 130px;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E5E5;background:#F9F9F7;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#8F8F8F">
-                  <span>Código</span><span>Partida</span><span style="text-align:right">Cantidad</span><span style="text-align:right">P. unit.</span><span style="text-align:right">Total</span>
+              <div class="bc-maqueta__tabla">
+                <div class="bc-maqueta__fila bc-maqueta__fila--titulos">
+                  <span>Código</span><span>Partida</span><span class="bc-maqueta__num">Cantidad</span><span class="bc-maqueta__num">P. unit.</span><span class="bc-maqueta__num">Total</span>
                 </div>
-                
-                  <div style="display:grid;grid-template-columns:90px minmax(0,1fr) 110px 120px 130px;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E5E5;font-size:13px;font-weight:500">
-                    <span style="color:#8F8F8F">03.02</span><span>Hormigón de cimientos</span><span style="text-align:right">6,4 m³</span><span style="text-align:right">$92.600</span><span style="text-align:right;font-weight:800">$887.000</span>
+
+                  <div class="bc-maqueta__fila">
+                    <span class="bc-maqueta__codigo">03.02</span><span>Hormigón de cimientos</span><span class="bc-maqueta__num">6,4 m³</span><span class="bc-maqueta__num">$92.600</span><span class="bc-maqueta__num bc-maqueta__monto">$887.000</span>
                   </div>
-                
-                  <div style="display:grid;grid-template-columns:90px minmax(0,1fr) 110px 120px 130px;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E5E5;font-size:13px;font-weight:500">
-                    <span style="color:#8F8F8F">04.02</span><span>Albañilería de ladrillo</span><span style="text-align:right">163,3 m²</span><span style="text-align:right">$27.400</span><span style="text-align:right;font-weight:800">$7.123.000</span>
+
+                  <div class="bc-maqueta__fila">
+                    <span class="bc-maqueta__codigo">04.02</span><span>Albañilería de ladrillo</span><span class="bc-maqueta__num">163,3 m²</span><span class="bc-maqueta__num">$27.400</span><span class="bc-maqueta__num bc-maqueta__monto">$7.123.000</span>
                   </div>
-                
-                  <div style="display:grid;grid-template-columns:90px minmax(0,1fr) 110px 120px 130px;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E5E5;font-size:13px;font-weight:500">
-                    <span style="color:#8F8F8F">05.02</span><span>Cubierta</span><span style="text-align:right">88,8 m²</span><span style="text-align:right">$15.100</span><span style="text-align:right;font-weight:800">$1.733.000</span>
+
+                  <div class="bc-maqueta__fila">
+                    <span class="bc-maqueta__codigo">05.02</span><span>Cubierta</span><span class="bc-maqueta__num">88,8 m²</span><span class="bc-maqueta__num">$15.100</span><span class="bc-maqueta__num bc-maqueta__monto">$1.733.000</span>
                   </div>
-                
-                  <div style="display:grid;grid-template-columns:90px minmax(0,1fr) 110px 120px 130px;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E5E5;font-size:13px;font-weight:500">
-                    <span style="color:#8F8F8F">06.07</span><span>Pintura interior</span><span style="text-align:right">369,2 m²</span><span style="text-align:right">$3.300</span><span style="text-align:right;font-weight:800">$2.291.000</span>
+
+                  <div class="bc-maqueta__fila">
+                    <span class="bc-maqueta__codigo">06.07</span><span>Pintura interior</span><span class="bc-maqueta__num">369,2 m²</span><span class="bc-maqueta__num">$3.300</span><span class="bc-maqueta__num bc-maqueta__monto">$2.291.000</span>
                   </div>
-                
-                  <div style="display:grid;grid-template-columns:90px minmax(0,1fr) 110px 120px 130px;gap:12px;padding:14px 16px;border-bottom:1px solid #E5E5E5;font-size:13px;font-weight:500">
-                    <span style="color:#8F8F8F">09.03</span><span>Centros y enchufes</span><span style="text-align:right">31,2 pto</span><span style="text-align:right">$27.000</span><span style="text-align:right;font-weight:800">$1.192.000</span>
+
+                  <div class="bc-maqueta__fila">
+                    <span class="bc-maqueta__codigo">09.03</span><span>Centros y enchufes</span><span class="bc-maqueta__num">31,2 pto</span><span class="bc-maqueta__num">$27.000</span><span class="bc-maqueta__num bc-maqueta__monto">$1.192.000</span>
                   </div>
-                
-                <div style="display:grid;grid-template-columns:minmax(0,1fr) 160px;gap:12px;padding:16px;background:#1A1A1A;color:#F9F9F7;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase">
-                  <span style="text-align:right">Total estimado · 142 m² en 2 pisos</span><span style="text-align:right">$89.318.414</span>
+
+                <div class="bc-maqueta__total">
+                  <span class="bc-maqueta__num">Total estimado · 142 m² en 2 pisos</span><span class="bc-maqueta__num">$89.318.414</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div style="margin-top:40px;display:flex;gap:16px;flex-wrap:wrap">
-        <button data-ir="/acceso.html" style="display:inline-flex;align-items:center;gap:14px;background:#FF5E00;color:#fff;border:1px solid #FF5E00;padding:20px 30px;font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s,border-color .3s" data-hover="background:#F9F9F7;color:#1A1A1A;border-color:#F9F9F7">Ver el panel →</button>
-        <button data-ir="/acceso.html" style="display:inline-flex;align-items:center;padding:20px 30px;border:1px solid rgba(249,249,247,.4);background:transparent;color:#F9F9F7;font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s,color .3s" data-hover="background:#F9F9F7;color:#1A1A1A">Armar un presupuesto</button>
+      <div class="bc-l-plataforma__botones">
+        <button data-ir="/acceso.html" class="bc-l-boton-acento">Ver el panel →</button>
+        <button data-ir="/acceso.html" class="bc-l-boton-claro">Armar un presupuesto</button>
       </div>
     </div>
   </section>
 
-  <section id="como-funciona" style="padding:clamp(80px,12vw,180px) 0;background:#F9F9F7">
-    <div style="max-width:1600px;margin:0 auto;padding:0 clamp(24px,4vw,48px)">
-      <h2 style="font-size:13px;letter-spacing:.3em;color:#8F8F8F;margin-bottom:clamp(48px,8vw,110px);font-weight:400">Cómo funciona</h2>
-      <div style="display:flex;flex-direction:column;gap:clamp(80px,12vw,190px)">
+  <section id="como-funciona" class="bc-l-como">
+    <div class="bc-l-como__contenedor">
+      <h2 class="bc-l-rotulo bc-l-como__rotulo">Cómo funciona</h2>
+      <div class="bc-l-como__pasos">
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(32px,4vw,64px);align-items:center">
+        <div class="bc-paso bc-l-paso">
           <div data-reveal="left">
-            <div style="font-family:'Space Grotesk';color:#FF5E00;font-size:clamp(56px,8vw,120px);line-height:.85;margin-bottom:20px">01</div>
-            <h3 style="font-size:clamp(32px,4.6vw,72px);letter-spacing:-0.035em;margin-bottom:20px;font-weight:600">Carga</h3>
-            <p style="margin:0;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:rgba(26,26,26,.8);max-width:440px;text-wrap:pretty">Registra la obra con seis antecedentes que el arquitecto conoce desde la primera reunión con el mandante.</p>
+            <div class="bc-l-titular bc-l-paso__numero">01</div>
+            <h3 class="bc-l-paso__titulo">Carga</h3>
+            <p class="bc-l-paso__texto">Registra la obra con seis antecedentes que el arquitecto conoce desde la primera reunión con el mandante.</p>
           </div>
-          <div style="height:clamp(280px,52vh,620px);border:1px solid #E5E5E5;background:#fff;padding:clamp(20px,3vw,56px);display:flex">
-            <div style="flex:1;border:2px dashed #E5E5E5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#8F8F8F;text-align:center;padding:16px">
-              <div style="font-family:'Space Grotesk';text-transform:uppercase;letter-spacing:.2em;font-size:16px">Superficie · pisos · comuna</div>
-              <div style="font-size:13px;font-weight:600">Tipo de obra · materialidad · terminaciones</div>
+          <div class="bc-l-marco bc-paso__visual bc-l-paso__carga">
+            <div class="bc-l-paso__zona">
+              <div class="bc-l-paso__zona-titulo">Superficie · pisos · comuna</div>
+              <div class="bc-l-paso__zona-nota">Tipo de obra · materialidad · terminaciones</div>
             </div>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(32px,4vw,64px);align-items:center">
-          <div style="position:relative;height:clamp(280px,52vh,620px);overflow:hidden;border:1px solid #E5E5E5;background:#fff">
-            <div class="bc-foto" style="width:100%;height:100%;opacity:.75"><img src="/images/bc-analisis.svg" alt="" onerror="this.style.display='none'"></div>
-            <div style="position:absolute;inset:0;background:rgba(255,94,0,.12);pointer-events:none"></div>
-            <div style="position:absolute;left:0;width:100%;height:2px;background:rgba(255,94,0,.85);animation:bc-scan 4s linear infinite;pointer-events:none"></div>
+        <div class="bc-paso bc-l-paso">
+          <div class="bc-l-marco bc-pasos__imagen bc-paso__visual bc-l-paso__imagen">
+            <div class="bc-foto bc-l-paso__foto"><img src="/images/bc-analisis.svg" alt="" onerror="this.style.display='none'"></div>
+            <div class="bc-l-paso__tinte"></div>
+            <div class="bc-l-paso__escaneo"></div>
           </div>
           <div data-reveal="right">
-            <div style="font-family:'Space Grotesk';color:#FF5E00;font-size:clamp(56px,8vw,120px);line-height:.85;margin-bottom:20px">02</div>
-            <h3 style="font-size:clamp(32px,4.6vw,72px);letter-spacing:-0.035em;margin-bottom:20px;font-weight:600">Analiza</h3>
-            <p style="margin:0;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:rgba(26,26,26,.8);max-width:440px;text-wrap:pretty">El motor cubica las 58 partidas del itemizado y aplica los factores por comuna, pisos, materialidad y estándar.</p>
+            <div class="bc-l-titular bc-l-paso__numero">02</div>
+            <h3 class="bc-l-paso__titulo">Analiza</h3>
+            <p class="bc-l-paso__texto">El motor cubica las 58 partidas del itemizado y aplica los factores por comuna, pisos, materialidad y estándar.</p>
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(32px,4vw,64px);align-items:end">
+        <div class="bc-paso bc-l-paso bc-l-paso--abajo">
           <div data-reveal="up">
-            <div style="font-family:'Space Grotesk';color:#FF5E00;font-size:clamp(56px,8vw,120px);line-height:.85;margin-bottom:20px">03</div>
-            <h3 style="font-size:clamp(32px,4.6vw,72px);letter-spacing:-0.035em;margin-bottom:20px;font-weight:600">Estructura</h3>
-            <p style="margin:0;font-size:clamp(16px,1.5vw,22px);font-weight:500;color:rgba(26,26,26,.8);max-width:440px;text-wrap:pretty">Convierte la información en partidas, cantidades y costos, organizados bajo estándares de la industria.</p>
+            <div class="bc-l-titular bc-l-paso__numero">03</div>
+            <h3 class="bc-l-paso__titulo">Estructura</h3>
+            <p class="bc-l-paso__texto">Convierte la información en partidas, cantidades y costos, organizados bajo estándares de la industria.</p>
           </div>
-          <div style="background:#fff;border:1px solid #E5E5E5;padding:clamp(24px,3vw,56px);display:flex;flex-direction:column;gap:20px">
-            <div data-reveal="up" style="display:flex;align-items:center;gap:16px"><div style="width:44px;height:1px;background:#FF5E00;flex:none"></div><div style="font-family:'Space Grotesk';font-weight:700;font-size:clamp(17px,1.8vw,24px);text-transform:uppercase;letter-spacing:.04em">01. Estructuras de hormigón</div></div>
-            <div data-reveal="up" data-delay="0.12" style="display:flex;align-items:center;gap:16px;margin-left:clamp(16px,3vw,48px)"><div style="width:44px;height:1px;background:#FF5E00;flex:none"></div><div style="font-family:'Space Grotesk';font-size:clamp(15px,1.5vw,20px);text-transform:uppercase;letter-spacing:.04em">01.1. Fundaciones</div></div>
-            <div data-reveal="up" data-delay="0.24" style="display:flex;align-items:center;gap:16px;margin-left:clamp(32px,6vw,96px)"><div style="width:44px;height:1px;background:#FF5E00;flex:none"></div><div style="font-family:'Space Grotesk';font-size:clamp(14px,1.3vw,18px);text-transform:uppercase;letter-spacing:.04em;color:#8F8F8F">01.1.1. Excavación (96 m³)</div></div>
-            <div data-reveal="up" data-delay="0.36" style="display:flex;align-items:center;gap:16px;margin-left:clamp(32px,6vw,96px)"><div style="width:44px;height:1px;background:#FF5E00;flex:none"></div><div style="font-family:'Space Grotesk';font-size:clamp(14px,1.3vw,18px);text-transform:uppercase;letter-spacing:.04em;color:#8F8F8F">01.1.2. Hormigón G-25 (42 m³)</div></div>
-            <div data-reveal="up" data-delay="0.48" style="display:flex;align-items:center;gap:16px;margin-left:clamp(16px,3vw,48px)"><div style="width:44px;height:1px;background:#FF5E00;flex:none"></div><div style="font-family:'Space Grotesk';font-size:clamp(15px,1.5vw,20px);text-transform:uppercase;letter-spacing:.04em">01.2. Elevaciones</div></div>
-          </div>
-        </div>
-
-        <div data-reveal="scale" style="display:flex;flex-direction:column;align-items:center;text-align:center;max-width:900px;margin:0 auto;padding-top:clamp(24px,4vw,64px)">
-          <div style="font-family:'Space Grotesk';color:#FF5E00;font-size:clamp(56px,8vw,120px);line-height:.85;margin-bottom:20px">04</div>
-          <h3 style="font-size:clamp(36px,5.5vw,88px);letter-spacing:-0.04em;margin-bottom:28px;font-weight:600">Presupuesta</h3>
-          <p style="margin:0 0 44px;font-size:clamp(18px,1.8vw,26px);font-weight:500;color:rgba(26,26,26,.8);text-wrap:pretty">Ajusta gastos generales y utilidad, revisa el desglose y genera el documento de entrega con folio y alcance declarado.</p>
-          <button data-ir="/acceso.html" style="background:#1A1A1A;color:#F9F9F7;border:1px solid #1A1A1A;padding:22px 38px;font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s,border-color .3s" data-hover="background:#FF5E00;border-color:#FF5E00">Ver la plataforma</button>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <section id="para-quien" style="padding:clamp(80px,12vw,180px) 0;background:#111;color:#fff">
-    <div style="max-width:1600px;margin:0 auto;padding:0 clamp(24px,4vw,48px)">
-      <h2 style="font-size:13px;letter-spacing:.3em;color:#8F8F8F;margin-bottom:clamp(40px,7vw,110px);font-weight:400">¿Para quién construimos?</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:clamp(32px,4vw,90px)">
-        <div style="display:flex;flex-direction:column;justify-content:center">
-          
-            <div data-perfil="0" style="border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;gap:clamp(16px,3vw,32px);padding:clamp(18px,2.4vw,32px) 0;transition:color .5s;color:#FF5E00">
-              <span style="font-family:'Space Grotesk';font-size:18px">01</span>
-              <h3 style="font-size:clamp(22px,3.2vw,50px);letter-spacing:-0.025em;flex:1;font-weight:600">Contratistas</h3>
-              <span style="font-size:22px;line-height:1;opacity:1">→</span>
-            </div>
-          
-            <div data-perfil="1" style="border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;gap:clamp(16px,3vw,32px);padding:clamp(18px,2.4vw,32px) 0;transition:color .5s;color:rgba(255,255,255,.5)">
-              <span style="font-family:'Space Grotesk';font-size:18px">02</span>
-              <h3 style="font-size:clamp(22px,3.2vw,50px);letter-spacing:-0.025em;flex:1;font-weight:600">Profesionales de presupuestos</h3>
-              <span style="font-size:22px;line-height:1;opacity:0">→</span>
-            </div>
-          
-            <div data-perfil="2" style="border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;gap:clamp(16px,3vw,32px);padding:clamp(18px,2.4vw,32px) 0;transition:color .5s;color:rgba(255,255,255,.5)">
-              <span style="font-family:'Space Grotesk';font-size:18px">03</span>
-              <h3 style="font-size:clamp(22px,3.2vw,50px);letter-spacing:-0.025em;flex:1;font-weight:600">Empresas constructoras</h3>
-              <span style="font-size:22px;line-height:1;opacity:0">→</span>
-            </div>
-          
-            <div data-perfil="3" style="border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;gap:clamp(16px,3vw,32px);padding:clamp(18px,2.4vw,32px) 0;transition:color .5s;color:rgba(255,255,255,.5)">
-              <span style="font-family:'Space Grotesk';font-size:18px">04</span>
-              <h3 style="font-size:clamp(22px,3.2vw,50px);letter-spacing:-0.025em;flex:1;font-weight:600">Desarrolladores</h3>
-              <span style="font-size:22px;line-height:1;opacity:0">→</span>
-            </div>
-          
-            <div data-perfil="4" style="border-bottom:1px solid rgba(255,255,255,.1);cursor:pointer;display:flex;align-items:center;gap:clamp(16px,3vw,32px);padding:clamp(18px,2.4vw,32px) 0;transition:color .5s;color:rgba(255,255,255,.5)">
-              <span style="font-family:'Space Grotesk';font-size:18px">05</span>
-              <h3 style="font-size:clamp(22px,3.2vw,50px);letter-spacing:-0.025em;flex:1;font-weight:600">Jefes de proyecto</h3>
-              <span style="font-size:22px;line-height:1;opacity:0">→</span>
-            </div>
-          
-        </div>
-        <div style="position:relative;height:clamp(340px,70vh,800px);overflow:hidden;border:1px solid rgba(255,255,255,.12);display:flex;align-items:flex-end;background:#161616">
-          <div style="position:absolute;inset:0;display:grid;place-items:center;font-family:'Space Grotesk';font-size:13px;letter-spacing:.24em;color:rgba(255,255,255,.28)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 420" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%"><rect x="150" y="140" width="180" height="70" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><rect x="380" y="140" width="110" height="70" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2" fill="none"/><text x="240" y="186" fill="#F9F9F7" fill-opacity=".55" font-family="monospace" font-size="26" text-anchor="middle">142 m²</text><text x="355" y="186" fill="#FF5E00" font-family="monospace" font-size="30" text-anchor="middle">×</text><text x="435" y="186" fill="#F9F9F7" fill-opacity=".55" font-family="monospace" font-size="22" text-anchor="middle">$95k</text><line x1="150" y1="250" x2="490" y2="250" stroke="#F9F9F7" stroke-opacity="0.3" stroke-width="2"/><text x="490" y="300" fill="#FF5E00" font-family="monospace" font-size="30" text-anchor="end">$13.775.000</text></svg><span data-perfil-titulo style="display:none">Contratistas</span></div>
-          <div style="position:relative;padding:clamp(24px,3vw,48px);width:100%;background:linear-gradient(to top,#111,rgba(17,17,17,0))">
-            <p style="margin:0;font-family:'Space Grotesk';font-size:clamp(24px,3.4vw,52px);text-transform:uppercase;letter-spacing:-0.03em;line-height:1.1;text-wrap:pretty">“<span data-perfil-cita>Menos tiempo buscando información. Más tiempo tomando decisiones.</span>”</p>
+          <div class="bc-paso__visual bc-l-arbol">
+            <div class="bc-l-arbol__fila" data-reveal="up"><div class="bc-l-arbol__linea"></div><div class="bc-l-arbol__texto bc-l-arbol__texto--1">01. Estructuras de hormigón</div></div>
+            <div class="bc-l-arbol__fila bc-l-arbol__fila--2" data-reveal="up" data-delay="0.12"><div class="bc-l-arbol__linea"></div><div class="bc-l-arbol__texto bc-l-arbol__texto--2">01.1. Fundaciones</div></div>
+            <div class="bc-l-arbol__fila bc-l-arbol__fila--3" data-reveal="up" data-delay="0.24"><div class="bc-l-arbol__linea"></div><div class="bc-l-arbol__texto bc-l-arbol__texto--3">01.1.1. Excavación (96 m³)</div></div>
+            <div class="bc-l-arbol__fila bc-l-arbol__fila--3" data-reveal="up" data-delay="0.36"><div class="bc-l-arbol__linea"></div><div class="bc-l-arbol__texto bc-l-arbol__texto--3">01.1.2. Hormigón G-25 (42 m³)</div></div>
+            <div class="bc-l-arbol__fila bc-l-arbol__fila--2" data-reveal="up" data-delay="0.48"><div class="bc-l-arbol__linea"></div><div class="bc-l-arbol__texto bc-l-arbol__texto--2">01.2. Elevaciones</div></div>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
 
-  <section data-seq="transformacion" style="position:relative;height:400vh;background:#FF5E00;color:#F9F9F7">
-    <div style="position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;text-align:center;padding:0 24px">
-      <div data-seq-item="0" data-from="0.02" data-to="0.16" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0">
-        <h2 style="font-size:clamp(38px,7vw,120px);line-height:.92;letter-spacing:-0.04em;font-weight:600">Menos tiempo<br>presupuestando.</h2>
-        <h2 style="font-size:clamp(38px,7vw,120px);line-height:.92;letter-spacing:-0.04em;margin-top:16px;color:#111;font-weight:600">Más tiempo<br>construyendo.</h2>
-      </div>
-      <div data-seq-item="1" data-from="0.22" data-to="0.38" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,48px);flex-wrap:wrap;opacity:0">
-        <span style="font-family:'Space Grotesk';font-size:clamp(28px,5vw,80px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(17,17,17,.4);text-decoration:line-through">Manual</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(24px,3vw,44px);color:#111">→</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(34px,6vw,96px);text-transform:uppercase;letter-spacing:-0.035em;color:#111">Inteligente</span>
-      </div>
-      <div data-seq-item="2" data-from="0.42" data-to="0.58" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,48px);flex-wrap:wrap;opacity:0">
-        <span style="font-family:'Space Grotesk';font-size:clamp(28px,5vw,80px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(17,17,17,.4);text-decoration:line-through">Fragmentado</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(24px,3vw,44px);color:#111">→</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(34px,6vw,96px);text-transform:uppercase;letter-spacing:-0.035em;color:#111">Estructurado</span>
-      </div>
-      <div data-seq-item="3" data-from="0.62" data-to="0.78" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,48px);flex-wrap:wrap;opacity:0">
-        <span style="font-family:'Space Grotesk';font-size:clamp(28px,5vw,80px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(17,17,17,.4);text-decoration:line-through">Información</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(24px,3vw,44px);color:#111">→</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(34px,6vw,96px);text-transform:uppercase;letter-spacing:-0.035em;color:#111">Claridad</span>
-      </div>
-      <div data-seq-item="4" data-from="0.82" data-to="0.96" data-hold="1" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:clamp(16px,3vw,48px);flex-wrap:wrap;opacity:0">
-        <span style="font-family:'Space Grotesk';font-size:clamp(28px,5vw,80px);text-transform:uppercase;letter-spacing:-0.03em;color:rgba(17,17,17,.4);text-decoration:line-through">Datos</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(24px,3vw,44px);color:#111">→</span>
-        <span style="font-family:'Space Grotesk';font-size:clamp(34px,6vw,96px);text-transform:uppercase;letter-spacing:-0.035em;color:#111">Decisiones</span>
-      </div>
-    </div>
-  </section>
-
-  <section style="padding:clamp(80px,12vw,180px) clamp(24px,4vw,48px);background:#F9F9F7">
-    <div style="max-width:1600px;margin:0 auto">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(32px,4vw,90px)">
-        <div style="display:flex;flex-direction:column;justify-content:center">
-          <h2 data-reveal="up" style="font-size:clamp(38px,7vw,110px);line-height:.88;letter-spacing:-0.04em;font-weight:600">El cálculo es<br>auditable.</h2>
-          <h2 data-reveal="up" data-delay="0.2" style="font-size:clamp(38px,7vw,110px);line-height:.88;letter-spacing:-0.04em;color:#FF5E00;margin-top:16px;font-weight:600">La decisión<br>sigue siendo tuya.</h2>
+        <div class="bc-l-como__cierre" data-reveal="scale">
+          <div class="bc-l-titular bc-l-paso__numero">04</div>
+          <h3 class="bc-l-como__cierre-titulo">Presupuesta</h3>
+          <p class="bc-l-como__cierre-texto">Ajusta gastos generales y utilidad, revisa el desglose y genera el documento de entrega con folio y alcance declarado.</p>
+          <button data-ir="/acceso.html" class="bc-l-boton-cierre">Ver la plataforma</button>
         </div>
-        <div data-reveal="right" data-delay="0.35" style="display:flex;flex-direction:column;justify-content:flex-end">
-          <div style="border-left:1px solid #1A1A1A;padding-left:28px;display:flex;flex-direction:column;gap:20px">
-            <p style="margin:0;font-size:clamp(16px,1.4vw,20px);font-weight:500">El sistema calcula y deja constancia.</p>
-            <p style="margin:0;font-size:clamp(16px,1.4vw,20px);font-weight:500">El profesional revisa cada partida.</p>
-            <p style="margin:0;font-size:clamp(16px,1.4vw,20px);font-weight:500">El profesional ajusta y decide.</p>
-            <p style="margin:12px 0 0;font-size:clamp(15px,1.3vw,19px);font-weight:800;letter-spacing:.14em;text-transform:uppercase">El profesional mantiene el control.</p>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="para-quien" class="bc-l-quien">
+    <div class="bc-l-quien__contenedor">
+      <h2 class="bc-l-rotulo bc-l-quien__rotulo">¿Para quién construimos?</h2>
+      <div class="bc-l-quien__rejilla">
+        <div class="bc-l-quien__lista">
+          
+            <button type="button" class="bc-perfil-tab" data-perfil="0" role="tab" id="perfil-tab-0" aria-controls="perfil-panel" aria-selected="true" tabindex="0"><span class="bc-perfil-tab__num">01</span>
+              <span class="bc-perfil-tab__nombre">Contratistas</span>
+              <span class="bc-perfil-tab__flecha" aria-hidden="true">→</span></button>
+          
+            <button type="button" class="bc-perfil-tab" data-perfil="1" role="tab" id="perfil-tab-1" aria-controls="perfil-panel" aria-selected="false" tabindex="-1"><span class="bc-perfil-tab__num">02</span>
+              <span class="bc-perfil-tab__nombre">Profesionales de presupuestos</span>
+              <span class="bc-perfil-tab__flecha" aria-hidden="true">→</span></button>
+          
+            <button type="button" class="bc-perfil-tab" data-perfil="2" role="tab" id="perfil-tab-2" aria-controls="perfil-panel" aria-selected="false" tabindex="-1"><span class="bc-perfil-tab__num">03</span>
+              <span class="bc-perfil-tab__nombre">Empresas constructoras</span>
+              <span class="bc-perfil-tab__flecha" aria-hidden="true">→</span></button>
+          
+            <button type="button" class="bc-perfil-tab" data-perfil="3" role="tab" id="perfil-tab-3" aria-controls="perfil-panel" aria-selected="false" tabindex="-1"><span class="bc-perfil-tab__num">04</span>
+              <span class="bc-perfil-tab__nombre">Desarrolladores</span>
+              <span class="bc-perfil-tab__flecha" aria-hidden="true">→</span></button>
+          
+            <button type="button" class="bc-perfil-tab" data-perfil="4" role="tab" id="perfil-tab-4" aria-controls="perfil-panel" aria-selected="false" tabindex="-1"><span class="bc-perfil-tab__num">05</span>
+              <span class="bc-perfil-tab__nombre">Jefes de proyecto</span>
+              <span class="bc-perfil-tab__flecha" aria-hidden="true">→</span></button>
+        </div>
+        <!-- Mismo marco para todos los perfiles: cambian el foco, el visual y la frase. -->
+        <div class="bc-perfil-marco" id="perfil-panel" role="tabpanel" aria-labelledby="perfil-tab-0">
+          <div class="bc-perfil-marco__foco"><span data-perfil-num>01</span><span data-perfil-foco>Costo rápido y partidas principales</span></div>
+          <div class="bc-perfil-vistas">
+          <figure class="bc-perfil-vista" data-perfil-vista="0" data-anima data-actual>
+            <svg viewBox="0 0 520 280" role="img" aria-label="Costo total estimado y sus cuatro capítulos principales." xmlns="http://www.w3.org/2000/svg"><rect width="520" height="280" fill="url(#bc-reticula)"/>
+<text class="bc-svg-rotulo" x="0" y="20" font-size="9" fill="#F9F9F7" fill-opacity=".5">COSTO TOTAL ESTIMADO</text>
+<text class="bc-a bc-svg-mono" style="--d:0.05s" x="0" y="72" font-size="46" fill="#F9F9F7">$ 76,5 M</text>
+<text class="bc-a bc-svg-mono" style="--d:0.15s" x="0" y="96" font-size="11" fill="#FF5E00">$ 612.405 / m² · 45 partidas</text>
+
+<g class="bc-a" style="--d:0.25s"><text x="0" y="142" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Obra gruesa</text>
+<text class="bc-svg-mono" x="520" y="142" font-size="12" text-anchor="end" fill="#F9F9F7" fill-opacity=".7">$ 24,8 M</text>
+<path d="M0 152H520" stroke="#F9F9F7" stroke-opacity=".1" stroke-width="4"/></g>
+<path class="bc-crece" style="--d:0.35s" d="M0 152H510" stroke="#FF5E00" stroke-opacity="1" stroke-width="4"/>
+<g class="bc-a" style="--d:0.35s"><text x="0" y="176" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Terminaciones</text>
+<text class="bc-svg-mono" x="520" y="176" font-size="12" text-anchor="end" fill="#F9F9F7" fill-opacity=".7">$ 17,6 M</text>
+<path d="M0 186H520" stroke="#F9F9F7" stroke-opacity=".1" stroke-width="4"/></g>
+<path class="bc-crece" style="--d:0.44999999999999996s" d="M0 186H364" stroke="#F9F9F7" stroke-opacity="0.6" stroke-width="4"/>
+<g class="bc-a" style="--d:0.45s"><text x="0" y="210" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Instalaciones</text>
+<text class="bc-svg-mono" x="520" y="210" font-size="12" text-anchor="end" fill="#F9F9F7" fill-opacity=".7">$ 9,4 M</text>
+<path d="M0 220H520" stroke="#F9F9F7" stroke-opacity=".1" stroke-width="4"/></g>
+<path class="bc-crece" style="--d:0.55s" d="M0 220H192" stroke="#F9F9F7" stroke-opacity="0.6" stroke-width="4"/>
+<g class="bc-a" style="--d:0.55s"><text x="0" y="244" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Otros</text>
+<text class="bc-svg-mono" x="520" y="244" font-size="12" text-anchor="end" fill="#F9F9F7" fill-opacity=".7">$ 9,4 M</text>
+<path d="M0 254H520" stroke="#F9F9F7" stroke-opacity=".1" stroke-width="4"/></g>
+<path class="bc-crece" style="--d:0.65s" d="M0 254H192" stroke="#F9F9F7" stroke-opacity="0.6" stroke-width="4"/></svg>
+          </figure>
+          <figure class="bc-perfil-vista" data-perfil-vista="1" data-anima aria-hidden="true">
+            <svg viewBox="0 0 520 280" role="img" aria-label="Una partida desglosada: cantidad, precio unitario, origen del precio y último cambio registrado." xmlns="http://www.w3.org/2000/svg"><rect width="520" height="280" fill="url(#bc-reticula)"/>
+<text class="bc-svg-rotulo" x="0" y="20" font-size="9" fill="#F9F9F7" fill-opacity=".5">PARTIDA 03.02 · HORMIGÓN DE CIMIENTOS</text>
+<g class="bc-a" style="--d:0.05s;--dx:-16px;--dy:0px"><text class="bc-svg-rotulo" x="0" y="58" font-size="8" fill="#F9F9F7" fill-opacity=".5">CANTIDAD</text><text class="bc-svg-mono" x="0" y="86" font-size="24" fill="#F9F9F7">18,4 m³</text></g>
+<text class="bc-a bc-svg-mono" style="--d:0.2s" x="150" y="86" font-size="24" fill="#FF5E00">×</text>
+<g class="bc-a" style="--d:0.05s;--dx:16px;--dy:0px"><text class="bc-svg-rotulo" x="190" y="58" font-size="8" fill="#F9F9F7" fill-opacity=".5">PRECIO UNITARIO</text><text class="bc-svg-mono" x="190" y="86" font-size="24" fill="#F9F9F7">$ 98.500</text></g>
+<g class="bc-a" style="--d:0.3s"><text class="bc-svg-mono" x="520" y="86" font-size="24" text-anchor="end" fill="#FF5E00">$ 1.812.400</text><path d="M0 104H520" stroke="#F9F9F7" stroke-opacity=".3"/></g>
+
+<g class="bc-a" style="--d:0.45s;--dx:-10px;--dy:0px"><circle cx="5" cy="142" r="3.5" fill="#F9F9F7" fill-opacity="0.5"/>
+<text class="bc-svg-rotulo" x="20" y="139" font-size="8" fill="#F9F9F7" fill-opacity=".5">ORIGEN DEL PRECIO</text>
+<text x="20" y="156" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Banco 2026-T3 · precio de la oficina</text></g>
+<g class="bc-a" style="--d:0.5900000000000001s;--dx:-10px;--dy:0px"><circle cx="5" cy="182" r="3.5" fill="#F9F9F7" fill-opacity="0.5"/>
+<text class="bc-svg-rotulo" x="20" y="179" font-size="8" fill="#F9F9F7" fill-opacity=".5">PROCEDENCIA</text>
+<text x="20" y="196" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Plantilla Vivienda · Albañilería conf.</text></g>
+<g class="bc-a" style="--d:0.73s;--dx:-10px;--dy:0px"><circle cx="5" cy="222" r="3.5" fill="#FF5E00" fill-opacity="1"/>
+<text class="bc-svg-rotulo" x="20" y="219" font-size="8" fill="#F9F9F7" fill-opacity=".5">ÚLTIMO CAMBIO</text>
+<text x="20" y="236" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Cantidad 16,2 → 18,4 m³ · Camila</text></g>
+<path class="bc-trazo" pathLength="1" style="--d:0.45s" d="M5 142V222" stroke="#F9F9F7" stroke-opacity=".25" fill="none"/></svg>
+          </figure>
+          <figure class="bc-perfil-vista" data-perfil-vista="2" data-anima aria-hidden="true">
+            <svg viewBox="0 0 520 280" role="img" aria-label="Cartera consolidada: cuatro proyectos con su estado y el monto vigente total." xmlns="http://www.w3.org/2000/svg"><rect width="520" height="280" fill="url(#bc-reticula)"/>
+<text class="bc-svg-rotulo" x="0" y="20" font-size="9" fill="#F9F9F7" fill-opacity=".5">CARTERA · 4 PROYECTOS</text>
+<text class="bc-a bc-svg-mono" style="--d:0.05s" x="520" y="20" font-size="11" text-anchor="end" fill="#F9F9F7">$ 214,3 M vigente</text>
+<g class="bc-a" style="--d:0.12s"><circle cx="8" cy="62" r="4" fill="#F9F9F7"/>
+<text x="24" y="66" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Casa Molina</text>
+<text class="bc-svg-rotulo" x="300" y="66" font-size="8.5" fill="#F9F9F7" fill-opacity="0.6">VIGENTE</text>
+<text class="bc-svg-mono" x="520" y="66" font-size="13" text-anchor="end" fill="#F9F9F7" fill-opacity="1">$ 88,1 M</text>
+<path d="M0 84H520" stroke="#F9F9F7" stroke-opacity=".1"/></g><g class="bc-a" style="--d:0.22s"><circle cx="8" cy="112" r="4" fill="#F9F9F7"/>
+<text x="24" y="116" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Dúplex Los Almendros</text>
+<text class="bc-svg-rotulo" x="300" y="116" font-size="8.5" fill="#F9F9F7" fill-opacity="0.6">VIGENTE</text>
+<text class="bc-svg-mono" x="520" y="116" font-size="13" text-anchor="end" fill="#F9F9F7" fill-opacity="1">$ 126,2 M</text>
+<path d="M0 134H520" stroke="#F9F9F7" stroke-opacity=".1"/></g><g class="bc-a" style="--d:0.32s"><path d="M0 140H520V184H0Z" fill="#FF5E00" fill-opacity=".08"/><circle cx="8" cy="162" r="4" fill="#FF5E00"/>
+<text x="24" y="166" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Ampliación Quiroz</text>
+<text class="bc-svg-rotulo" x="300" y="166" font-size="8.5" fill="#FF5E00" fill-opacity="1">POR RECALCULAR</text>
+<text class="bc-svg-mono" x="520" y="166" font-size="13" text-anchor="end" fill="#F9F9F7" fill-opacity="1">$ 21,4 M</text>
+<path d="M0 184H520" stroke="#F9F9F7" stroke-opacity=".1"/></g><g class="bc-a" style="--d:0.42000000000000004s"><circle cx="8" cy="212" r="3.5" fill="none" stroke="#FF5E00" stroke-width="1.4"/>
+<text x="24" y="216" font-size="14" fill="#F9F9F7" class="bc-svg-texto">Casa Ibarra</text>
+<text class="bc-svg-rotulo" x="300" y="216" font-size="8.5" fill="#FF5E00" fill-opacity="1">SIN ESTIMAR</text>
+<text class="bc-svg-mono" x="520" y="216" font-size="13" text-anchor="end" fill="#F9F9F7" fill-opacity="0.4">—</text>
+<path d="M0 234H520" stroke="#F9F9F7" stroke-opacity=".1"/></g></svg>
+          </figure>
+          <figure class="bc-perfil-vista" data-perfil-vista="3" data-anima aria-hidden="true">
+            <svg viewBox="0 0 520 280" role="img" aria-label="Dos variantes del mismo proyecto comparadas por costo por metro cuadrado y plazo referencial." xmlns="http://www.w3.org/2000/svg"><rect width="520" height="280" fill="url(#bc-reticula)"/>
+<text class="bc-svg-rotulo" x="0" y="20" font-size="9" fill="#F9F9F7" fill-opacity=".5">MISMO PROYECTO · DOS VARIANTES</text>
+
+<g class="bc-a" style="--d:0.1s;--dx:-14px;--dy:0px">
+<path d="M0 44H250V266H0Z" stroke="#FF5E00" stroke-opacity="1" fill="none"/>
+<text class="bc-svg-mono" x="18" y="78" font-size="22" fill="#FF5E00">A</text>
+<text x="18" y="104" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Albañilería confinada</text>
+<text class="bc-svg-rotulo" x="18" y="140" font-size="8" fill="#F9F9F7" fill-opacity=".5">COSTO POR m²</text>
+<text class="bc-svg-mono" x="18" y="166" font-size="22" fill="#F9F9F7">$ 612.405</text>
+<path d="M18 182H232" stroke="#F9F9F7" stroke-opacity=".12" stroke-width="4"/>
+<text class="bc-svg-rotulo" x="18" y="216" font-size="8" fill="#F9F9F7" fill-opacity=".5">PLAZO REFERENCIAL</text>
+<text class="bc-svg-mono" x="18" y="242" font-size="16" fill="#F9F9F7" fill-opacity=".8">126 días</text></g>
+<path class="bc-crece" style="--d:0.3s" d="M18 182H232" stroke="#FF5E00" stroke-opacity="1" stroke-width="4"/>
+<g class="bc-a" style="--d:0.25s;--dx:14px;--dy:0px">
+<path d="M270 44H520V266H270Z" stroke="#F9F9F7" stroke-opacity="0.3" fill="none"/>
+<text class="bc-svg-mono" x="288" y="78" font-size="22" fill="#F9F9F7">B</text>
+<text x="288" y="104" font-size="13" fill="#F9F9F7" class="bc-svg-texto">Tabiquería de madera</text>
+<text class="bc-svg-rotulo" x="288" y="140" font-size="8" fill="#F9F9F7" fill-opacity=".5">COSTO POR m²</text>
+<text class="bc-svg-mono" x="288" y="166" font-size="22" fill="#F9F9F7">$ 538.920</text>
+<path d="M288 182H502" stroke="#F9F9F7" stroke-opacity=".12" stroke-width="4"/>
+<text class="bc-svg-rotulo" x="288" y="216" font-size="8" fill="#F9F9F7" fill-opacity=".5">PLAZO REFERENCIAL</text>
+<text class="bc-svg-mono" x="288" y="242" font-size="16" fill="#F9F9F7" fill-opacity=".8">104 días</text></g>
+<path class="bc-crece" style="--d:0.44999999999999996s" d="M288 182H476" stroke="#F9F9F7" stroke-opacity="0.6" stroke-width="4"/></svg>
+          </figure>
+          <figure class="bc-perfil-vista" data-perfil-vista="4" data-anima aria-hidden="true">
+            <svg viewBox="0 0 520 280" role="img" aria-label="Costo total, plazo referencial con intervalo, estado de la estimación y cronograma preliminar por etapas." xmlns="http://www.w3.org/2000/svg"><rect width="520" height="280" fill="url(#bc-reticula)"/>
+<g class="bc-a" style="--d:0.05s"><text class="bc-svg-rotulo" x="0" y="20" font-size="9" fill="#F9F9F7" fill-opacity=".5">COSTO TOTAL</text>
+<text class="bc-svg-mono" x="0" y="54" font-size="28" fill="#F9F9F7">$ 76,5 M</text></g>
+<g class="bc-a" style="--d:0.15s"><text class="bc-svg-rotulo" x="270" y="20" font-size="9" fill="#F9F9F7" fill-opacity=".5">PLAZO REFERENCIAL</text>
+<text class="bc-svg-mono" x="270" y="54" font-size="28" fill="#F9F9F7">126 días</text>
+<text class="bc-svg-mono" x="270" y="72" font-size="10" fill="#F9F9F7" fill-opacity=".5">intervalo 108–148</text></g>
+<g class="bc-a" style="--d:0.25s"><path d="M0 92H520V124H0Z" fill="#FF5E00" fill-opacity=".1"/><path d="M0 92V124" stroke="#FF5E00" stroke-width="3"/>
+<text class="bc-svg-rotulo" x="16" y="112" font-size="8.5" fill="#FF5E00">POR RECALCULAR</text>
+<text x="140" y="112" font-size="12" fill="#F9F9F7" fill-opacity=".8" class="bc-svg-texto">Los datos del proyecto cambiaron después de estimar.</text></g>
+<text class="bc-a bc-svg-rotulo" style="--d:0.35s" x="0" y="152" font-size="9" fill="#F9F9F7" fill-opacity=".5">CRONOGRAMA PRELIMINAR</text>
+
+<g class="bc-a" style="--d:0.4s"><text x="0" y="176" font-size="11" fill="#F9F9F7" fill-opacity=".7" class="bc-svg-texto">Faenas y tierras</text></g>
+<path class="bc-crece" style="--d:0.5s" d="M170 172H201.8" stroke="#FF5E00" stroke-opacity="1" stroke-width="8"/>
+<g class="bc-a" style="--d:0.48000000000000004s"><text x="0" y="197" font-size="11" fill="#F9F9F7" fill-opacity=".7" class="bc-svg-texto">Fundaciones</text></g>
+<path class="bc-crece" style="--d:0.58s" d="M201.8 193H249.5" stroke="#F9F9F7" stroke-opacity="0.6" stroke-width="8"/>
+<g class="bc-a" style="--d:0.56s"><text x="0" y="218" font-size="11" fill="#F9F9F7" fill-opacity=".7" class="bc-svg-texto">Obra gruesa</text></g>
+<path class="bc-crece" style="--d:0.66s" d="M249.5 214H350.2" stroke="#FF5E00" stroke-opacity="1" stroke-width="8"/>
+<g class="bc-a" style="--d:0.64s"><text x="0" y="239" font-size="11" fill="#F9F9F7" fill-opacity=".7" class="bc-svg-texto">Terminaciones</text></g>
+<path class="bc-crece" style="--d:0.74s" d="M350.2 235H440.3" stroke="#F9F9F7" stroke-opacity="0.6" stroke-width="8"/>
+<g class="bc-a" style="--d:0.72s"><text x="0" y="260" font-size="11" fill="#F9F9F7" fill-opacity=".7" class="bc-svg-texto">Instalaciones</text></g>
+<path class="bc-crece" style="--d:0.8200000000000001s" d="M397.9 256H472.09999999999997" stroke="#FF5E00" stroke-opacity="1" stroke-width="8"/></svg>
+          </figure>
+          </div>
+          <p class="bc-perfil-marco__cita">“<span data-perfil-cita>Una referencia de costo temprana, sin armar la planilla desde cero.</span>”</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section data-seq="transformacion" class="bc-l-transformacion">
+    <div class="bc-l-transformacion__capa">
+      <div class="bc-capa-item bc-l-transformacion__lema" data-seq-item="0" data-from="0.02" data-to="0.16">
+        <h2 class="bc-l-titular bc-l-transformacion__frase">Menos tiempo<br>presupuestando.</h2>
+        <h2 class="bc-l-titular bc-l-transformacion__frase bc-l-transformacion__frase--oscura">Más tiempo<br>construyendo.</h2>
+      </div>
+      <div class="bc-capa-item bc-l-transformacion__par" data-seq-item="1" data-from="0.22" data-to="0.38">
+        <span class="bc-l-transformacion__antes">Manual</span>
+        <span class="bc-l-transformacion__flecha">→</span>
+        <span class="bc-l-subtitular bc-l-transformacion__despues">Inteligente</span>
+      </div>
+      <div class="bc-capa-item bc-l-transformacion__par" data-seq-item="2" data-from="0.42" data-to="0.58">
+        <span class="bc-l-transformacion__antes">Fragmentado</span>
+        <span class="bc-l-transformacion__flecha">→</span>
+        <span class="bc-l-subtitular bc-l-transformacion__despues">Estructurado</span>
+      </div>
+      <div class="bc-capa-item bc-l-transformacion__par" data-seq-item="3" data-from="0.62" data-to="0.78">
+        <span class="bc-l-transformacion__antes">Información</span>
+        <span class="bc-l-transformacion__flecha">→</span>
+        <span class="bc-l-subtitular bc-l-transformacion__despues">Claridad</span>
+      </div>
+      <div class="bc-capa-item bc-l-transformacion__par" data-seq-item="4" data-from="0.82" data-to="0.96" data-hold="1">
+        <span class="bc-l-transformacion__antes">Datos</span>
+        <span class="bc-l-transformacion__flecha">→</span>
+        <span class="bc-l-subtitular bc-l-transformacion__despues">Decisiones</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="bc-l-control">
+    <div class="bc-l-control__contenedor">
+      <div class="bc-l-control__rejilla">
+        <div class="bc-l-control__titulares">
+          <h2 class="bc-l-titular bc-l-control__titulo" data-reveal="up">El cálculo es<br>auditable.</h2>
+          <h2 class="bc-l-titular bc-l-control__titulo bc-l-control__titulo--acento" data-reveal="up" data-delay="0.2">La decisión<br>sigue siendo tuya.</h2>
+        </div>
+        <div data-reveal="right" data-delay="0.35" class="bc-control-columna bc-l-control__columna">
+          <!-- Calcula, revisa (✓), ajusta (partida editada) y decide (total aprobado) -->
+          <figure class="bc-control" aria-label="Ejemplo de estimación revisada y ajustada por el profesional">
+            <div class="bc-control__fila"><span class="bc-control__partida"><small>03.02</small>Hormigón de cimientos</span><span class="bc-control__monto">$887.000</span><span class="bc-control__marca" aria-hidden="true">✓</span></div>
+            <div class="bc-control__fila"><span class="bc-control__partida"><small>04.02</small>Albañilería de ladrillo</span><span class="bc-control__monto">$7.123.000</span><span class="bc-control__marca" aria-hidden="true">✓</span></div>
+            <div class="bc-control__fila bc-control__fila--ajustada"><span class="bc-control__partida"><small>05.02</small>Cubierta</span><span class="bc-control__monto"><s>$1.733.000</s>$1.912.000</span><span class="bc-control__marca" aria-hidden="true">✓</span></div>
+            <div class="bc-control__fila"><span class="bc-control__partida"><small>06.07</small>Pintura interior</span><span class="bc-control__monto">$2.291.000</span><span class="bc-control__marca" aria-hidden="true">✓</span></div>
+            <div class="bc-control__total"><span>Total</span><span class="bc-control__estado">✓ Aprobada</span><span>$12.213.000</span></div>
+          </figure>
+          <div class="bc-l-control__lista">
+            <p class="bc-l-control__frase">El sistema calcula y deja constancia.</p>
+            <p class="bc-l-control__frase">El profesional revisa cada partida.</p>
+            <p class="bc-l-control__frase">El profesional ajusta y decide.</p>
+            <p class="bc-l-control__cierre">El profesional mantiene el control.</p>
           </div>
         </div>
       </div>
-      <div data-reveal="up" data-delay="0.2" style="margin-top:clamp(48px,8vw,110px);height:clamp(280px,50vh,620px);width:100%">
-        <div class="bc-foto" style="width:100%;height:100%"><img src="/images/bc-ingeniero.svg" alt="" onerror="this.style.display='none'"></div>
+    </div>
+  </section>
+
+  <section class="bc-l-cifras">
+    <div class="bc-l-cifras__rejilla">
+      <div class="bc-l-cifras__item" data-reveal="up">
+        <div class="bc-l-titular bc-l-cifras__numero">58</div>
+        <div class="bc-l-cifras__texto">Partidas en el banco de precios</div>
+      </div>
+      <div data-reveal="up" data-delay="0.12" class="bc-l-cifras__item bc-l-cifras__item--borde">
+        <div class="bc-l-titular bc-l-cifras__numero">12</div>
+        <div class="bc-l-cifras__texto">Capítulos del itemizado</div>
+      </div>
+      <div data-reveal="up" data-delay="0.24" class="bc-l-cifras__item bc-l-cifras__item--borde">
+        <div class="bc-l-titular bc-l-cifras__numero">6</div>
+        <div class="bc-l-cifras__texto">Datos de la obra para estimar</div>
       </div>
     </div>
   </section>
 
-  <section style="padding:clamp(56px,8vw,130px) clamp(24px,4vw,48px);background:#fff;border-top:1px solid #E5E5E5;border-bottom:1px solid #E5E5E5">
-    <div style="max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:clamp(32px,4vw,48px)">
-      <div data-reveal="up" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 16px">
-        <div style="font-family:'Space Grotesk';font-size:clamp(48px,7vw,110px);line-height:1;margin-bottom:16px">58</div>
-        <div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8F8F8F;max-width:260px">Partidas en el banco de precios</div>
-      </div>
-      <div data-reveal="up" data-delay="0.12" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 16px;border-left:1px solid #E5E5E5">
-        <div style="font-family:'Space Grotesk';font-size:clamp(48px,7vw,110px);line-height:1;margin-bottom:16px">12</div>
-        <div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8F8F8F;max-width:260px">Capítulos del itemizado</div>
-      </div>
-      <div data-reveal="up" data-delay="0.24" style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 16px;border-left:1px solid #E5E5E5">
-        <div style="font-family:'Space Grotesk';font-size:clamp(48px,7vw,110px);line-height:1;margin-bottom:16px">6</div>
-        <div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#8F8F8F;max-width:260px">Datos de la obra para estimar</div>
+  <section class="bc-l-cita">
+    <div class="bc-l-cita__bloque" data-reveal="up">
+      <p class="bc-l-cita__texto">“Cada cifra del presupuesto se puede rastrear hasta el precio unitario y la versión del banco con que fue calculada.”</p>
+      <div class="bc-l-cita__firma">
+        <div class="bc-l-cita__principio">Principio de trazabilidad</div>
+        <div class="bc-l-cita__autor">BuildCast · RAM Arquitectura y Construcción</div>
       </div>
     </div>
   </section>
 
-  <section style="padding:clamp(80px,12vw,180px) clamp(24px,4vw,48px);background:#F9F9F7">
-    <div data-reveal="up" style="max-width:1200px;margin:0 auto;text-align:center">
-      <p style="font-family:'Space Grotesk';font-size:clamp(28px,4.6vw,76px);text-transform:uppercase;letter-spacing:-0.035em;line-height:1.08;margin:0 0 48px;text-wrap:pretty">“Cada cifra del presupuesto se puede rastrear hasta el precio unitario y la versión del banco con que fue calculada.”</p>
-      <div style="display:flex;flex-direction:column;gap:6px;align-items:center">
-        <div style="font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase">Principio de trazabilidad</div>
-        <div style="font-size:13px;letter-spacing:.06em;color:#8F8F8F">BuildCast · RAM Arquitectura y Construcción</div>
-      </div>
+  <section class="bc-pantalla bc-l-final">
+    <div class="bc-l-final__fondo">
+      <div class="bc-foto bc-l-final__foto"><img src="/images/bc-final.svg" alt="" onerror="this.style.display='none'"></div>
+      <div class="bc-l-final__velo"></div>
     </div>
-  </section>
-
-  <section style="position:relative;height:100vh;min-height:720px;width:100%;overflow:hidden;background:#111">
-    <div style="position:absolute;inset:0;z-index:0">
-      <div class="bc-foto" style="width:100%;height:100%;opacity:.5"><img src="/images/bc-final.svg" alt="" onerror="this.style.display='none'"></div>
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,#111,rgba(17,17,17,.1));pointer-events:none"></div>
-    </div>
-    <div style="position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 24px;pointer-events:none">
+    <div class="bc-l-final__contenido">
       <div data-parallax="120">
-        <h2 style="font-size:clamp(30px,5vw,80px);letter-spacing:-0.03em;color:rgba(255,255,255,.7);margin-bottom:16px;font-weight:600">Todo empezó<br>con un número.</h2>
+        <h2 class="bc-l-final__antes">Todo empezó<br>con un número.</h2>
       </div>
       <div data-parallax="-120">
-        <h2 style="font-size:clamp(44px,9vw,150px);letter-spacing:-0.05em;color:#fff;line-height:.9;font-weight:600">Ahora es<br>una obra.</h2>
+        <h2 class="bc-l-cifra bc-l-final__ahora">Ahora es<br>una obra.</h2>
       </div>
     </div>
   </section>
 
-  <section id="demo" style="padding:clamp(80px,12vw,180px) clamp(24px,4vw,48px);background:#F9F9F7;text-align:center">
-    <div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;align-items:center">
-      <h2 data-reveal="up" style="font-size:clamp(38px,7.5vw,125px);line-height:.9;letter-spacing:-0.045em;margin-bottom:28px;font-weight:600">¿Listo para<br>presupuestar<br>de otra manera?</h2>
-      <p data-reveal="up" data-delay="0.1" style="margin:0 0 56px;font-size:clamp(17px,1.6vw,24px);font-weight:500;color:rgba(26,26,26,.8);max-width:640px;text-wrap:pretty">Descubre cómo BuildCast puede transformar la forma en que tu equipo prepara presupuestos.</p>
-      <div data-reveal="up" data-delay="0.2" style="display:flex;gap:18px;flex-wrap:wrap;justify-content:center">
-        <button style="display:inline-flex;align-items:center;gap:14px;background:#FF5E00;color:#fff;border:1px solid #FF5E00;padding:22px 38px;font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s,border-color .3s" data-hover="background:#1A1A1A;border-color:#1A1A1A">Conocer el alcance →</button>
-        <button data-ir="/acceso.html" style="display:inline-flex;align-items:center;padding:22px 38px;border:1px solid #1A1A1A;background:transparent;color:#1A1A1A;font-family:'Manrope';font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;transition:background .3s,color .3s" data-hover="background:#1A1A1A;color:#F9F9F7">Entrar a la plataforma</button>
+  <section id="demo" class="bc-l-demo">
+    <div class="bc-l-demo__contenido">
+      <h2 class="bc-l-titular bc-l-demo__titulo" data-reveal="up">¿Listo para<br>presupuestar<br>de otra manera?</h2>
+      <p class="bc-l-demo__texto" data-reveal="up" data-delay="0.1">Descubre cómo BuildCast puede transformar la forma en que tu equipo prepara presupuestos.</p>
+      <div class="bc-l-demo__botones" data-reveal="up" data-delay="0.2">
+        <button class="bc-l-boton-acento-grande">Conocer el alcance →</button>
+        <button data-ir="/acceso.html" class="bc-l-boton-linea-grande">Entrar a la plataforma</button>
       </div>
     </div>
   </section>
 
-  <footer style="background:#111;color:#fff;padding:clamp(48px,7vw,80px) clamp(24px,4vw,48px);border-top:1px solid rgba(255,255,255,.1)">
-    <div style="max-width:1600px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:40px;align-items:end">
+  <footer class="bc-l-pie">
+    <div class="bc-l-pie__rejilla">
       <div>
-        <h2 style="font-size:clamp(30px,4vw,54px);letter-spacing:.18em;margin-bottom:14px;font-weight:600">BuildCast</h2>
-        <p style="margin:0;font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.5)">Presupuestos de construcción, repensados.</p>
+        <h2 class="bc-l-pie__marca">BuildCast</h2>
+        <p class="bc-l-pie__lema">Presupuestos de construcción, repensados.</p>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:14px 32px;justify-content:flex-end;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase">
-        <a href="#plataforma" style="color:rgba(255,255,255,.7)">Producto</a>
-        <a href="#como-funciona" style="color:rgba(255,255,255,.7)">Cómo funciona</a>
-        <a href="#para-quien" style="color:rgba(255,255,255,.7)">Para quién</a>
-        <a href="#demo" style="color:rgba(255,255,255,.7)">Contacto</a>
+      <div class="bc-l-pie__enlaces">
+        <a href="#plataforma">Producto</a>
+        <a href="#como-funciona">Cómo funciona</a>
+        <a href="#para-quien">Para quién</a>
+        <a href="#demo">Contacto</a>
       </div>
     </div>
   </footer>

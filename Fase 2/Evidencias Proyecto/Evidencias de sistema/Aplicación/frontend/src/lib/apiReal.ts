@@ -1,7 +1,10 @@
 import type {
+  CandidatoMiembro,
   CierreObra,
   CategoriaPartida,
+  EventoHistorial,
   FilaBanco,
+  MiembroProyecto,
   Partida,
   PartidaEditada,
   PartidaNueva,
@@ -15,74 +18,34 @@ import type {
   PrecioEditado,
   Proyecto,
   ProyectoNuevo,
+  RolAsignable,
+  RolProyecto,
   RespuestaRegistro,
   RespuestaSesion,
   Usuario,
   VersionPrecios,
 } from '../tipos/api'
-import type { Estimacion, EstimacionResumen, OpcionesEstimacion } from '../tipos/estimacion'
+import type {
+  DefinirPlazoProfesional, Estimacion, EstimacionResumen, OpcionesEstimacion,
+} from '../tipos/estimacion'
+import type {
+  ConfiguracionAdministracion, SolicitudAdministrador, UsuarioAdministrado, UsuarioCreado, UsuarioNuevo,
+} from '../tipos/administracion'
 import type { Configuracion } from './configuracion'
-import { cerrar, token } from './sesion'
-import { ErrorApi } from './errores'
+import type { UfVigente } from './uf'
+import { cerrar, guardar, refresco, token } from './sesion'
+import { crearCliente } from './http'
 
 const BASE = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '')
 
-/** FastAPI devuelve el detalle en `detail`, como texto o como lista de
- *  errores de validación de Pydantic. Se normaliza a una sola frase. */
-function mensajeDeError(cuerpo: unknown, estado: number): string {
-  if (cuerpo && typeof cuerpo === 'object' && 'detail' in cuerpo) {
-    const detalle = (cuerpo as { detail: unknown }).detail
-    if (typeof detalle === 'string') return detalle
-    if (Array.isArray(detalle) && detalle.length > 0) {
-      const primero = detalle[0] as { msg?: string }
-      if (primero?.msg) return primero.msg
-    }
-  }
-  if (estado >= 500) return 'La API no está respondiendo. Revisa que esté levantada.'
-  return `La solicitud falló (${estado}).`
-}
-
-interface Opciones {
-  metodo?: 'GET' | 'POST' | 'PUT' | 'DELETE'
-  cuerpo?: unknown
-  autenticado?: boolean
-}
-
-async function pedir<T>(ruta: string, opciones: Opciones = {}): Promise<T> {
-  const { metodo = 'GET', cuerpo, autenticado = true } = opciones
-  const cabeceras: Record<string, string> = { Accept: 'application/json' }
-
-  if (cuerpo !== undefined) cabeceras['Content-Type'] = 'application/json'
-
-  if (autenticado) {
-    const t = token()
-    if (t) cabeceras['Authorization'] = `Bearer ${t}`
-  }
-
-  let respuesta: Response
-  try {
-    respuesta = await fetch(`${BASE}${ruta}`, {
-      method: metodo,
-      headers: cabeceras,
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
-    })
-  } catch {
-    throw new ErrorApi(0, 'No se pudo conectar con la API. Revisa la URL y el CORS.')
-  }
-
-  if (respuesta.status === 401 && autenticado) {
-    cerrar()
-    window.location.replace('/acceso.html')
-    throw new ErrorApi(401, 'La sesión expiró.')
-  }
-
-  const texto = await respuesta.text()
-  const datos: unknown = texto ? JSON.parse(texto) : null
-
-  if (!respuesta.ok) throw new ErrorApi(respuesta.status, mensajeDeError(datos, respuesta.status))
-
-  return datos as T
-}
+// Clasificación de errores y renovación de sesión: ver http.ts.
+const { pedir } = crearCliente({
+  base: BASE,
+  sesion: { token, refresco, guardar, cerrar },
+  alCerrarSesion: () => window.location.replace('/acceso.html'),
+  // Invitación sin contraseña: acceso.html muestra «Crea tu contraseña».
+  alAccesoPendiente: () => window.location.replace('/acceso.html'),
+})
 
 /* ── Mapeos entre el contrato de FastAPI y las formas que ya usa el
    frontend (paginas/*.ts, catalogos.ts). Se traduce sólo acá para no
@@ -91,10 +54,22 @@ async function pedir<T>(ruta: string, opciones: Opciones = {}): Promise<T> {
 interface UsuarioBackend {
   id: string
   email: string
+  rol_global?: string
+  es_administrador_principal?: boolean
+  nombre?: string | null
+  acceso_configurado?: boolean
 }
 
 function aUsuarioFrontend(u: UsuarioBackend): Usuario {
-  return { id: u.id, correo: u.email }
+  return {
+    id: u.id,
+    correo: u.email,
+    nombre: u.nombre ?? undefined,
+    rol: u.rol_global,
+    esAdministradorPrincipal: u.es_administrador_principal ?? false,
+    // Un backend anterior a la migración 008 no lo informa: no bloquea a nadie.
+    accesoConfigurado: u.acceso_configurado ?? true,
+  }
 }
 
 interface ProyectoBackend {
@@ -118,6 +93,11 @@ interface ProyectoBackend {
   fecha_estimacion: string | null
   estado_estimacion: 'sin_estimar' | 'vigente' | 'recalcular'
   plazo_dias: number | null
+  plazo_estado?: string | null
+  plazo_motivo?: string | null
+  plazo_profesional_dias?: number | null
+  plazo_profesional_estado?: string | null
+  mi_rol: RolProyecto
 }
 
 function aProyectoFrontend(p: ProyectoBackend): Proyecto {
@@ -137,8 +117,13 @@ function aProyectoFrontend(p: ProyectoBackend): Proyecto {
     costo_m2: p.costo_m2 ?? null,
     fecha_estimacion: p.fecha_estimacion ?? null,
     plazo_dias: p.plazo_dias ?? null,
+    plazo_estado: p.plazo_estado ?? null,
+    plazo_motivo: p.plazo_motivo ?? null,
+    plazo_profesional_dias: p.plazo_profesional_dias ?? null,
+    plazo_profesional_estado: p.plazo_profesional_estado ?? null,
     creado_en: p.fecha_creacion,
     actualizado_en: p.fecha_actualizacion,
+    mi_rol: p.mi_rol ?? null,
   }
 }
 
@@ -178,6 +163,13 @@ export const apiReal = {
 
   yo: () => pedir<UsuarioBackend>('/autenticacion/yo').then(aUsuarioFrontend),
 
+  /** Primera contraseña de un usuario invitado; usa la sesión que trae el enlace. */
+  establecerContrasena: (clave: string) =>
+    pedir<{ mensaje: string }>('/autenticacion/establecer-contrasena', {
+      metodo: 'POST',
+      cuerpo: { password: clave },
+    }),
+
   listarProyectos: () =>
     pedir<ProyectoBackend[]>('/proyectos').then((proyectos) => proyectos.map(aProyectoFrontend)),
 
@@ -194,6 +186,10 @@ export const apiReal = {
       metodo: 'PUT',
       cuerpo: aProyectoBackend(datos),
     }).then(aProyectoFrontend),
+
+  /** Solo el propietario; responde 204. */
+  eliminarProyecto: (id: string) =>
+    pedir<null>(`/proyectos/${id}`, { metodo: 'DELETE' }).then(() => undefined),
 
   /** Cierre real de obra: alimenta el conjunto de entrenamiento (HU-22). */
   registrarCierreObra: (proyectoId: string, datos: CierreObra) =>
@@ -329,14 +325,93 @@ export const apiReal = {
   obtenerEstimacion: (proyectoId: string, estimacionId: string) =>
     pedir<Estimacion>(`/proyectos/${proyectoId}/estimaciones/${estimacionId}`),
 
+  /** Solo cambia la observación: nueva estimación con los mismos montos. */
+  actualizarCotizacion: (proyectoId: string, estimacionId: string, observaciones: string | null) =>
+    pedir<Estimacion>(`/proyectos/${proyectoId}/estimaciones/${estimacionId}/actualizar-cotizacion`, {
+      metodo: 'POST',
+      cuerpo: { observaciones },
+    }),
+
+  /** Plazo para la cotización: un valor escrito o la sugerencia del modelo. Nueva
+   *  estimación con los mismos montos y la misma sugerencia (no recalcula). */
+  definirPlazoProfesional: (proyectoId: string, estimacionId: string, cuerpo: DefinirPlazoProfesional) =>
+    pedir<Estimacion>(`/proyectos/${proyectoId}/estimaciones/${estimacionId}/plazo-profesional`, {
+      metodo: 'POST',
+      cuerpo,
+    }),
+
+  // --- Miembros e historial --------------------------------------------
+
+  /** Cualquier miembro consulta; agregar, cambiar y quitar son del propietario. */
+  listarMiembros: (proyectoId: string) =>
+    pedir<MiembroProyecto[]>(`/proyectos/${proyectoId}/miembros`),
+
+  /** Solo el propietario. Hasta 20, filtrados por nombre o correo. */
+  listarCandidatosMiembro: (proyectoId: string, buscar = '') =>
+    pedir<CandidatoMiembro[]>(
+      `/proyectos/${proyectoId}/miembros/candidatos${buscar ? `?buscar=${encodeURIComponent(buscar)}` : ''}`,
+    ),
+
+  /** Correo exacto de un usuario ya registrado. */
+  agregarMiembro: (proyectoId: string, email: string, rol: RolAsignable) =>
+    pedir<MiembroProyecto>(`/proyectos/${proyectoId}/miembros`, {
+      metodo: 'POST',
+      cuerpo: { email, rol },
+    }),
+
+  cambiarRolMiembro: (proyectoId: string, usuarioId: string, rol: RolAsignable) =>
+    pedir<MiembroProyecto>(`/proyectos/${proyectoId}/miembros/${usuarioId}`, {
+      metodo: 'PUT',
+      cuerpo: { rol },
+    }),
+
+  /** Responde 204. */
+  quitarMiembro: (proyectoId: string, usuarioId: string) =>
+    pedir<null>(`/proyectos/${proyectoId}/miembros/${usuarioId}`, { metodo: 'DELETE' }).then(() => undefined),
+
+  /** Solo lectura, el más reciente primero. */
+  listarHistorial: (proyectoId: string, limite = 50) =>
+    pedir<EventoHistorial[]>(`/proyectos/${proyectoId}/historial?limite=${limite}`),
+
   // --- Configuración del cálculo --------------------------------------
 
   obtenerConfiguracion: () =>
     pedir<Configuracion>('/configuracion'),
 
+  /** UF del día desde valores_uf; el backend no consulta la CMF en cada petición. */
+  obtenerUfVigente: () =>
+    pedir<UfVigente>('/configuracion/uf-vigente'),
+
   guardarConfiguracion: (configuracion: Configuracion) =>
     pedir<Configuracion>('/configuracion', {
       metodo: 'PUT',
       cuerpo: configuracion,
+    }),
+
+  // --- Administración (solo administradores) ---------------------------
+
+  listarUsuarios: () =>
+    pedir<UsuarioAdministrado[]>('/administracion/usuarios'),
+
+  /** Crea un profesional; en modo enlace responde el enlace una sola vez. */
+  crearUsuario: (datos: UsuarioNuevo) =>
+    pedir<UsuarioCreado>('/administracion/usuarios', { metodo: 'POST', cuerpo: datos }),
+
+  /** Enlace nuevo para una invitación pendiente; en modo correo, Supabase la reenvía. */
+  renovarInvitacion: (usuarioId: string) =>
+    pedir<UsuarioCreado>(`/administracion/usuarios/${usuarioId}/renovar-invitacion`, { metodo: 'POST' }),
+
+  configuracionAdministracion: () =>
+    pedir<ConfiguracionAdministracion>('/administracion/configuracion'),
+
+  /** Crea la solicitud; el rol cambia solo con 3 de 3 aprobaciones. */
+  solicitarAdministrador: (usuarioId: string) =>
+    pedir<SolicitudAdministrador>(`/administracion/usuarios/${usuarioId}/solicitar-administrador`, {
+      metodo: 'POST',
+    }),
+
+  aprobarSolicitudAdministrador: (solicitudId: string) =>
+    pedir<SolicitudAdministrador>(`/administracion/solicitudes-administrador/${solicitudId}/aprobar`, {
+      metodo: 'POST',
     }),
 }

@@ -17,6 +17,7 @@ export default defineConfig({
         panel: resolve(__dirname, 'panel.html'),
         documento: resolve(__dirname, 'documento.html'),
         configuracion: resolve(__dirname, 'configuracion.html'),
+        administracion: resolve(__dirname, 'administracion.html'),
       },
     },
   },

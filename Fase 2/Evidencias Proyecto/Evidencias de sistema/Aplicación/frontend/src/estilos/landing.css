@@ -1,0 +1,1341 @@
+/* =========================================================================
+   Landing (index.html)
+   Reglas que solo usa la página de inicio. Lo compartido con el resto del
+   sitio (tokens, tipografía, botones, logotipo) sigue en base.css, que se
+   carga antes que esta hoja.
+   ========================================================================= */
+
+
+/* --- Landing ------------------------------------------------------------- */
+
+.bc-landing { overflow-x: clip; }
+@supports not (overflow-x: clip) { .bc-landing { overflow-x: hidden; } }
+.bc-landing h1, .bc-landing h2, .bc-landing h3 { text-transform: none; }
+.bc-landing a { transition: color .3s ease; }
+
+/* Marco de fotografía: si existe /images/<id>.jpg se muestra;
+   si no, queda el rótulo de qué imagen corresponde. */
+.bc-foto {
+  position: relative;
+  background: var(--bc-linea);
+  display: grid; place-items: center;
+  overflow: hidden;
+}
+.bc-foto img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
+.bc-foto span {
+  position: relative; z-index: 1;
+  font-family: var(--bc-display); font-size: 12px;
+  letter-spacing: .24em; text-transform: uppercase;
+  color: var(--bc-gris); text-align: center; padding: 16px;
+}
+.bc-foto img[src]:not([style*="display: none"]) ~ span { display: none; }
+
+/* --- Landing: móvil ------------------------------------------------------ */
+/* El prototipo fue diseñado para pantalla ancha: secciones de 300 a 600vh
+   con capas fijadas y tipografías de hasta 190px. En un teléfono eso
+   obliga a scrollear seis pantallas por idea y corta los titulares.
+   Aquí las secuencias pasan a flujo normal y la escala tipográfica baja. */
+
+@media (max-width: 760px) {
+  /* Secuencias fijadas → bloques apilados */
+  .bc-landing [data-seq] { height: auto !important; overflow: visible !important; }
+  .bc-landing [data-seq] > div { position: static !important; height: auto !important; display: block !important; }
+  .bc-landing [data-seq-item] {
+    position: static !important;
+    opacity: 1 !important;
+    transform: none !important;
+    padding: 40px clamp(20px, 5vw, 28px) !important;
+    width: auto !important;
+    inset: auto !important;
+  }
+  .bc-landing [data-seq-bar] { display: none; }
+  .bc-landing [data-hero] { transform: none !important; opacity: 1 !important; }
+  .bc-landing [data-parallax] { transform: none !important; }
+  .bc-landing [data-cross-out], .bc-landing [data-cross-in] { opacity: 1 !important; }
+  .bc-landing [data-cross-scale] { transform: none !important; }
+
+  /* Escala tipográfica del relato */
+  .bc-landing h1 { font-size: clamp(34px, 11vw, 54px) !important; line-height: .96 !important; }
+  .bc-landing h2 { font-size: clamp(26px, 8.4vw, 42px) !important; line-height: 1.02 !important; }
+  .bc-landing h3 { font-size: clamp(19px, 5.6vw, 28px) !important; }
+  .bc-landing p  { font-size: 15px !important; }
+  .bc-landing [data-chaos] { font-size: 13px !important; }
+
+  /* Cabecera: solo marca y acceso */
+  .bc-landing [data-navbar] { padding: 14px 20px !important; background: rgba(249,249,247,.94); backdrop-filter: blur(10px); }
+  .bc-landing [data-navbar] [data-chapter] { display: none; }
+
+  /* Alturas de sección y marcos de imagen */
+  .bc-landing section { padding-left: 20px !important; padding-right: 20px !important; }
+  .bc-landing section > div { padding-left: 0 !important; padding-right: 0 !important; }
+  .bc-landing .bc-foto { min-height: 220px; }
+  /* Solo hero y cierre ocupan la pantalla; las capas apiladas miden lo que su contenido */
+  .bc-landing .bc-pantalla { height: auto !important; min-height: 92vh !important; }
+
+  /* Tablas de la maqueta: desplazamiento propio en lugar de desbordar */
+  .bc-landing table { font-size: 12px !important; }
+
+  /* Marcos del recorrido: a 50vh el dibujo (600×420) quedaba chico en una caja alta y vacía */
+  .bc-landing .bc-recorrido__marco {
+    height: auto !important;
+    aspect-ratio: 10 / 7;
+  }
+}
+
+/* Pantallas medianas: baja el pico de la escala sin tocar el layout */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .bc-landing h1 { font-size: clamp(48px, 8vw, 86px) !important; }
+  .bc-landing h2 { font-size: clamp(32px, 6vw, 64px) !important; }
+}
+
+/* Rejillas de columnas fijas de la maqueta: en móvil se vuelven una lista */
+@media (max-width: 760px) {
+  .bc-landing .bc-maqueta__fila {
+    grid-template-columns: 1fr auto !important;
+    gap: 2px 10px !important;
+    font-size: 12px !important;
+  }
+  .bc-landing .bc-maqueta__fila > *:nth-child(1),
+  .bc-landing .bc-maqueta__fila > *:nth-child(3),
+  .bc-landing .bc-maqueta__fila > *:nth-child(4) { display: none !important; }
+
+  /* Maqueta de la plataforma: sin la barra lateral de 240px, que dejaba ~90px al presupuesto */
+  .bc-landing .bc-maqueta__lateral { display: none !important; }
+  .bc-landing .bc-maqueta__cabecera { height: auto !important; padding: 12px 16px !important; flex-wrap: wrap; }
+  .bc-landing .bc-maqueta__total { grid-template-columns: 1fr !important; }
+  /* Bloques con ancho máximo fijo: en el teléfono ocupan todo el ancho */
+  .bc-landing .bc-l-problema__titulares,
+  .bc-landing .bc-l-como__cierre,
+  .bc-landing .bc-l-cita__bloque,
+  .bc-landing .bc-l-demo__contenido { width: 100% !important; }
+  /* Capas en posición absoluta: que no se salgan de la pantalla */
+  .bc-landing .bc-l-paso__tinte,
+  .bc-landing .bc-l-paso__escaneo,
+  .bc-landing .bc-l-transformacion__lema,
+  .bc-landing .bc-l-transformacion__par,
+  .bc-landing .bc-capa__pista,
+  .bc-landing .bc-recorrido__rotulo,
+  .bc-landing .bc-l-recorrido__lamina,
+  .bc-landing .bc-l-final__fondo,
+  .bc-landing .bc-l-final__velo,
+  .bc-landing .bc-l-defs,
+  .bc-landing .bc-l-portada__fondo,
+  .bc-landing .bc-l-portada__velo,
+  .bc-landing .bc-l-problema__frase,
+  .bc-landing .bc-l-cambio__pregunta,
+  .bc-landing .bc-l-cambio__nombre,
+  .bc-landing .bc-l-plataforma__planos,
+  .bc-landing .bc-maqueta { max-width: 100%; }
+}
+
+/* --- Landing sin capas fijadas ------------------------------------------
+   Este es el modo que ve un teléfono, y también el de respaldo si el
+   script no llega a iniciar. Las capas del prototipo son titulares
+   superpuestos con posición absoluta que se cruzan según el scroll; aquí
+   se convierten en bloques que se leen uno tras otro. */
+
+.bc-landing:not(.bc-animada) [data-seq] { height: auto !important; }
+.bc-landing:not(.bc-animada) [data-seq] > div {
+  position: static !important;
+  height: auto !important;
+  overflow: visible !important;
+  /* El contenedor fijado alinea las capas en fila; sin capas, en fila
+     los bloques se pisan entre sí. */
+  display: block !important;
+  padding-block: clamp(48px, 9vw, 96px) !important;
+  padding-inline: clamp(20px, 4vw, 48px) !important;
+}
+
+/* Nada posicionado en absoluto: si no hay capas, no hay superposición */
+.bc-landing:not(.bc-animada) [data-seq] .bc-l-problema__frase,
+.bc-landing:not(.bc-animada) [data-seq] .bc-l-cambio__pregunta,
+.bc-landing:not(.bc-animada) [data-seq] .bc-l-cambio__nombre,
+.bc-landing:not(.bc-animada) [data-seq] .bc-l-transformacion__lema,
+.bc-landing:not(.bc-animada) [data-seq] .bc-l-transformacion__par,
+.bc-landing:not(.bc-animada) [data-seq] .bc-capa__pista,
+.bc-landing:not(.bc-animada) [data-seq] .bc-recorrido__rotulo,
+.bc-landing:not(.bc-animada) [data-seq] .bc-l-recorrido__lamina {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+}
+
+/* El contenedor que alineaba los titulares en fila pasa a columna */
+.bc-landing:not(.bc-animada) [data-seq] .bc-titulares {
+  display: block !important;
+  height: auto !important;
+  max-width: none !important;
+}
+
+.bc-landing:not(.bc-animada) [data-seq-item] {
+  opacity: 1 !important;
+  transform: none !important;
+  display: block !important;
+  width: 100% !important;
+  max-width: 900px !important;
+  margin: 0 auto clamp(36px, 6vw, 64px) !important;
+  padding-bottom: clamp(28px, 5vw, 48px) !important;
+  border-bottom: 1px solid currentColor;
+  opacity: 1;
+}
+.bc-landing:not(.bc-animada) [data-seq-item] { border-bottom-color: color-mix(in srgb, currentColor 22%, transparent); }
+.bc-landing:not(.bc-animada) [data-seq-item]:last-child {
+  margin-bottom: 0 !important; padding-bottom: 0 !important; border-bottom: 0;
+}
+
+/* Los pares «palabra tachada → palabra nueva» conservan su fila */
+.bc-landing:not(.bc-animada) [data-seq-item] > span { display: inline-block !important; }
+
+/* Los titulares de 130px solo funcionan ocupando la pantalla completa */
+.bc-landing:not(.bc-animada) [data-seq-item] h2,
+.bc-landing:not(.bc-animada) [data-seq-item] > span {
+  font-size: clamp(28px, 7.5vw, 58px) !important;
+}
+.bc-landing:not(.bc-animada) [data-seq-item] h3 { font-size: clamp(22px, 6vw, 38px) !important; }
+
+/* Las palabras dispersas son decoración de la capa fijada */
+.bc-landing:not(.bc-animada) [data-chaos] { display: none !important; }
+
+.bc-landing:not(.bc-js) [data-reveal] { opacity: 1 !important; transform: none !important; }
+.bc-landing:not(.bc-animada) [data-cross-out],
+.bc-landing:not(.bc-animada) [data-cross-in] { opacity: 1 !important; }
+.bc-landing:not(.bc-animada) [data-cross-scale] { transform: none !important; }
+.bc-landing:not(.bc-animada) [data-hero] { transform: none !important; opacity: 1 !important; }
+.bc-landing:not(.bc-animada) [data-seq-bar],
+.bc-landing:not(.bc-animada) .bc-capa__pista { display: none !important; }
+
+/* --- Menú de la landing -------------------------------------------------- */
+
+.bc-hamburguesa {
+  display: none;
+  flex-direction: column; justify-content: center; gap: 5px;
+  width: 44px; height: 44px; padding: 0;
+  background: transparent; border: 1px solid var(--bc-linea);
+  cursor: pointer;
+}
+.bc-hamburguesa span {
+  display: block; width: 20px; height: 2px; margin: 0 auto;
+  background: var(--bc-tinta);
+  transition: transform .3s ease, opacity .2s ease;
+}
+.bc-hamburguesa[aria-expanded="true"] span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.bc-hamburguesa[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.bc-hamburguesa[aria-expanded="true"] span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Bajo 1024px la barra no da para cinco elementos en línea: el botón de
+   acceso terminaba cayendo bajo los enlaces. Pasa a menú desplegable. */
+@media (max-width: 1024px) {
+  .bc-hamburguesa { display: flex; }
+
+  .bc-landing [data-navbar] { background: rgba(249,249,247,.96); backdrop-filter: blur(12px); border-bottom: 1px solid var(--bc-linea); }
+
+  .bc-menu {
+    position: absolute; top: 100%; left: 0; right: 0;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+    background: var(--bc-fondo);
+    border-bottom: 1px solid var(--bc-linea);
+    padding: 8px clamp(20px, 4vw, 48px) 20px;
+    display: none !important;
+  }
+  .bc-menu[data-abierto] { display: flex !important; }
+  .bc-menu a {
+    padding: 16px 0;
+    border-bottom: 1px solid var(--bc-linea);
+    font-size: 13px;
+  }
+  .bc-menu__entrar { width: 100%; margin-top: 16px; }
+
+  .bc-landing [data-chapter] { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-hamburguesa span { transition: none; }
+}
+
+/* =========================================================================
+   Landing · capas fijadas y escala por altura
+   Los tamaños del prototipo se dimensionaron para pantallas altas: hasta
+   190px de titular y 900px de marco de imagen. En una ventana común el
+   bloque no cabe dentro de la capa y se corta. Aquí se reescalan contra
+   la altura disponible (vh), de modo que el texto crece con la ventana en
+   vez de saltar entre dos tamaños fijos. Se apuntan por las clases bc-l-*.
+   ========================================================================= */
+
+/* La cabecera es fija: las capas empiezan debajo */
+.bc-landing.bc-animada [data-seq] .bc-capa-item {
+  top: clamp(68px, 9vh, 92px) !important;
+}
+.bc-landing.bc-animada [data-seq] > div {
+  padding-top: clamp(68px, 9vh, 92px);
+  box-sizing: border-box;
+}
+
+/* Rótulos de sección: 13px con mucho tracking se perdían en pantalla */
+.bc-landing .bc-l-rotulo {
+  font-size: clamp(14px, 1.7vh, 17px) !important;
+  letter-spacing: .22em !important;
+  font-weight: 600 !important;
+}
+
+/* Escala por altura: las clases bc-l-* marcan cifras, titulares y marcos del prototipo */
+@media (min-width: 761px) {
+  .bc-landing .bc-l-cifra { font-size: clamp(38px, 11.5vh, 142px) !important; }
+  .bc-landing .bc-l-titular { font-size: clamp(28px, 7.8vh, 94px) !important; }
+  .bc-landing .bc-l-subtitular { font-size: clamp(24px, 5.6vh, 70px) !important; }
+  .bc-landing .bc-l-marco { height: clamp(170px, 44vh, 620px) !important; }
+
+  .bc-landing [data-seq-item] p { font-size: clamp(15px, 2.3vh, 20px) !important; }
+  .bc-landing [data-seq-item] { overflow: hidden; }
+}
+
+/* --- Ritmo de las secciones fijadas --------------------------------------
+   «¿Y si el proceso…» y «Conoce BuildCast» ocupaban dos pantallas enteras
+   de scroll para dos frases. Se acorta el recorrido fijado: el mensaje
+   llega antes y la página deja de sentirse larga en ese tramo. */
+
+@media (min-width: 761px) {
+  .bc-landing [data-seq="cambio"] { height: 160vh !important; }
+  .bc-landing [data-seq="problema"] { height: 240vh !important; }
+}
+
+/* El rótulo de «El camino hacia el presupuesto» quedaba bajo la cabecera fija. */
+.bc-landing.bc-animada .bc-recorrido__rotulo { top: clamp(100px, 13vh, 132px) !important; }
+
+/* Palabras dispersas de «La forma tradicional».
+   El tamaño sigue a la menor de las dos medidas de la ventana: así cada palabra
+   ocupa siempre la misma fracción de ancho y de alto, y las posiciones en %
+   no se cruzan entre sí ni con el titular, sea cual sea la proporción. */
+.bc-caos {
+  position: absolute;
+  font-family: var(--bc-display);
+  font-size: clamp(16px, min(5.2vh, 3.2vw), 52px);
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  color: rgba(143, 143, 143, .45);
+  pointer-events: none;
+}
+.bc-caos--planos       { top: 20%; left: 8%; }
+.bc-caos--excel        { top: max(14%, 96px); left: 64%; }   /* bajo la cabecera fija */
+.bc-caos--partidas     { top: 30%; right: 4%; }
+.bc-caos--cotizaciones { top: 33%; left: 6%; }
+.bc-caos--pdfs         { top: 62%; left: 72%; }
+.bc-caos--versiones    { top: 75%; right: 5%; }      /* fuera de la franja central del titular */
+.bc-caos--correos      { top: 80%; left: 14%; }
+.bc-caos--cambios      { top: 86%; left: 38%; }
+.bc-caos--revisiones   { top: 88%; left: 70%; }
+
+/* «Construir es complejo»: planilla, precios y criterios → BuildCast → presupuesto.
+   El paso a vertical depende del ancho de la columna, no de la ventana. */
+.bc-flujo-marco { container-type: inline-size; }
+.bc-flujo {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(36px, 9%, 80px) auto 40px auto;
+  align-items: center;
+}
+.bc-flujo__entradas {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-rows: repeat(3, 1fr);
+}
+/* Filas iguales y entrada centrada: las líneas salen a 1/6, 1/2 y 5/6 de la altura */
+.bc-flujo__entradas li { display: flex; align-items: center; padding: 8px 0; }
+.bc-flujo__entrada {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 16px 18px;
+  background: var(--bc-blanco); border: 1px solid var(--bc-linea);
+  font-family: var(--bc-display); font-size: 13px; font-weight: 500;
+  letter-spacing: .16em; text-transform: uppercase;
+}
+.bc-flujo__glifo { flex: none; width: 18px; height: 14px; color: var(--bc-gris); }
+.bc-flujo__glifo--planilla {
+  border: 1.5px solid currentColor;
+  background:
+    linear-gradient(currentColor, currentColor) center / 1.5px 100% no-repeat,
+    linear-gradient(currentColor, currentColor) center / 100% 1.5px no-repeat;
+}
+.bc-flujo__glifo--precios { display: grid; place-items: center; font-size: 16px; font-weight: 700; line-height: 1; }
+.bc-flujo__glifo--criterios {
+  background:
+    linear-gradient(currentColor, currentColor) 0 0 / 100% 1.5px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 50% / 70% 1.5px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 100% / 45% 1.5px no-repeat;
+}
+.bc-flujo__union { display: block; width: 100%; height: 100%; align-self: stretch; overflow: visible; }
+.bc-flujo__union path { fill: none; stroke: var(--bc-gris); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.bc-flujo__union--vertical { display: none; }
+.bc-flujo__motor {
+  padding: 20px 22px;
+  background: var(--bc-tinta); color: var(--bc-acento);
+  font-family: var(--bc-display); font-size: 14px; font-weight: 700;
+  letter-spacing: .2em; text-transform: uppercase; white-space: nowrap;
+}
+.bc-flujo__flecha { text-align: center; color: var(--bc-gris); font-size: 20px; }
+.bc-flujo__flecha::before { content: '→'; }
+.bc-flujo__resultado { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+/* Tres hojas iguales: el mismo resultado cada vez */
+.bc-flujo__hojas { position: relative; width: 84px; height: 106px; margin: 8px 8px 0 0; }
+.bc-flujo__hojas span { position: absolute; inset: 0; background: var(--bc-blanco); border: 1px solid var(--bc-linea); }
+.bc-flujo__hojas span:nth-child(1) { transform: translate(8px, -8px); }
+.bc-flujo__hojas span:nth-child(2) { transform: translate(4px, -4px); }
+.bc-flujo__hojas span:nth-child(3) {
+  border-color: #D9D9D9;
+  background:
+    linear-gradient(var(--bc-linea), var(--bc-linea)) 12px 18px / 58% 2px no-repeat,
+    linear-gradient(var(--bc-linea), var(--bc-linea)) 12px 32px / 44% 2px no-repeat,
+    linear-gradient(var(--bc-linea), var(--bc-linea)) 12px 46px / 58% 2px no-repeat,
+    linear-gradient(var(--bc-linea), var(--bc-linea)) 12px 60px / 36% 2px no-repeat,
+    linear-gradient(var(--bc-acento), var(--bc-acento)) 12px 82px / 48% 6px no-repeat,
+    var(--bc-blanco);
+}
+.bc-flujo__etiqueta {
+  font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--bc-gris);
+}
+
+@container (max-width: 540px) {
+  .bc-flujo { grid-template-columns: 1fr; justify-items: center; }
+  .bc-flujo__entradas { width: 100%; grid-template-rows: none; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .bc-flujo__entradas li { padding: 0; justify-content: center; }
+  .bc-flujo__entrada { flex-direction: column; gap: 8px; padding: 14px 6px; font-size: 11px; letter-spacing: .12em; justify-content: center; }
+  .bc-flujo__union--lateral { display: none; }
+  .bc-flujo__union--vertical { display: block; height: 44px; }
+  .bc-flujo__flecha { padding: 6px 0; }
+  .bc-flujo__flecha::before { content: '↓'; }
+}
+
+/* Pasos de «Cómo funciona»: en una columna cada paso se lee número → título →
+   descripción → visual. Sobre 760px queda la composición de escritorio. */
+@media (max-width: 760px) {
+  .bc-landing .bc-paso { grid-template-columns: minmax(0, 1fr) !important; align-items: start !important; }
+  .bc-landing .bc-paso__visual { order: 1; }
+}
+
+/* «Analiza»: la imagen es 4:3 y va en cover. En columnas angostas el marco quedaba
+   vertical y se cortaban los costados; ahí el marco toma la proporción de la imagen. */
+@media (max-width: 1100px) {
+  .bc-landing .bc-pasos__imagen { height: auto !important; aspect-ratio: 4 / 3; }
+  .bc-landing .bc-pasos__imagen .bc-foto { min-height: 0; }
+}
+
+/* «¿Para quién construimos?»: el cálculo es un acento chico arriba; la cita, el mensaje.
+   Alto según contenido: cabe la cita más larga sin solaparse con nada. */
+.bc-perfil-marco {
+  display: flex; flex-direction: column; justify-content: space-between;
+  gap: clamp(24px, 4vh, 48px);
+  min-height: clamp(320px, 56vh, 640px);
+  padding: clamp(24px, 3vw, 48px);
+  background: #161616; border: 1px solid rgba(255, 255, 255, .12);
+}
+.bc-perfil-marco__cita {
+  margin: 0;
+  font-family: var(--bc-display); font-size: clamp(24px, 3.4vw, 52px);
+  text-transform: uppercase; letter-spacing: -0.03em; line-height: 1.1; text-wrap: pretty;
+}
+@media (max-width: 760px) {
+  .bc-perfil-marco { min-height: 0; }
+  .bc-landing .bc-perfil-marco__cita { font-size: 22px !important; }
+}
+
+/* «La decisión sigue siendo tuya»: mini estimación revisada y ajustada */
+.bc-control-columna { gap: clamp(32px, 4vw, 48px); }
+.bc-control {
+  margin: 0; width: 100%; max-width: 560px;
+  background: #fff; border: 1px solid var(--bc-linea);
+  font-size: 13px; font-weight: 500;
+}
+.bc-control__fila, .bc-control__total {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 16px;
+  gap: 16px; align-items: center; padding: 14px 18px;
+}
+.bc-control__fila { border-bottom: 1px solid var(--bc-linea); }
+.bc-control__partida small {
+  margin-right: 12px; font-size: 12px; color: var(--bc-gris);
+  font-variant-numeric: tabular-nums;
+}
+.bc-control__monto { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bc-control__monto s { margin-right: 10px; font-weight: 500; color: var(--bc-gris); }
+.bc-control__marca { font-size: 12px; color: var(--bc-gris); text-align: center; }
+.bc-control__fila--ajustada { background: var(--bc-acento-tenue); box-shadow: inset 3px 0 0 var(--bc-acento); }
+.bc-control__fila--ajustada .bc-control__monto,
+.bc-control__fila--ajustada .bc-control__marca { color: var(--bc-acento); }
+.bc-control__total {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  background: var(--bc-tinta); color: var(--bc-fondo);
+  font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+.bc-control__total span:last-child { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.bc-control__estado { color: var(--bc-acento); font-size: 10px; }
+
+@media (max-width: 480px) {
+  .bc-control__fila, .bc-control__total { gap: 10px; padding: 12px 14px; }
+  .bc-control__partida small { display: none; }
+  /* El monto anterior pasa arriba del nuevo para no apretar el nombre */
+  .bc-control__monto s { display: block; margin: 0 0 2px; font-size: 11px; }
+}
+
+/* En la cabecera de la landing el logotipo sustituye al texto de 22px */
+.bc-landing [data-navbar] .bc-logo { height: 30px; }
+@media (max-width: 760px) {
+  .bc-landing [data-navbar] .bc-logo { height: 24px; }
+}
+
+.bc-landing h1, .bc-landing h2 { letter-spacing: -.04em; }
+
+/* La frase más larga de la sección del problema no cabe a tamaño pleno
+   con una tipografía no condensada: se limita por ancho de ventana. */
+.bc-landing [data-seq="problema"] [data-seq-item] { font-size: min(7.4vw, 94px) !important; }
+
+/* Los titulares de línea larga («Presupuestar no debería serlo.») se topan
+   también por ancho, no solo por altura: con una tipografía no condensada
+   una línea de treinta caracteres desborda antes que la altura. */
+/* Solo las capas y los titulares de sección, nunca los rótulos pequeños */
+.bc-landing h2:not(.bc-l-rotulo) {
+  font-size: min(5.6vw, 94px);
+}
+.bc-landing [data-seq-item] h2,
+.bc-landing h2[data-seq-item] { font-size: min(7.4vw, 94px) !important; }
+
+/* Los rótulos de sección conservan su tamaño pase lo que pase */
+.bc-landing .bc-l-rotulo {
+  font-size: clamp(14px, 1.7vh, 17px) !important;
+  letter-spacing: .22em !important;
+  font-weight: 600 !important;
+}
+
+/* Si una línea no cabe, que doble: nunca que desborde la pantalla */
+.bc-landing h1, .bc-landing h2, .bc-landing h3 { overflow-wrap: break-word; }
+
+/* =========================================================================
+   Landing · recorrido hacia el presupuesto y perfiles
+   Un mismo proyecto (folio BC-2026-0142) atraviesa las seis láminas: misma
+   cabecera, mismo riel 01→06 con el punto naranja que avanza y las mismas
+   cifras de una etapa a la siguiente. Los dibujos están completos por
+   defecto; solo con .bc-movimiento (JS activo y sin «menos movimiento») se
+   ocultan hasta que su lámina se activa y entonces se trazan.
+   ========================================================================= */
+
+.bc-svg-mono   { font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace; }
+.bc-svg-rotulo { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; letter-spacing: .18em; }
+.bc-svg-texto  { font-family: 'Manrope', system-ui, sans-serif; font-weight: 500; }
+
+/* Indicador de etapa en la cabecera: solo se ve dentro del recorrido. */
+.bc-capitulo {
+  font-family: 'Space Grotesk', sans-serif; font-size: 12px; letter-spacing: .2em;
+  text-transform: uppercase; color: #8F8F8F; white-space: nowrap;
+  opacity: 0; transition: opacity .4s ease;
+}
+
+/* --- Láminas del recorrido ------------------------------------------------- */
+
+.bc-recorrido__fila {
+  max-width: 1600px; width: 100%; margin: 0 auto;
+  display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: clamp(32px, 5vw, 96px); align-items: center;
+}
+.bc-recorrido__numero {
+  font-family: 'Space Grotesk', sans-serif; font-size: clamp(84px, 12vw, 190px);
+  line-height: .85; color: #FF5E00; letter-spacing: -.05em;
+}
+.bc-recorrido__titulo { font-size: clamp(36px, 5vw, 76px); margin-top: 12px; font-weight: 600; }
+.bc-recorrido__bajada {
+  margin-top: 24px; max-width: 420px;
+  font-size: clamp(16px, 1.5vw, 22px); font-weight: 500; color: #8F8F8F;
+}
+/* El número y el título se leen como un rótulo de lámina: un filete los une. */
+.bc-recorrido__titulo::after {
+  content: ''; display: block; width: 56px; height: 2px; margin-top: 20px; background: rgba(249, 249, 247, .25);
+}
+
+/* El marco toma la proporción del dibujo (10:7): sin franjas vacías arriba y
+   abajo en pantallas verticales. El tope de alto evita que en ventanas bajas
+   la lámina empuje el texto fuera de la capa fijada. */
+.bc-lamina {
+  position: relative; margin: 0;
+  aspect-ratio: 10 / 7; max-height: 66vh; width: 100%;
+  background: #141414; border: 1px solid rgba(249, 249, 247, .14);
+}
+.bc-lamina::before, .bc-lamina::after {
+  content: ''; position: absolute; width: 14px; height: 14px; pointer-events: none;
+}
+.bc-lamina::before { top: -1px; left: -1px; border-top: 2px solid #FF5E00; border-left: 2px solid #FF5E00; }
+.bc-lamina::after  { bottom: -1px; right: -1px; border-bottom: 1px solid rgba(249, 249, 247, .5); border-right: 1px solid rgba(249, 249, 247, .5); }
+.bc-lamina__svg { display: block; width: 100%; height: 100%; }
+
+@media (max-width: 760px) {
+  .bc-recorrido__fila { grid-template-columns: 1fr; gap: 24px; }
+  .bc-recorrido__titulo::after { margin-top: 14px; }
+  /* A todo el ancho de la pantalla: el plano gana escala y sus rótulos se leen. */
+  .bc-landing .bc-lamina {
+    height: auto !important; max-height: none; width: auto;
+    margin-inline: calc(-1 * clamp(20px, 5vw, 28px));
+    border-inline: 0;
+  }
+}
+
+/* --- Animación de dibujo ---------------------------------------------------- */
+
+.bc-crece { transform-box: fill-box; transform-origin: 0 50%; }
+
+.bc-movimiento [data-anima]:not([data-activo]) .bc-a { opacity: 0; }
+.bc-movimiento [data-anima]:not([data-activo]) .bc-trazo { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.bc-movimiento [data-anima]:not([data-activo]) .bc-crece { transform: scaleX(0); }
+
+.bc-movimiento [data-anima][data-activo] .bc-a {
+  animation: bc-l-entra .8s cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+.bc-movimiento [data-anima][data-activo] .bc-trazo {
+  stroke-dasharray: 1;
+  animation: bc-l-traza 1.2s cubic-bezier(.45, 0, .2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+.bc-movimiento [data-anima][data-activo] .bc-crece {
+  animation: bc-l-crece 1s cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: var(--d, 0s);
+}
+
+/* --- ¿Para quién construimos? ------------------------------------------------ */
+
+.bc-perfil-lista { display: flex; flex-direction: column; justify-content: center; }
+.bc-perfil-tab {
+  display: flex; align-items: center; gap: clamp(16px, 3vw, 32px);
+  width: 100%; padding: clamp(18px, 2.4vw, 32px) 0;
+  background: none; border: 0; border-bottom: 1px solid rgba(255, 255, 255, .1);
+  font: inherit; text-align: left; cursor: pointer;
+  color: rgba(255, 255, 255, .5);
+  transition: color .4s ease;
+}
+.bc-perfil-tab:hover { color: rgba(255, 255, 255, .82); }
+.bc-perfil-tab[aria-selected="true"] { color: #FF5E00; }
+.bc-perfil-tab:focus-visible { outline: 2px solid #FF5E00; outline-offset: 4px; }
+.bc-perfil-tab__num { font-family: 'Space Grotesk', sans-serif; font-size: 18px; }
+.bc-perfil-tab__nombre {
+  flex: 1; font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+  font-size: clamp(22px, 3.2vw, 50px); line-height: 1.1; letter-spacing: -.025em; text-transform: uppercase;
+}
+.bc-perfil-tab__flecha {
+  font-size: 22px; line-height: 1;
+  opacity: 0; transform: translateX(-8px); transition: opacity .3s ease, transform .3s ease;
+}
+.bc-perfil-tab[aria-selected="true"] .bc-perfil-tab__flecha { opacity: 1; transform: none; }
+
+.bc-perfil-marco { position: relative; justify-content: flex-start; }
+.bc-perfil-marco::before {
+  content: ''; position: absolute; top: -1px; left: -1px; width: 14px; height: 14px;
+  border-top: 2px solid #FF5E00; border-left: 2px solid #FF5E00; pointer-events: none;
+}
+.bc-perfil-marco__foco {
+  display: flex; gap: 14px; align-items: baseline;
+  padding-bottom: 16px; border-bottom: 1px solid rgba(255, 255, 255, .12);
+  font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: .24em;
+  text-transform: uppercase; color: rgba(249, 249, 247, .6);
+}
+.bc-perfil-marco__foco [data-perfil-num] { color: #FF5E00; }
+
+/* Las cinco vistas comparten celda: el marco no cambia de alto al pasar de una a otra. */
+.bc-perfil-vistas { display: grid; }
+.bc-perfil-vista {
+  grid-area: 1 / 1; margin: 0;
+  opacity: 0; visibility: hidden;
+  transition: opacity .3s ease, visibility 0s linear .3s;
+}
+.bc-perfil-vista[data-actual] { opacity: 1; visibility: visible; transition: opacity .45s ease .05s; }
+.bc-perfil-vista svg { display: block; width: 100%; height: auto; overflow: visible; }
+.bc-landing .bc-perfil-marco__cita { font-size: clamp(20px, 2.3vw, 34px); margin-top: auto; }
+.bc-movimiento [data-perfil-cita] { display: inline; animation: bc-l-entra .5s ease both; }
+
+@media (max-width: 760px) {
+  .bc-perfil-tab__nombre { font-size: clamp(20px, 6vw, 30px); }
+  .bc-perfil-tab__num { font-size: 14px; }
+  .bc-landing .bc-perfil-marco__foco { font-size: 10px !important; letter-spacing: .18em; }
+  .bc-landing .bc-perfil-marco__cita { font-size: 20px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bc-perfil-vista, .bc-perfil-vista[data-actual], .bc-perfil-tab, .bc-perfil-tab__flecha, .bc-capitulo { transition: none; }
+}
+
+@keyframes bc-l-entra { from { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, 6px)); } to { opacity: 1; transform: none; } }
+
+@keyframes bc-l-traza { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+@keyframes bc-l-crece { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* =========================================================================
+   Cabecera y portada
+   Antes eran estilos en línea en index.html. Van al final y con
+   .bc-landing delante para ganarle a las reglas generales de la landing,
+   como lo hacía el estilo en línea.
+   ========================================================================= */
+
+.bc-landing .bc-l-defs { position: absolute; }
+
+.bc-landing .bc-l-cabecera {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: 20px clamp(20px, 4vw, 48px);
+  transition: background .5s, backdrop-filter .5s;
+}
+.bc-landing .bc-l-cabecera__marca { display: flex; align-items: center; gap: clamp(16px, 3vw, 48px); }
+
+.bc-landing .bc-menu {
+  display: flex; align-items: center; gap: clamp(14px, 2vw, 32px);
+  font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+}
+.bc-landing .bc-menu__entrar {
+  font-family: 'Manrope'; font-size: 11px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  padding: 14px 22px;
+  border: 1px solid #1A1A1A; background: transparent; color: #1A1A1A;
+  cursor: pointer;
+  transition: background .3s, color .3s;
+}
+
+.bc-landing .bc-l-portada {
+  position: relative; width: 100%; height: 100vh; min-height: 760px;
+  overflow: hidden; padding-top: 128px;
+}
+.bc-landing .bc-l-portada__fondo { position: absolute; inset: 0; z-index: 0; }
+.bc-landing .bc-l-portada__foto { width: 100%; height: 100%; opacity: .4; }
+.bc-landing .bc-l-portada__velo {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(249,249,247,.2), rgba(249,249,247,.55), #F9F9F7);
+}
+.bc-landing .bc-l-portada__contenido {
+  position: relative; z-index: 10;
+  width: 100%; height: 100%; max-width: 1600px; margin: 0 auto;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 0 clamp(24px, 4vw, 48px) clamp(72px, 10vh, 128px);
+  pointer-events: none;
+}
+.bc-landing .bc-l-portada__encabezado { pointer-events: auto; }
+.bc-landing .bc-l-portada__marca {
+  display: block; margin-bottom: 24px;
+  font-family: 'Space Grotesk'; font-size: 14px; color: #FF5E00;
+  letter-spacing: .3em; text-transform: uppercase;
+}
+.bc-landing .bc-l-portada__titulo {
+  font-size: clamp(46px, 10.5vw, 190px); line-height: .85;
+  letter-spacing: -0.04em; font-weight: 600;
+}
+.bc-landing .bc-l-portada__pie {
+  margin-top: clamp(40px, 6vh, 96px);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 32px; align-items: end;
+  pointer-events: auto;
+}
+.bc-landing .bc-l-portada__bajada {
+  margin: 0; max-width: 460px;
+  font-size: clamp(17px, 1.4vw, 21px); font-weight: 500; line-height: 1.55;
+  color: rgba(26,26,26,.8); text-wrap: pretty;
+}
+.bc-landing .bc-l-portada__botones { display: flex; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+/* En celular los botones quedan uno sobre otro: alineados a la izquierda, como el texto */
+@media (max-width: 760px) {
+  .bc-landing .bc-l-portada__botones { justify-content: flex-start; }
+}
+
+/* Botones grandes de la landing: relleno y de línea */
+.bc-landing .bc-l-boton {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 20px 30px;
+  background: #1A1A1A; color: #F9F9F7; border: 1px solid #1A1A1A;
+  font-family: 'Manrope'; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, border-color .3s;
+}
+.bc-landing .bc-l-boton-linea {
+  display: inline-flex; align-items: center;
+  padding: 20px 30px;
+  border: 1px solid #1A1A1A;
+  font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  transition: background .3s, color .3s;
+}
+
+/* =========================================================================
+   «Construir es complejo» y secciones fijas «La forma tradicional» y
+   «Conoce BuildCast». Antes eran estilos en línea en index.html.
+   ========================================================================= */
+
+.bc-landing .bc-l-intro {
+  position: relative; width: 100%; overflow: hidden;
+  padding: clamp(80px, 12vw, 180px) clamp(24px, 4vw, 48px);
+}
+.bc-landing .bc-l-intro__rejilla {
+  max-width: 1600px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: clamp(32px, 5vw, 96px); align-items: center;
+}
+.bc-landing .bc-l-intro__titulo {
+  font-size: clamp(38px, 6vw, 100px); line-height: .9;
+  letter-spacing: -0.035em; margin-bottom: 40px; font-weight: 600;
+}
+.bc-landing .bc-l-intro__gris { color: #8F8F8F; }
+.bc-landing .bc-l-intro__texto {
+  display: flex; flex-direction: column; gap: 28px; max-width: 560px;
+  font-size: clamp(16px, 1.3vw, 20px); font-weight: 500; line-height: 1.6;
+  color: rgba(26,26,26,.8);
+}
+.bc-landing .bc-l-intro__texto p { margin: 0; }
+
+/* Estado inicial de las palabras dispersas: landing.ts las enciende con el scroll */
+.bc-landing .bc-caos { opacity: 0; }
+
+.bc-landing .bc-l-problema { position: relative; height: 300vh; background: #F9F9F7; }
+.bc-landing .bc-l-problema__capa {
+  position: sticky; top: 0; height: 100vh; width: 100%; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.bc-landing .bc-l-problema__centro {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 0 24px;
+}
+.bc-landing .bc-l-problema__rotulo {
+  font-size: 13px; letter-spacing: .3em; color: #FF5E00;
+  margin-bottom: 48px; font-weight: 400;
+}
+.bc-landing .bc-l-problema__titulares {
+  position: relative; height: clamp(180px, 26vh, 240px); width: 100%; max-width: 960px;
+  display: flex; align-items: center; justify-content: center;
+}
+.bc-landing .bc-l-problema__frase {
+  position: absolute; opacity: 0;
+  font-size: clamp(40px, 8vw, 130px); line-height: .92;
+  letter-spacing: -0.045em; font-weight: 600;
+}
+
+.bc-landing .bc-l-cambio { position: relative; height: 200vh; background: #ffffff; }
+.bc-landing .bc-l-cambio__capa {
+  position: sticky; top: 0; height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 0 24px;
+}
+.bc-landing .bc-l-cambio__marco {
+  position: relative; height: clamp(200px, 30vh, 320px); width: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.bc-landing .bc-l-cambio__pregunta {
+  position: absolute; opacity: 0;
+  font-size: clamp(34px, 6.5vw, 110px); line-height: .92;
+  letter-spacing: -0.04em; font-weight: 600;
+}
+.bc-landing .bc-l-cambio__nombre {
+  position: absolute; opacity: 0;
+  font-size: clamp(46px, 9vw, 150px); line-height: .9;
+  letter-spacing: -0.05em; color: #FF5E00; font-weight: 600;
+}
+/* Esta capa no lleva el respiro superior de las capas fijadas
+   (.bc-animada [data-seq] > div): el titular va centrado en la pantalla. */
+.bc-landing.bc-animada [data-seq] > .bc-l-cambio__capa { padding-top: 0; }
+
+/* =========================================================================
+   «BuildCast entiende el proyecto» y «La plataforma» (maqueta del panel).
+   Antes eran estilos en línea en index.html.
+   ========================================================================= */
+
+.bc-landing .bc-l-entiende {
+  padding: clamp(80px, 12vw, 180px) clamp(24px, 4vw, 48px);
+  background: #F9F9F7;
+}
+.bc-landing .bc-l-entiende__rejilla {
+  max-width: 1600px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(40px, 5vw, 96px);
+}
+.bc-landing .bc-l-entiende__titulo {
+  font-size: clamp(38px, 6vw, 100px); line-height: .9;
+  letter-spacing: -0.035em; margin-bottom: 32px; font-weight: 600;
+}
+.bc-landing .bc-l-entiende__bajada {
+  margin: 0; max-width: 520px;
+  font-size: clamp(17px, 1.5vw, 23px); font-weight: 500; line-height: 1.55;
+  color: rgba(26,26,26,.7); text-wrap: pretty;
+}
+.bc-landing .bc-l-entiende__lado { display: flex; justify-content: center; align-items: center; }
+
+/* Pasos en columna: Documentos → BuildCast → … → Presupuesto */
+.bc-landing .bc-l-pasos-v {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 100%; max-width: 520px;
+  padding: clamp(32px, 5vw, 56px) clamp(32px, 8vw, 110px);
+  border: 1px solid #E5E5E5; background: #fff;
+}
+.bc-landing .bc-l-pasos-v__paso {
+  font-family: 'Space Grotesk'; font-size: clamp(22px, 2.6vw, 38px);
+  text-transform: uppercase; letter-spacing: .1em;
+}
+.bc-landing .bc-l-pasos-v__paso--marca { font-weight: 700; color: #FF5E00; }
+.bc-landing .bc-l-pasos-v__flecha { color: rgba(143,143,143,.7); font-size: 20px; line-height: 1; }
+
+.bc-landing .bc-l-plataforma {
+  position: relative; overflow: hidden;
+  padding: clamp(80px, 12vw, 180px) 0;
+  background: #111;
+}
+.bc-landing .bc-l-plataforma__cabecera {
+  max-width: 1600px; margin: 0 auto clamp(48px, 8vw, 128px);
+  padding: 0 clamp(24px, 4vw, 48px);
+}
+.bc-landing .bc-l-plataforma__rotulo {
+  font-size: 13px; letter-spacing: .3em; color: #8F8F8F;
+  margin-bottom: 28px; font-weight: 400;
+}
+.bc-landing .bc-l-plataforma__titulo {
+  font-size: clamp(38px, 6.5vw, 110px); line-height: .92;
+  letter-spacing: -0.04em; color: #fff; font-weight: 600;
+}
+.bc-landing .bc-l-plataforma__escena {
+  position: relative; width: 100%; max-width: 1600px; margin: 0 auto;
+  padding: 0 clamp(24px, 4vw, 48px);
+}
+.bc-landing .bc-l-plataforma__marco {
+  position: relative; width: 100%; height: clamp(420px, 78vh, 900px);
+  transform-origin: bottom center;
+}
+.bc-landing .bc-l-plataforma__planos { position: absolute; inset: 0; z-index: 10; background: #F9F9F7; }
+.bc-landing .bc-l-plataforma__foto { width: 100%; height: 100%; opacity: .7; }
+.bc-landing .bc-l-plataforma__botones { margin-top: 40px; display: flex; gap: 16px; flex-wrap: wrap; }
+
+/* Maqueta del panel que aparece sobre los planos */
+.bc-landing .bc-maqueta {
+  position: absolute; inset: 0; z-index: 20;
+  display: flex; flex-direction: column; overflow: hidden;
+  background: #fff; border: 1px solid #E5E5E5;
+  opacity: 0;
+}
+.bc-landing .bc-maqueta__cabecera {
+  height: 56px; flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 0 24px;
+  border-bottom: 1px solid #E5E5E5; background: #F9F9F7;
+}
+.bc-landing .bc-maqueta__marca {
+  font-family: 'Space Grotesk'; font-weight: 700; font-size: 14px;
+  letter-spacing: .2em; text-transform: uppercase;
+}
+.bc-landing .bc-maqueta__datos {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: flex-end;
+  font-size: 11px; font-weight: 700; letter-spacing: .12em;
+  color: #8F8F8F; text-transform: uppercase;
+}
+.bc-landing .bc-maqueta__cuerpo { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+.bc-landing .bc-maqueta__lateral {
+  width: 240px; flex: none;
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 24px;
+  border-right: 1px solid #E5E5E5; background: rgba(249,249,247,.6);
+  font-size: 13px; font-weight: 600; color: rgba(26,26,26,.6);
+}
+.bc-landing .bc-maqueta__actual { color: #1A1A1A; font-weight: 800; }
+.bc-landing .bc-maqueta__contenido {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; overflow: hidden;
+  padding: clamp(20px, 3vw, 48px);
+}
+.bc-landing .bc-maqueta__encabezado { margin-bottom: 28px; }
+.bc-landing .bc-maqueta__titulo { font-size: clamp(20px, 2vw, 28px); line-height: 1.16; margin-bottom: 6px; font-weight: 600; }
+.bc-landing .bc-maqueta__nota { margin: 0; font-size: 13px; color: #8F8F8F; font-weight: 500; }
+.bc-landing .bc-maqueta__tabla { border: 1px solid #E5E5E5; display: flex; flex-direction: column; min-height: 0; }
+.bc-landing .bc-maqueta__fila {
+  display: grid; grid-template-columns: 90px minmax(0, 1fr) 110px 120px 130px; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid #E5E5E5;
+  font-size: 13px; font-weight: 500;
+}
+.bc-landing .bc-maqueta__fila--titulos {
+  background: #F9F9F7; color: #8F8F8F;
+  font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+}
+.bc-landing .bc-maqueta__codigo { color: #8F8F8F; }
+.bc-landing .bc-maqueta__num { text-align: right; }
+.bc-landing .bc-maqueta__monto { font-weight: 800; }
+.bc-landing .bc-maqueta__total {
+  display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 12px;
+  padding: 16px;
+  background: #1A1A1A; color: #F9F9F7;
+  font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+}
+
+/* Botones sobre fondo oscuro */
+.bc-landing .bc-l-boton-acento {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 20px 30px;
+  background: #FF5E00; color: #fff; border: 1px solid #FF5E00;
+  font-family: 'Manrope'; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, border-color .3s;
+}
+.bc-landing .bc-l-boton-claro {
+  display: inline-flex; align-items: center;
+  padding: 20px 30px;
+  background: transparent; color: #F9F9F7; border: 1px solid rgba(249,249,247,.4);
+  font-family: 'Manrope'; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, color .3s;
+}
+
+/* =========================================================================
+   «Cómo funciona»: cuatro pasos. Antes eran estilos en línea en index.html.
+   ========================================================================= */
+
+.bc-landing .bc-l-como { padding: clamp(80px, 12vw, 180px) 0; background: #F9F9F7; }
+.bc-landing .bc-l-como__contenedor { max-width: 1600px; margin: 0 auto; padding: 0 clamp(24px, 4vw, 48px); }
+.bc-landing .bc-l-como__rotulo {
+  font-size: 13px; letter-spacing: .3em; color: #8F8F8F;
+  margin-bottom: clamp(48px, 8vw, 110px); font-weight: 400;
+}
+.bc-landing .bc-l-como__pasos { display: flex; flex-direction: column; gap: clamp(80px, 12vw, 190px); }
+
+.bc-landing .bc-l-paso {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(32px, 4vw, 64px); align-items: center;
+}
+.bc-landing .bc-l-paso--abajo { align-items: end; }
+.bc-landing .bc-l-paso__numero {
+  font-family: 'Space Grotesk'; color: #FF5E00;
+  font-size: clamp(56px, 8vw, 120px); line-height: .85; margin-bottom: 20px;
+}
+.bc-landing .bc-l-paso__titulo {
+  font-size: clamp(32px, 4.6vw, 72px); letter-spacing: -0.035em;
+  margin-bottom: 20px; font-weight: 600;
+}
+.bc-landing .bc-l-paso__texto {
+  margin: 0; max-width: 440px;
+  font-size: clamp(16px, 1.5vw, 22px); font-weight: 500;
+  color: rgba(26,26,26,.8); text-wrap: pretty;
+}
+
+/* Paso 1: zona para cargar los datos */
+.bc-landing .bc-l-paso__carga {
+  height: clamp(280px, 52vh, 620px); display: flex;
+  padding: clamp(20px, 3vw, 56px);
+  border: 1px solid #E5E5E5; background: #fff;
+}
+.bc-landing .bc-l-paso__zona {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px; border: 2px dashed #E5E5E5;
+  color: #8F8F8F; text-align: center;
+}
+.bc-landing .bc-l-paso__zona-titulo {
+  font-family: 'Space Grotesk'; font-size: 16px;
+  text-transform: uppercase; letter-spacing: .2em;
+}
+.bc-landing .bc-l-paso__zona-nota { font-size: 13px; font-weight: 600; }
+
+/* Paso 2: imagen con tinte naranjo y línea que la recorre */
+.bc-landing .bc-l-paso__imagen {
+  position: relative; overflow: hidden;
+  height: clamp(280px, 52vh, 620px);
+  border: 1px solid #E5E5E5; background: #fff;
+}
+.bc-landing .bc-l-paso__foto { width: 100%; height: 100%; opacity: .75; }
+.bc-landing .bc-l-paso__tinte { position: absolute; inset: 0; background: rgba(255,94,0,.12); pointer-events: none; }
+.bc-landing .bc-l-paso__escaneo {
+  position: absolute; left: 0; width: 100%; height: 2px;
+  background: rgba(255,94,0,.85);
+  animation: bc-scan 4s linear infinite;
+  pointer-events: none;
+}
+@keyframes bc-scan { 0% { top: 0 } 100% { top: 100% } }
+
+/* Paso 3: árbol de partidas con tres niveles de sangría */
+.bc-landing .bc-l-arbol {
+  display: flex; flex-direction: column; gap: 20px;
+  padding: clamp(24px, 3vw, 56px);
+  background: #fff; border: 1px solid #E5E5E5;
+}
+.bc-landing .bc-l-arbol__fila { display: flex; align-items: center; gap: 16px; }
+.bc-landing .bc-l-arbol__fila--2 { margin-left: clamp(16px, 3vw, 48px); }
+.bc-landing .bc-l-arbol__fila--3 { margin-left: clamp(32px, 6vw, 96px); }
+.bc-landing .bc-l-arbol__linea { width: 44px; height: 1px; background: #FF5E00; flex: none; }
+.bc-landing .bc-l-arbol__texto { font-family: 'Space Grotesk'; text-transform: uppercase; letter-spacing: .04em; }
+.bc-landing .bc-l-arbol__texto--1 { font-weight: 700; font-size: clamp(17px, 1.8vw, 24px); }
+.bc-landing .bc-l-arbol__texto--2 { font-size: clamp(15px, 1.5vw, 20px); }
+.bc-landing .bc-l-arbol__texto--3 { font-size: clamp(14px, 1.3vw, 18px); color: #8F8F8F; }
+
+/* Paso 4: cierre centrado con botón */
+.bc-landing .bc-l-como__cierre {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  max-width: 900px; margin: 0 auto;
+  padding-top: clamp(24px, 4vw, 64px);
+}
+.bc-landing .bc-l-como__cierre-titulo {
+  font-size: clamp(36px, 5.5vw, 88px); letter-spacing: -0.04em;
+  margin-bottom: 28px; font-weight: 600;
+}
+.bc-landing .bc-l-como__cierre-texto {
+  margin: 0 0 44px;
+  font-size: clamp(18px, 1.8vw, 26px); font-weight: 500;
+  color: rgba(26,26,26,.8); text-wrap: pretty;
+}
+.bc-landing .bc-l-boton-cierre {
+  padding: 22px 38px;
+  background: #1A1A1A; color: #F9F9F7; border: 1px solid #1A1A1A;
+  font-family: 'Manrope'; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, border-color .3s;
+}
+
+/* =========================================================================
+   «¿Para quién construimos?» y sección naranja «Menos tiempo
+   presupuestando». Antes eran estilos en línea en index.html.
+   ========================================================================= */
+
+.bc-landing .bc-l-quien { padding: clamp(80px, 12vw, 180px) 0; background: #111; color: #fff; }
+.bc-landing .bc-l-quien__contenedor { max-width: 1600px; margin: 0 auto; padding: 0 clamp(24px, 4vw, 48px); }
+.bc-landing .bc-l-quien__rotulo {
+  font-size: 13px; letter-spacing: .3em; color: #8F8F8F;
+  margin-bottom: clamp(40px, 7vw, 110px); font-weight: 400;
+}
+.bc-landing .bc-l-quien__rejilla {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: clamp(32px, 4vw, 90px);
+}
+.bc-landing .bc-l-quien__lista { display: flex; flex-direction: column; justify-content: center; }
+
+.bc-landing .bc-l-transformacion { position: relative; height: 400vh; background: #FF5E00; color: #F9F9F7; }
+.bc-landing .bc-l-transformacion__capa {
+  position: sticky; top: 0; height: 100vh; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 0 24px;
+}
+/* Igual que «Conoce BuildCast»: sin el respiro superior de las capas fijadas */
+.bc-landing.bc-animada [data-seq] > .bc-l-transformacion__capa { padding-top: 0; }
+
+.bc-landing .bc-l-transformacion__lema {
+  position: absolute; inset: 0; opacity: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.bc-landing .bc-l-transformacion__frase {
+  font-size: clamp(38px, 7vw, 120px); line-height: .92;
+  letter-spacing: -0.04em; font-weight: 600;
+}
+.bc-landing .bc-l-transformacion__frase--oscura { margin-top: 16px; color: #111; }
+
+/* Pares «palabra tachada → palabra nueva» */
+.bc-landing .bc-l-transformacion__par {
+  position: absolute; inset: 0; opacity: 0;
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(16px, 3vw, 48px); flex-wrap: wrap;
+}
+.bc-landing .bc-l-transformacion__antes {
+  font-family: 'Space Grotesk'; font-size: clamp(28px, 5vw, 80px);
+  text-transform: uppercase; letter-spacing: -0.03em;
+  color: rgba(17,17,17,.4); text-decoration: line-through;
+}
+.bc-landing .bc-l-transformacion__flecha { font-family: 'Space Grotesk'; font-size: clamp(24px, 3vw, 44px); color: #111; }
+.bc-landing .bc-l-transformacion__despues {
+  font-family: 'Space Grotesk'; font-size: clamp(34px, 6vw, 96px);
+  text-transform: uppercase; letter-spacing: -0.035em; color: #111;
+}
+
+/* =========================================================================
+   Final de la página: «El cálculo es auditable», cifras, cita, «Ahora es
+   una obra», «¿Listo para…?» y pie. Antes eran estilos en línea.
+   ========================================================================= */
+
+.bc-landing .bc-l-control { padding: clamp(80px, 12vw, 180px) clamp(24px, 4vw, 48px); background: #F9F9F7; }
+.bc-landing .bc-l-control__contenedor { max-width: 1600px; margin: 0 auto; }
+.bc-landing .bc-l-control__rejilla {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: clamp(32px, 4vw, 90px);
+}
+.bc-landing .bc-l-control__titulares { display: flex; flex-direction: column; justify-content: center; }
+.bc-landing .bc-l-control__titulo {
+  font-size: clamp(38px, 7vw, 110px); line-height: .88;
+  letter-spacing: -0.04em; font-weight: 600;
+}
+.bc-landing .bc-l-control__titulo--acento { color: #FF5E00; margin-top: 16px; }
+.bc-landing .bc-l-control__columna { display: flex; flex-direction: column; justify-content: flex-end; }
+.bc-landing .bc-l-control__lista {
+  display: flex; flex-direction: column; gap: 20px;
+  border-left: 1px solid #1A1A1A; padding-left: 28px;
+}
+.bc-landing .bc-l-control__frase { margin: 0; font-size: clamp(16px, 1.4vw, 20px); font-weight: 500; }
+.bc-landing .bc-l-control__cierre {
+  margin: 12px 0 0;
+  font-size: clamp(15px, 1.3vw, 19px); font-weight: 800;
+  letter-spacing: .14em; text-transform: uppercase;
+}
+
+/* Tres cifras */
+.bc-landing .bc-l-cifras {
+  padding: clamp(56px, 8vw, 130px) clamp(24px, 4vw, 48px);
+  background: #fff; border-top: 1px solid #E5E5E5; border-bottom: 1px solid #E5E5E5;
+}
+.bc-landing .bc-l-cifras__rejilla {
+  max-width: 1600px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: clamp(32px, 4vw, 48px);
+}
+.bc-landing .bc-l-cifras__item {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 0 16px;
+}
+.bc-landing .bc-l-cifras__item--borde { border-left: 1px solid #E5E5E5; }
+.bc-landing .bc-l-cifras__numero {
+  font-family: 'Space Grotesk'; font-size: clamp(48px, 7vw, 110px);
+  line-height: 1; margin-bottom: 16px;
+}
+.bc-landing .bc-l-cifras__texto {
+  max-width: 260px;
+  font-size: 12px; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: #8F8F8F;
+}
+
+/* Cita de trazabilidad */
+.bc-landing .bc-l-cita { padding: clamp(80px, 12vw, 180px) clamp(24px, 4vw, 48px); background: #F9F9F7; }
+.bc-landing .bc-l-cita__bloque { max-width: 1200px; margin: 0 auto; text-align: center; }
+.bc-landing .bc-l-cita__texto {
+  margin: 0 0 48px;
+  font-family: 'Space Grotesk'; font-size: clamp(28px, 4.6vw, 76px);
+  text-transform: uppercase; letter-spacing: -0.035em; line-height: 1.08; text-wrap: pretty;
+}
+.bc-landing .bc-l-cita__firma { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.bc-landing .bc-l-cita__principio { font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+.bc-landing .bc-l-cita__autor { font-size: 13px; letter-spacing: .06em; color: #8F8F8F; }
+
+/* «Todo empezó con un número. Ahora es una obra.» */
+.bc-landing .bc-l-final {
+  position: relative; width: 100%; height: 100vh; min-height: 720px;
+  overflow: hidden; background: #111;
+}
+.bc-landing .bc-l-final__fondo { position: absolute; inset: 0; z-index: 0; }
+.bc-landing .bc-l-final__foto { width: 100%; height: 100%; opacity: .5; }
+.bc-landing .bc-l-final__velo {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to top, #111, rgba(17,17,17,.1));
+}
+.bc-landing .bc-l-final__contenido {
+  position: relative; z-index: 10; width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 0 24px;
+  pointer-events: none;
+}
+/* Este h2 no lleva clase de escala: necesita más peso que
+   «.bc-landing h2:not(.bc-l-rotulo)», como lo tenía su estilo en línea. */
+.bc-landing .bc-l-final h2.bc-l-final__antes {
+  font-size: clamp(30px, 5vw, 80px); letter-spacing: -0.03em;
+  color: rgba(255,255,255,.7); margin-bottom: 16px; font-weight: 600;
+}
+.bc-landing .bc-l-final__ahora {
+  font-size: clamp(44px, 9vw, 150px); letter-spacing: -0.05em;
+  color: #fff; line-height: .9; font-weight: 600;
+}
+
+/* «¿Listo para presupuestar de otra manera?» */
+.bc-landing .bc-l-demo {
+  padding: clamp(80px, 12vw, 180px) clamp(24px, 4vw, 48px);
+  background: #F9F9F7; text-align: center;
+}
+.bc-landing .bc-l-demo__contenido {
+  max-width: 900px; margin: 0 auto;
+  display: flex; flex-direction: column; align-items: center;
+}
+.bc-landing .bc-l-demo__titulo {
+  font-size: clamp(38px, 7.5vw, 125px); line-height: .9;
+  letter-spacing: -0.045em; margin-bottom: 28px; font-weight: 600;
+}
+.bc-landing .bc-l-demo__texto {
+  margin: 0 0 56px; max-width: 640px;
+  font-size: clamp(17px, 1.6vw, 24px); font-weight: 500;
+  color: rgba(26,26,26,.8); text-wrap: pretty;
+}
+.bc-landing .bc-l-demo__botones { display: flex; gap: 18px; flex-wrap: wrap; justify-content: center; }
+.bc-landing .bc-l-boton-acento-grande {
+  display: inline-flex; align-items: center; gap: 14px;
+  padding: 22px 38px;
+  background: #FF5E00; color: #fff; border: 1px solid #FF5E00;
+  font-family: 'Manrope'; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, border-color .3s;
+}
+.bc-landing .bc-l-boton-linea-grande {
+  display: inline-flex; align-items: center;
+  padding: 22px 38px;
+  background: transparent; color: #1A1A1A; border: 1px solid #1A1A1A;
+  font-family: 'Manrope'; font-size: 12px; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s, color .3s;
+}
+
+/* Pie de página */
+.bc-landing .bc-l-pie {
+  background: #111; color: #fff;
+  padding: clamp(48px, 7vw, 80px) clamp(24px, 4vw, 48px);
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.bc-landing .bc-l-pie__rejilla {
+  max-width: 1600px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 40px; align-items: end;
+}
+/* Mismo caso que «Todo empezó…»: h2 sin clase de escala */
+.bc-landing .bc-l-pie h2.bc-l-pie__marca {
+  font-size: clamp(30px, 4vw, 54px); letter-spacing: .18em;
+  margin-bottom: 14px; font-weight: 600;
+}
+.bc-landing .bc-l-pie__lema {
+  margin: 0;
+  font-size: 12px; font-weight: 600; letter-spacing: .14em;
+  text-transform: uppercase; color: rgba(255,255,255,.5);
+}
+.bc-landing .bc-l-pie__enlaces {
+  display: flex; flex-wrap: wrap; gap: 14px 32px; justify-content: flex-end;
+  font-size: 11px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+}
+.bc-landing .bc-l-pie__enlaces a { color: rgba(255,255,255,.7); }
+
+/* =========================================================================
+   Recorrido de seis láminas («El camino hacia el presupuesto»).
+   Antes eran estilos en línea en index.html.
+   ========================================================================= */
+
+.bc-landing .bc-l-recorrido { position: relative; height: 600vh; background: #111; color: #F9F9F7; }
+.bc-landing .bc-l-recorrido__capa {
+  position: sticky; top: 0; height: 100vh; width: 100%; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center;
+}
+/* Barra de avance: landing.ts escala la barra naranja con el scroll */
+.bc-landing .bc-capa__pista {
+  position: absolute; top: 0; left: 0; z-index: 30;
+  width: 100%; height: 3px; background: rgba(143,143,143,.25);
+}
+.bc-landing .bc-l-recorrido__barra {
+  height: 100%; background: #FF5E00;
+  transform: scaleX(0); transform-origin: 0 50%;
+}
+.bc-landing .bc-recorrido__rotulo {
+  position: absolute; z-index: 20;
+  top: clamp(56px, 10vh, 96px); left: clamp(24px, 4vw, 48px);
+}
+.bc-landing .bc-l-recorrido__titulo { font-size: 13px; letter-spacing: .3em; color: #8F8F8F; font-weight: 400; }
+.bc-landing .bc-l-recorrido__lamina {
+  position: absolute; inset: 0; opacity: 0;
+  display: flex; align-items: center;
+  padding: 0 clamp(24px, 4vw, 48px);
+}
+
+/* =========================================================================
+   Hover de los botones de la landing. Antes lo aplicaba landing.ts
+   (conectarHover) con estilos en línea a partir de data-hover.
+   ========================================================================= */
+
+.bc-landing .bc-menu__entrar:hover { background: #1A1A1A; color: #F9F9F7; }
+.bc-landing .bc-l-boton:hover { background: #FF5E00; border-color: #FF5E00; }
+.bc-landing .bc-l-boton-linea:hover { background: #1A1A1A; color: #F9F9F7; }
+.bc-landing .bc-l-boton-acento:hover { background: #F9F9F7; color: #1A1A1A; border-color: #F9F9F7; }
+.bc-landing .bc-l-boton-claro:hover { background: #F9F9F7; color: #1A1A1A; }
+.bc-landing .bc-l-boton-cierre:hover { background: #FF5E00; border-color: #FF5E00; }
+.bc-landing .bc-l-boton-acento-grande:hover { background: #1A1A1A; border-color: #1A1A1A; }
+.bc-landing .bc-l-boton-linea-grande:hover { background: #1A1A1A; color: #F9F9F7; }

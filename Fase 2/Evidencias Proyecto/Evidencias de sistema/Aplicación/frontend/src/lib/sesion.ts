@@ -1,25 +1,28 @@
-import type { RespuestaSesion, Usuario } from '../tipos/api'
+import type { Usuario } from '../tipos/api.ts'
 
-/* ── Contrato confirmado: POST /autenticacion/iniciar-sesion devuelve
-   RespuestaToken (access_token, refresh_token, token_type), sin datos de
-   usuario ni vencimiento. `guardar()` sólo persiste el access_token.
-   ──────────────────────────────────────────────────────────────────────── */
+/* POST /autenticacion/iniciar-sesion y /autenticacion/refrescar devuelven
+   access_token y refresh_token. Ante un 401, `pedir()` (http.ts) canjea el
+   refresh token por una sesión nueva; solo si Supabase lo rechaza se cierra. */
 
 const CLAVE_TOKEN = 'buildcast.token'
+const CLAVE_REFRESCO = 'buildcast.refresco'
 const CLAVE_USUARIO = 'buildcast.usuario'
 
-/* No hay CLAVE_VENCE: el login real no informa expires_in. El backend
-   sigue rechazando con 401 un token vencido; `pedir()` en apiReal.ts ya
-   limpia la sesión y redirige cuando eso ocurre. */
-
-export function guardar(respuesta: RespuestaSesion): boolean {
+export function guardar(respuesta: { access_token?: string; refresh_token?: string }): boolean {
   if (!respuesta.access_token) return false
   localStorage.setItem(CLAVE_TOKEN, respuesta.access_token)
+  // Sin refresh token no queda uno viejo de otra sesión.
+  if (respuesta.refresh_token) localStorage.setItem(CLAVE_REFRESCO, respuesta.refresh_token)
+  else localStorage.removeItem(CLAVE_REFRESCO)
   return true
 }
 
 export function token(): string | null {
   return localStorage.getItem(CLAVE_TOKEN)
+}
+
+export function refresco(): string | null {
+  return localStorage.getItem(CLAVE_REFRESCO)
 }
 
 export function usuario(): Usuario | null {
@@ -32,12 +35,18 @@ export function usuario(): Usuario | null {
   }
 }
 
+/** Copia local de GET /autenticacion/yo: solo decide qué se muestra; la API autoriza. */
+export function guardarUsuario(datos: Usuario): void {
+  localStorage.setItem(CLAVE_USUARIO, JSON.stringify(datos))
+}
+
 export function haySesion(): boolean {
   return token() !== null
 }
 
 export function cerrar(): void {
   localStorage.removeItem(CLAVE_TOKEN)
+  localStorage.removeItem(CLAVE_REFRESCO)
   localStorage.removeItem(CLAVE_USUARIO)
 }
 

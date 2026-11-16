@@ -10,54 +10,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <style>
-    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
-       hoja completa. Evita ver la estructura sin estilos al navegar entre
-       páginas. Incluye el esqueleto de carga para no depender de base.css. */
-    :root { color-scheme: light; }
-    html { background: #F9F9F7; }
-    body {
-      margin: 0;
-      background: #F9F9F7;
-      color: #1A1A1A;
-      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: 15px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
-    img { display: block; max-width: 100%; }
-    [x-cloak] { display: none !important; }
-    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
-
-    .bc-esqueleto {
-      max-width: 1600px; margin: 0 auto;
-      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
-      display: flex; flex-direction: column; gap: 20px;
-    }
-    .bc-esqueleto span {
-      display: block;
-      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
-      background-size: 200% 100%;
-      animation: bc-latido 1.4s ease-in-out infinite;
-    }
-    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
-    .bc-esqueleto span:nth-child(2) { height: 120px; }
-    .bc-esqueleto span:nth-child(3) { height: 280px; }
-    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-    main:not([x-cloak]) ~ .bc-esqueleto,
-    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
-
-    body > * { animation: bc-entrar .22s ease-out both; }
-    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
-    @media (prefers-reduced-motion: reduce) {
-      body > * { animation: none; }
-      .bc-esqueleto span { animation: none; }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/estilos/base.css">
 </head>
 <body>
-  <main class="bc-acceso" x-data="acceso" x-cloak>
+  <main class="bc-acceso" x-data="acceso" x-init="iniciar()" x-cloak>
 
     <aside class="bc-acceso__panel">
       <a href="/index.html" class="bc-marca"><img src="/buildcast-logo-dark.svg" alt="BuildCast" class="bc-logo bc-logo--grande"></a>
@@ -83,11 +39,48 @@
     <div class="bc-acceso__form">
       <div class="bc-acceso__caja">
         <div>
-          <span class="bc-rotulo">Acceso empresa</span>
-          <h1>Iniciar sesión</h1>
+          <span class="bc-rotulo" x-text="invitacion ? 'Invitación' : 'Acceso empresa'"></span>
+          <h1 x-text="invitacion ? 'Crea tu contraseña' : 'Iniciar sesión'"></h1>
         </div>
 
-        <form class="bc-tarjeta bc-tarjeta--relleno bc-form" @submit.prevent="entrar()" style="gap:20px">
+        <p class="bc-apoyo" role="status" x-show="verificando">Verificando tu acceso…</p>
+
+        <!-- Invitación pendiente (lo dice el backend): la contraseña la define la persona, no el administrador. -->
+        <form class="bc-tarjeta bc-tarjeta--relleno bc-form" x-show="!verificando && invitacion" @submit.prevent="crearClave()" style="gap:20px">
+          <p class="bc-apoyo">Te invitaron a BuildCast. Define tu contraseña para entrar.</p>
+          <div class="bc-campo">
+            <label for="clave-nueva">Contraseña nueva</label>
+            <div class="bc-clave" x-data="{ ver: false }">
+              <input class="bc-entrada" id="clave-nueva" :type="ver ? 'text' : 'password'" autocomplete="new-password" minlength="8"
+                     x-model="claveNueva">
+              <button type="button" class="bc-clave__ver" aria-label="Mantén apretado para ver la contraseña" :aria-pressed="ver"
+                      @pointerdown.prevent="ver = true" @pointerup="ver = false" @pointerleave="ver = false" @pointercancel="ver = false"
+                      @blur="ver = false" @contextmenu.prevent @keydown.space.prevent="ver = true" @keyup.space="ver = false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path x-show="ver" d="M3 3l18 18"/></svg>
+              </button>
+            </div>
+            <p class="bc-ayuda">Al menos 8 caracteres.</p>
+          </div>
+          <div class="bc-campo">
+            <label for="clave-confirmacion">Repite la contraseña</label>
+            <div class="bc-clave" x-data="{ ver: false }">
+              <input class="bc-entrada" id="clave-confirmacion" :type="ver ? 'text' : 'password'" autocomplete="new-password"
+                     x-model="confirmacion">
+              <button type="button" class="bc-clave__ver" aria-label="Mantén apretado para ver la contraseña" :aria-pressed="ver"
+                      @pointerdown.prevent="ver = true" @pointerup="ver = false" @pointerleave="ver = false" @pointercancel="ver = false"
+                      @blur="ver = false" @contextmenu.prevent @keydown.space.prevent="ver = true" @keyup.space="ver = false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path x-show="ver" d="M3 3l18 18"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error" x-cloak></p>
+
+          <button class="bc-boton bc-boton--ancho" type="submit" :disabled="cargando"
+                  x-text="cargando ? 'Guardando…' : 'Guardar y entrar'"></button>
+        </form>
+
+        <form class="bc-tarjeta bc-tarjeta--relleno bc-form" x-show="!verificando && !invitacion" @submit.prevent="entrar()" style="gap:20px">
           <div class="bc-campo">
             <label for="correo">Correo corporativo</label>
             <input class="bc-entrada" id="correo" type="email" autocomplete="username"
@@ -96,8 +89,15 @@
 
           <div class="bc-campo">
             <label for="clave">Contraseña</label>
-            <input class="bc-entrada" id="clave" type="password" autocomplete="current-password"
-                   placeholder="••••••••" x-model="clave">
+            <div class="bc-clave" x-data="{ ver: false }">
+              <input class="bc-entrada" id="clave" :type="ver ? 'text' : 'password'" autocomplete="current-password"
+                     placeholder="••••••••" x-model="clave">
+              <button type="button" class="bc-clave__ver" aria-label="Mantén apretado para ver la contraseña" :aria-pressed="ver"
+                      @pointerdown.prevent="ver = true" @pointerup="ver = false" @pointerleave="ver = false" @pointercancel="ver = false"
+                      @blur="ver = false" @contextmenu.prevent @keydown.space.prevent="ver = true" @keyup.space="ver = false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path x-show="ver" d="M3 3l18 18"/></svg>
+              </button>
+            </div>
           </div>
 
           <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error" x-cloak></p>
@@ -107,7 +107,7 @@
                   x-text="cargando ? 'Ingresando…' : 'Ingresar'"></button>
         </form>
 
-        <p class="bc-nota">¿No llegó el correo de confirmación?
+        <p class="bc-nota" x-show="!verificando && !invitacion">¿No llegó el correo de confirmación?
           <button type="button" class="bc-enlace" @click="reenviar()">Reenviarlo</button>
         </p>
 

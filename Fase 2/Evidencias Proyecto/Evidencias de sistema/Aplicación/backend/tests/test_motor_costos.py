@@ -521,13 +521,19 @@ class SinMotorAnterior(unittest.TestCase):
         self.assertEqual(con_cuantias, [])
 
     def test_una_sola_migracion_base(self):
+        # 001 es la base; las siguientes solo agregan sobre ella.
         migraciones = sorted(p.name for p in (RAIZ / "supabase" / "migrations").glob("*.sql"))
-        self.assertEqual(migraciones, ["001_schema_buildcast.sql"])
+        self.assertEqual(migraciones, [
+            "001_schema_buildcast.sql", "002_roles_permisos_auditoria.sql", "003_rls_permisos_proyecto.sql",
+            "004_eliminar_proyectos.sql", "005_administracion_usuarios.sql", "006_observaciones_estimacion.sql",
+            "007_renovar_invitacion.sql", "008_acceso_configurado.sql", "009_plazo_estimaciones.sql",
+            "010_plazo_profesional.sql",
+        ])
 
     def test_seeds_finales(self):
         self.assertEqual(sorted(p.name for p in SEEDS.glob("*.sql")), [
             "001_catalogo_base.sql", "002_precios_referenciales.sql",
-            "003_configuracion_base.sql", "004_plantillas_base.sql",
+            "003_configuracion_base.sql", "004_plantillas_base.sql", "005_valores_uf_cmf.sql",
         ])
         plantillas = (SEEDS / "004_plantillas_base.sql").read_text(encoding="utf-8")
         self.assertNotIn("plantilla_partidas", plantillas)  # nacen vacías

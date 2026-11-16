@@ -10,63 +10,32 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <style>
-    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
-       hoja completa. Evita ver la estructura sin estilos al navegar entre
-       páginas. Incluye el esqueleto de carga para no depender de base.css. */
-    :root { color-scheme: light; }
-    html { background: #F9F9F7; }
-    body {
-      margin: 0;
-      background: #F9F9F7;
-      color: #1A1A1A;
-      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: 15px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
-    img { display: block; max-width: 100%; }
-    [x-cloak] { display: none !important; }
-    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
-
-    .bc-esqueleto {
-      max-width: 1600px; margin: 0 auto;
-      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
-      display: flex; flex-direction: column; gap: 20px;
-    }
-    .bc-esqueleto span {
-      display: block;
-      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
-      background-size: 200% 100%;
-      animation: bc-latido 1.4s ease-in-out infinite;
-    }
-    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
-    .bc-esqueleto span:nth-child(2) { height: 120px; }
-    .bc-esqueleto span:nth-child(3) { height: 280px; }
-    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-    main:not([x-cloak]) ~ .bc-esqueleto,
-    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
-
-    body > * { animation: bc-entrar .22s ease-out both; }
-    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
-    @media (prefers-reduced-motion: reduce) {
-      body > * { animation: none; }
-      .bc-esqueleto span { animation: none; }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/estilos/base.css">
+  <link rel="stylesheet" href="/src/estilos/estimacion.css">
+  <script>try{var t=localStorage.getItem('buildcast.tema');if(t!=='claro'&&(t==='oscuro'||matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.dataset.tema='oscuro'}catch(e){}</script>
 </head>
 <body x-data="estimacion" x-init="iniciar()">
+  <div class="bc-progreso" x-show="cargando" x-cloak aria-hidden="true"></div>
 
   <header class="bc-barra">
     <div>
-      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <div class="bc-marca-grupo">
+        <a href="/panel.html" class="bc-marca">
+          <img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo bc-logo--claro">
+          <img src="/buildcast-logo-dark.svg" alt="BuildCast" class="bc-logo bc-logo--oscuro">
+        </a>
+        <button type="button" class="bc-tema" data-tema-boton aria-label="Cambiar a modo oscuro" aria-pressed="false" title="Modo oscuro">
+          <svg class="bc-tema__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="bc-tema__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
       <nav class="bc-nav">
         <a href="/panel.html">Panel</a>
         <a href="/proyectos.html" aria-current="page">Proyectos</a>
         <a href="/precios.html">Banco de precios</a>
         <a href="/plantillas.html">Plantillas</a>
         <a href="/configuracion.html">Configuración</a>
+        <a href="/administracion.html" data-solo-admin hidden>Administración</a>
       </nav>
       <span class="bc-cuenta">
         <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
@@ -76,13 +45,68 @@
     </div>
   </header>
 
-  <main class="bc-pagina" x-cloak>
 
-    <p class="bc-apoyo" x-show="cargando">Cargando el presupuesto…</p>
-    <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
+  <main class="bc-pagina" :aria-busy="vista === 'cargando'">
 
-    <template x-if="proyecto">
-      <div style="display:flex;flex-direction:column;gap:clamp(20px,2.4vw,32px)">
+
+    <div class="bc-sk" x-show="vista === 'cargando'" role="status">
+      <div class="bc-sk__cabecera">
+        <div>
+          <p class="bc-sk__migas"><a href="/proyectos.html">Proyectos</a> / Cargando proyecto…</p>
+          <i class="bc-sk__titulo" aria-hidden="true"></i>
+          <i class="bc-sk__meta" aria-hidden="true"></i>
+          <i class="bc-sk__meta" aria-hidden="true"></i>
+        </div>
+        <i class="bc-sk__boton" aria-hidden="true"></i>
+      </div>
+        <div class="bc-sk__tarjetas" aria-hidden="true">
+          <div class="bc-sk__tarjeta">
+            <i class="bc-sk__rotulo"></i><i class="bc-sk__cifra"></i><i class="bc-sk__linea"></i>
+            <div class="bc-sk__fila"><i></i><i></i></div>
+            <div class="bc-sk__fila"><i></i><i></i></div>
+            <div class="bc-sk__fila"><i></i><i></i></div>
+          </div>
+          <div class="bc-sk__tarjeta">
+            <i class="bc-sk__rotulo"></i><i class="bc-sk__cifra" style="width:48%"></i><i class="bc-sk__linea"></i>
+            <div class="bc-sk__fila"><i></i><i></i></div>
+          </div>
+        </div>
+        <div class="bc-sk__tarjeta" aria-hidden="true"><i class="bc-sk__rotulo"></i><i class="bc-sk__linea" style="width:28%"></i></div>
+        <div class="bc-sk__pestanas" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="bc-sk__presupuesto" aria-hidden="true">
+          <div class="bc-sk__columna">
+            <div class="bc-sk__tarjeta"><i class="bc-sk__rotulo"></i><i class="bc-sk__linea" style="height:18px;width:36%"></i><i class="bc-sk__linea" style="width:62%"></i></div>
+            <div class="bc-sk__filas">
+              <div class="bc-sk__fila"><i></i><i></i></div>
+              <div class="bc-sk__fila"><i></i><i></i></div>
+              <div class="bc-sk__fila"><i></i><i></i></div>
+              <div class="bc-sk__fila"><i></i><i></i></div>
+              <div class="bc-sk__fila"><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="bc-sk__tarjeta bc-sk__lateral">
+            <i class="bc-sk__rotulo"></i>
+            <div class="bc-sk__fila"><i></i><i></i></div>
+            <div class="bc-sk__fila"><i></i><i></i></div>
+          </div>
+        </div>
+    </div>
+
+    <template x-if="vista === 'error'">
+      <section class="bc-vacio bc-vacio--error" role="alert" aria-labelledby="error-carga-titulo">
+        <p class="bc-migas"><a href="/proyectos.html">Proyectos</a></p>
+        <span class="bc-rotulo">Error de carga</span>
+        <h1 class="bc-h2" id="error-carga-titulo">No pudimos cargar este proyecto.</h1>
+        <p class="bc-apoyo" x-text="error"></p>
+        <div class="bc-acciones">
+          <button type="button" class="bc-boton" x-show="puedeReintentar" @click="reintentar()">Reintentar</button>
+          <a class="bc-boton bc-boton--linea" href="/proyectos.html">Volver a proyectos</a>
+        </div>
+      </section>
+    </template>
+
+    <template x-if="vista === 'listo'">
+      <div class="bc-aparece bc-pila" style="--bc-pila-gap:clamp(20px,2.4vw,32px)">
 
         <div class="bc-encabezado">
           <div>
@@ -97,7 +121,6 @@
           </div>
         </div>
 
-        <!-- Avisos de la estimación guardada -->
         <p class="bc-aviso bc-aviso--error" x-show="errorCalculo" x-text="errorCalculo"></p>
 
         <p class="bc-aviso bc-aviso--pendiente" x-show="presupuesto && (datosCambiaron || versionCambio || partidasCambiaron)">
@@ -109,15 +132,17 @@
           Los montos guardados no cambian hasta que uses «Recalcular».
         </p>
 
-        <p class="bc-aviso bc-aviso--pendiente" x-show="presupuesto && !presupuesto.completa">
-          Estimación incompleta:
-          <span x-text="presupuesto.partidasSinCantidad + ' partida(s) sin cantidad y ' + presupuesto.partidasSinPrecio + ' sin precio no suman al costo directo'"></span>
-          <span x-text="'(' + presupuesto.sinCantidad.concat(presupuesto.sinPrecio).map((l) => l.nombre).join(', ') + ').'"></span>
-        </p>
+        <template x-if="presupuesto && !presupuesto.completa">
+          <p class="bc-aviso bc-aviso--pendiente">
+            Estimación incompleta:
+            <span x-text="presupuesto.partidasSinCantidad + ' partida(s) sin cantidad y ' + presupuesto.partidasSinPrecio + ' sin precio no suman al costo directo'"></span>
+            <span x-text="'(' + presupuesto.sinCantidad.concat(presupuesto.sinPrecio).map((l) => l.nombre).join(', ') + ').'"></span>
+          </p>
+        </template>
 
         <!-- Resultado guardado -->
         <template x-if="presupuesto">
-          <div class="bc-resultados">
+          <div class="bc-resultados" id="resultado-estimacion">
             <div class="bc-resultado">
               <span class="bc-rotulo">Costo total estimado</span>
               <span class="bc-resultado__cifra" x-text="pesos(presupuesto.total)"></span>
@@ -129,25 +154,148 @@
               </div>
             </div>
 
-            <div class="bc-resultado bc-resultado--claro">
-              <span class="bc-rotulo">Plazo de construcción</span>
-              <span class="bc-resultado__cifra"><span x-text="presupuesto.plazoDias"></span> días</span>
-              <span class="bc-resultado__resumen">
-                Intervalo de <span x-text="presupuesto.plazoMin"></span> a <span x-text="presupuesto.plazoMax"></span> días
-                · tolerancia ±<span x-text="tolerancia"></span>%
-              </span>
-              <div style="display:flex;flex-direction:column;margin-top:4px">
-                <div class="bc-resultado__fila"><span>Método</span><b>Regla paramétrica</b></div>
-                <div class="bc-resultado__fila"><span>Métricas del modelo</span><b>Pendientes de validación</b></div>
+            <!-- Sugerencia del modelo, guardada por el backend: es una referencia para el profesional,
+                 no el plazo del documento. Fuera del dominio histórico, el número baja a texto
+                 secundario: queda visible para trazabilidad, no como estimación normal. -->
+            <div class="bc-resultado bc-resultado--claro bc-plazo">
+              <span class="bc-rotulo">Plazo sugerido por BuildCast</span>
+              <span class="bc-nota" x-text="presentacion.rotulo"></span>
+              <span :class="presentacion.esCifra ? 'bc-resultado__cifra' : 'bc-resultado__leyenda'" x-text="presentacion.principal"></span>
+              <span class="bc-resultado__resumen" x-show="presentacion.rango" x-text="presentacion.rango"></span>
+
+              <!-- Explicación breve, justo bajo el estado. -->
+              <div class="bc-plazo__avisos">
+                <template x-for="aviso in presentacion.avisos" :key="aviso">
+                  <p x-text="aviso"></p>
+                </template>
+              </div>
+
+              <!-- Métricas en dos columnas: el valor del modelo y su rango, sin jerarquía de cifra principal. -->
+              <dl class="bc-plazo__datos" x-show="presentacion.valorModelo">
+                <div>
+                  <dt x-text="presentacion.valorModelo.split(': ')[0]"></dt>
+                  <dd x-text="presentacion.valorModelo.split(': ').slice(1).join(': ')"></dd>
+                </div>
+                <div x-show="presentacion.rangoTecnico">
+                  <dt x-text="presentacion.rangoTecnico.split(': ')[0]"></dt>
+                  <dd x-text="presentacion.rangoTecnico.split(': ').slice(1).join(': ')"></dd>
+                </div>
+              </dl>
+
+              <!-- Pie: de qué modelo sale, su error medio observado (de la versión) y su estado. -->
+              <div class="bc-plazo__pie">
+                <b x-text="presentacion.origen"></b>
+                <span x-show="errorMedio" x-text="errorMedio"></span>
+                <span x-show="estadoModelo" x-text="estadoModelo"></span>
+                <span x-show="presentacion.valorModelo">Referencia calculada con los datos disponibles. No constituye un compromiso de plazo.</span>
               </div>
             </div>
           </div>
         </template>
 
+        <!-- Plazo para la cotización: lo decide el profesional y es el que sale en el documento.
+             Se guarda como una estimación nueva con los mismos montos; nunca recalcula el modelo. -->
+        <div class="bc-resultados">
+        <template x-if="presupuesto">
+          <div class="bc-tarjeta bc-tarjeta--relleno bc-plazo-cotizacion" id="plazo-cotizacion">
+            <span class="bc-rotulo">Plazo para la cotización</span>
+            <p class="bc-aviso bc-aviso--pendiente" style="margin-top:8px" role="status" x-show="profesional.porRevisar">
+              <span x-text="profesional.avisoRevision"></span>
+            </p>
+            <p style="margin-top:4px;margin-bottom:0">
+              <b class="bc-resultado__resumen" x-text="profesional.texto"></b>
+              <span class="bc-nota" x-show="profesional.origenTexto" x-text="' · ' + profesional.origenTexto"></span>
+            </p>
+
+            <!-- Propietario o editor lo definen; el lector solo lo ve. -->
+            <template x-if="puedeEditarPlazo">
+              <div style="margin-top:8px">
+                <div class="bc-campo bc-plazo-cotizacion__dias">
+                  <div class="bc-paso">
+                    <label for="plazo-profesional">Días</label>
+                    <button type="button" class="bc-paso__boton" aria-label="Restar un día"
+                            :disabled="guardandoPlazo || guardando"
+                            @click="plazoEscrito = String(Math.max(plazoMin, (parseInt(plazoEscrito, 10) || plazoMin + 1) - 1))">−</button>
+                    <input class="bc-entrada bc-entrada--num" id="plazo-profesional" type="number" inputmode="numeric"
+                           :min="plazoMin" :max="plazoMax" step="1" x-model="plazoEscrito"
+                           :disabled="guardandoPlazo || guardando">
+                    <button type="button" class="bc-paso__boton" aria-label="Sumar un día"
+                            :disabled="guardandoPlazo || guardando"
+                            @click="plazoEscrito = String(Math.min(plazoMax, (parseInt(plazoEscrito, 10) || plazoMin - 1) + 1))">+</button>
+                  </div>
+                </div>
+                <p class="bc-error" x-show="errorPlazoEscrito" x-text="errorPlazoEscrito"></p>
+                <div class="bc-acciones bc-plazo-cotizacion__acciones" style="margin-top:12px">
+                  <button type="button" class="bc-boton bc-boton--linea" x-show="profesional.porRevisar"
+                          :disabled="guardandoPlazo || guardando" @click="mantenerPlazo()" x-text="textoMantener"></button>
+                  <button type="button" class="bc-boton bc-boton--linea"
+                          :disabled="!sugerenciaDisponible || guardandoPlazo || guardando"
+                          @click="usarSugerencia()" x-text="textoUsarSugerencia"></button>
+                  <button type="button" class="bc-boton" :disabled="!puedeGuardarPlazo" @click="guardarPlazo()"
+                          x-text="guardandoPlazo ? 'Guardando…' : 'Guardar plazo'"></button>
+                </div>
+                <!-- Advertencia visible antes de usar una sugerencia fuera del dominio o de respaldo. -->
+                <p class="bc-nota" style="margin-top:8px" x-show="sugerenciaDisponible && advertenciaSugerencia"
+                   x-text="advertenciaSugerencia"></p>
+                <p class="bc-nota" style="margin-top:8px" x-show="!sugerenciaDisponible">
+                  No hay plazo sugerido para esta estimación: escribe el plazo en días.
+                </p>
+              </div>
+            </template>
+            <p class="bc-nota" style="margin-top:8px">Este será el plazo mostrado en el documento de entrega.</p>
+            <p class="bc-error" role="alert" x-show="errorPlazo" x-text="errorPlazo"></p>
+          </div>
+        </template>
+
+        <!-- Observaciones de la estimación mostrada: se guardan con la estimación y salen en el documento.
+             Propietario o editor las escriben aquí; el lector las ve como texto plano (x-text), nunca HTML.
+             Sin estimación todavía, el campo está en «Ajustes comerciales». -->
+        <template x-if="presupuesto">
+          <div class="bc-tarjeta bc-tarjeta--relleno">
+            <span class="bc-rotulo">Observaciones</span>
+
+            <template x-if="puedeEditarObservaciones">
+              <div style="margin-top:8px">
+                <div class="bc-campo" x-show="puedeEditarObservaciones">
+                  <label for="observaciones">Texto para el documento <span class="bc-tabla__suave">· opcional</span></label>
+                  <textarea class="bc-entrada bc-entrada--area" id="observaciones" rows="4" :maxlength="limiteObservaciones"
+                            placeholder="Ej.: Valor preliminar sujeto a revisión de especialidades y confirmación de terreno."
+                            x-model="observaciones" :disabled="guardando || actualizandoCotizacion"></textarea>
+                  <p class="bc-ayuda" x-text="observaciones.length + ' / ' + limiteObservaciones"></p>
+                </div>
+                <p class="bc-error" x-show="errorTextoObservaciones" x-text="errorTextoObservaciones"></p>
+
+                <!-- Solo cambió la observación: no hay nada que recalcular. -->
+                <div class="bc-acciones" style="margin-top:12px" x-show="accion === 'actualizar'">
+                  <button type="button" class="bc-boton" x-show="accion === 'actualizar'"
+                          :disabled="!puedeActualizarCotizacion" @click="actualizarCotizacion()"
+                          x-text="actualizandoCotizacion ? 'Actualizando…' : 'Actualizar cotización'"></button>
+                </div>
+                <p class="bc-nota" style="margin-top:8px" x-show="accion === 'actualizar' && !actualizandoCotizacion">
+                  Los montos no cambian: se emite la misma estimación con la nueva observación y la anterior se conserva.
+                </p>
+                <p class="bc-nota" style="margin-top:8px" x-show="accion === 'recalcular' && observacionCambio">
+                  La observación se guardará al recalcular la estimación.
+                </p>
+                <p class="bc-error" role="alert" x-show="errorCotizacion" x-text="errorCotizacion"></p>
+              </div>
+            </template>
+
+            <template x-if="!puedeEditarObservaciones">
+              <div>
+                <p class="bc-observaciones" style="margin-top:8px" x-show="presupuesto.observaciones" x-text="presupuesto.observaciones"></p>
+                <p class="bc-tabla__suave" style="margin-top:8px" x-show="!presupuesto.observaciones">Sin observaciones.</p>
+              </div>
+            </template>
+          </div>
+        </template>
+        </div>
+
         <p class="bc-aviso bc-aviso--pendiente" x-show="presupuesto">
-          El plazo se obtiene con una <strong>regla paramétrica provisional</strong>, no con el modelo predictivo:
-          el conjunto de datos de obras ejecutadas todavía no permite entrenarlo ni validarlo. Mientras no existan
-          métricas medidas sobre datos fuera del entrenamiento, la plataforma no declara precisión alguna.
+          El plazo sugerido es una <strong>estimación provisional</strong>: proviene de un modelo calibrado con pocos
+          presupuestos históricos de RAM, con plazos ofertados y no ejecutados. El rango es referencial. Fuera del rango
+          histórico el valor es solo una referencia; el modelo mejorará a medida que se registren obras ejecutadas.
+          El documento de entrega muestra solo el plazo para la cotización que defines tú.
         </p>
 
         <!-- Pestañas -->
@@ -158,10 +306,14 @@
                   @click="pestana = 'cronograma'">Cronograma preliminar</button>
           <button type="button" class="bc-pestana" :aria-selected="pestana === 'transparencia'" x-show="presupuesto"
                   @click="pestana = 'transparencia'">Transparencia</button>
+          <button type="button" class="bc-pestana" :aria-selected="pestana === 'miembros'"
+                  @click="abrirPestana('miembros')">Miembros</button>
+          <button type="button" class="bc-pestana" :aria-selected="pestana === 'historial'"
+                  @click="abrirPestana('historial')">Historial</button>
         </div>
 
         <!-- Presupuesto -->
-        <div x-show="pestana === 'presupuesto'" style="display:flex;flex-direction:column;gap:20px">
+        <div x-show="pestana === 'presupuesto'" class="bc-pila">
 
           <!-- Plantilla -->
           <div class="bc-tarjeta bc-tarjeta--relleno bc-plantilla">
@@ -212,8 +364,10 @@
                         <td></td>
                       </tr>
                       <template x-for="p in g.partidas" :key="p.id">
-                        <tr :class="editando === p.id ? 'bc-fila-guardando' : ''">
+                        <tr :id="'partida-' + p.id" :aria-busy="filaEnProceso(p.id)" :class="{ 'bc-fila-guardando': filaEnProceso(p.id), 'bc-fila-destacada': destacada === p.id }">
                           <td class="bc-partida">
+                            <!-- Solo esta partida se está guardando: el resto de la tabla sigue disponible. -->
+                            <span class="bc-fila-barra" x-show="filaEnProceso(p.id)" aria-hidden="true"></span>
                             <button type="button" class="bc-partida__nombre" x-show="nombreEditando !== p.id"
                                     title="Editar nombre" @click="editarNombre(p, $el.parentElement)" x-text="p.nombre"></button>
                             <input class="bc-entrada bc-entrada--celda bc-entrada--texto" x-show="nombreEditando === p.id"
@@ -221,7 +375,7 @@
                                    @keydown.enter.prevent="$event.target.blur()"
                                    @keydown.escape="$event.target.value = p.nombre; $event.target.blur()"
                                    @blur="terminarNombre(p, $event.target.value)">
-                            <span class="bc-partida__meta" x-text="origenPartida(p)"></span>
+                            <span class="bc-partida__meta" x-text="origenPartida(p) + (filaEnProceso(p.id) ? ' · Guardando…' : '')"></span>
                           </td>
                           <td><span class="bc-celda-linea bc-tabla__suave" x-text="p.unidad"></span></td>
                           <td class="bc-num">
@@ -274,13 +428,19 @@
                 </table>
               </div>
 
-              <div class="bc-vacio" x-show="partidas.length === 0">
-                <span class="bc-rotulo">Sin partidas</span>
-                <h2 class="bc-h2">Este proyecto todavía no tiene partidas</h2>
-                <p class="bc-apoyo">Aplica una plantilla o agrega partidas del catálogo o manuales.</p>
-              </div>
+              <!-- Solo se dibuja con la carga terminada (vista === 'listo'): aquí «sin partidas» es un hecho. -->
+              <template x-if="partidas.length === 0">
+                <div class="bc-vacio">
+                  <span class="bc-rotulo">Sin partidas</span>
+                  <h2 class="bc-h2">Este proyecto todavía no tiene partidas</h2>
+                  <p class="bc-apoyo">Aplica una plantilla o agrega partidas del catálogo o manuales.</p>
+                  <div class="bc-acciones">
+                    <button type="button" class="bc-boton" @click="abrirAgregar()">+ Agregar partida</button>
+                  </div>
+                </div>
+              </template>
 
-              <div class="bc-acciones">
+              <div class="bc-acciones" x-show="partidas.length > 0">
                 <button type="button" class="bc-boton" @click="abrirAgregar()">+ Agregar partida</button>
               </div>
             </div>
@@ -306,8 +466,29 @@
                 </div>
                 <p class="bc-nota" style="margin-top:8px">Gastos generales y utilidad se calculan sobre el costo directo.</p>
                 <p class="bc-error" x-show="errorAjustes" x-text="errorAjustes"></p>
-                <button type="button" class="bc-boton" style="margin-top:16px;width:100%"
+
+                <!-- Observaciones de la primera estimación. Con estimación guardada, el campo está en la
+                     tarjeta «Observaciones» de arriba (solo existe uno de los dos a la vez). -->
+                <template x-if="!presupuesto">
+                  <div>
+                    <div class="bc-campo" style="margin-top:16px" x-show="puedeEditarObservaciones">
+                      <label for="observaciones">Observaciones <span class="bc-tabla__suave">· opcional</span></label>
+                      <textarea class="bc-entrada bc-entrada--area" id="observaciones" rows="3" :maxlength="limiteObservaciones"
+                                placeholder="Ej.: Valor preliminar sujeto a revisión de especialidades y confirmación de terreno."
+                                x-model="observaciones" :disabled="guardando"></textarea>
+                      <p class="bc-ayuda" x-text="observaciones.length + ' / ' + limiteObservaciones"></p>
+                    </div>
+                    <p class="bc-error" x-show="errorTextoObservaciones" x-text="errorTextoObservaciones"></p>
+                  </div>
+                </template>
+
+                <!-- Si solo cambió la observación, el botón «Actualizar cotización» está en la tarjeta de arriba. -->
+                <button type="button" class="bc-boton" style="margin-top:16px;width:100%" x-show="accion !== 'actualizar'"
+                        :class="guardando && 'bc-boton--calculando'" :aria-busy="guardando"
                         :disabled="!puedeAplicar" @click="aplicar()" x-text="textoAplicar"></button>
+                <p class="bc-nota" style="margin-top:16px" x-show="accion === 'actualizar'">
+                  Solo cambió la observación: guárdala con «Actualizar cotización» en la tarjeta «Observaciones».
+                </p>
                 <p class="bc-nota" style="margin-top:8px" x-show="!presupuesto && partidas.length > 0">
                   Todavía no hay una estimación guardada. Revisa las partidas y genera la estimación.
                 </p>
@@ -364,9 +545,21 @@
           </div>
         </div>
 
-        <!-- Cronograma -->
-        <div x-show="pestana === 'cronograma' && presupuesto" class="bc-tarjeta bc-tarjeta--relleno">
-          <span class="bc-rotulo">Distribución referencial del plazo</span>
+        <!-- Cronograma: solo con la estimación completa y con algún plazo. Usa el plazo para la
+             cotización si existe; si no, la sugerencia del modelo, rotulada como interna. -->
+        <template x-if="presupuesto && bloqueoCronograma(presupuesto.completa, presupuesto.plazo, presupuesto.plazoProfesional) === 'incompleta'">
+          <div x-show="pestana === 'cronograma'" class="bc-tarjeta bc-tarjeta--relleno" role="status">
+            <span class="bc-rotulo">Cronograma preliminar</span>
+            <p class="bc-apoyo" style="margin-top:8px"><strong>Cronograma no disponible mientras la estimación esté incompleta.</strong></p>
+            <p class="bc-nota">Completa las partidas con cantidad y precio para obtener una distribución referencial del plazo.</p>
+          </div>
+        </template>
+        <template x-if="presupuesto && bloqueoCronograma(presupuesto.completa, presupuesto.plazo, presupuesto.plazoProfesional) === 'sin_plazo'">
+          <p x-show="pestana === 'cronograma'" class="bc-aviso">Sin plazo sugerido ni plazo para la cotización no hay cronograma preliminar.</p>
+        </template>
+        <template x-if="presupuesto && bloqueoCronograma(presupuesto.completa, presupuesto.plazo, presupuesto.plazoProfesional) === ''">
+        <div x-show="pestana === 'cronograma'" class="bc-tarjeta bc-tarjeta--relleno">
+          <span class="bc-rotulo" x-text="rotuloCronograma"></span>
           <h2 class="bc-h2" style="margin:8px 0 6px">Cronograma preliminar</h2>
           <p class="bc-apoyo" style="margin-bottom:24px">
             Las etapas se reparten en proporción a la incidencia de sus capítulos sobre el costo directo.
@@ -381,11 +574,12 @@
               </div>
               <div class="bc-etapa__barra">
                 <div class="bc-etapa__relleno"
-                     :style="'margin-left:' + (e.desde / presupuesto.plazoDias * 100) + '%; width:' + (e.dias / presupuesto.plazoDias * 100) + '%'"></div>
+                     :style="'margin-left:' + (e.desde / diasCronograma * 100) + '%; width:' + (e.dias / diasCronograma * 100) + '%'"></div>
               </div>
             </div>
           </template>
         </div>
+        </template>
 
         <!-- Transparencia -->
         <template x-if="presupuesto">
@@ -412,8 +606,8 @@
                   <td class="bc-tabla__suave">Precio de la versión usada, salvo que el proyecto tenga un precio particular</td>
                   <td>
                     <span class="bc-estado" x-text="presupuesto.versionPrecios.version"></span>
-                    <span class="bc-nota" style="display:block;margin-top:4px" x-show="presupuesto.versionPrecios.fuente"
-                          x-text="presupuesto.versionPrecios.fuente"></span>
+                    <p class="bc-nota" style="margin-top:4px" x-show="presupuesto.versionPrecios.fuente"
+                       x-text="presupuesto.versionPrecios.fuente"></p>
                   </td>
                 </tr>
                 <tr>
@@ -435,15 +629,190 @@
                   <td><span class="bc-estado" x-text="presupuesto.gastosGeneralesPct + ' % · ' + presupuesto.utilidadPct + ' %'"></span></td>
                 </tr>
                 <tr>
-                  <td class="bc-tabla__nombre">Plazo de construcción</td>
-                  <td class="bc-tabla__suave">Regla paramétrica</td>
-                  <td class="bc-tabla__suave">Base más superficie elevada a 0,52, pisos y estándar</td>
-                  <td><span class="bc-estado bc-estado--pendiente">Provisional · modelo sin validar</span></td>
+                  <td class="bc-tabla__nombre">Plazo sugerido</td>
+                  <td class="bc-tabla__suave" x-text="etiquetaModelo(presupuesto.plazo)"></td>
+                  <td class="bc-tabla__suave">Regla paramétrica sobre el costo total en UF y la clase de obra</td>
+                  <td><span class="bc-estado bc-estado--pendiente" x-text="presentacion.estadoCorto"></span></td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">Plazo para la cotización</td>
+                  <td class="bc-tabla__suave">Profesional a cargo</td>
+                  <td class="bc-tabla__suave">Acepta la sugerencia o escribe otro valor; es el que muestra el documento</td>
+                  <td><span class="bc-estado" x-text="profesional.estadoTexto"></span></td>
+                </tr>
+                <tr>
+                  <td class="bc-tabla__nombre">UF utilizada</td>
+                  <td class="bc-tabla__suave">Valor de la UF guardado con esta estimación</td>
+                  <td class="bc-tabla__suave">Convierte el costo total a UF para el plazo; es la UF de esa fecha, no la de hoy</td>
+                  <td>
+                    <span class="bc-estado" x-text="ufUtilizada.valor"></span>
+                    <p class="bc-nota" style="margin-top:4px" x-show="ufUtilizada.disponible" x-text="ufUtilizada.detalle"></p>
+                  </td>
                 </tr>
               </tbody>
             </table>
+
+            <!-- Trazabilidad del plazo: lo que sugirió el modelo y lo que decidió el profesional. -->
+            <div class="bc-transparencia-plazo">
+              <section>
+                <h3 class="bc-rotulo">Modelo</h3>
+                <table class="bc-tabla bc-tabla--ficha" style="margin-top:8px">
+                  <tbody>
+                    <template x-for="f in transparenciaModelo" :key="f.etiqueta">
+                      <tr><td x-text="f.etiqueta"></td><td x-text="f.valor"></td></tr>
+                    </template>
+                    <tr>
+                      <td>UF usada</td>
+                      <td>
+                        <span x-text="ufUtilizada.valor"></span>
+                        <p class="bc-nota" style="margin-top:4px" x-show="ufUtilizada.disponible" x-text="ufUtilizada.detalle"></p>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+              <section>
+                <h3 class="bc-rotulo">Profesional</h3>
+                <table class="bc-tabla bc-tabla--ficha" style="margin-top:8px">
+                  <tbody>
+                    <template x-for="f in transparenciaProfesional" :key="f.etiqueta">
+                      <tr><td x-text="f.etiqueta"></td><td x-text="f.valor"></td></tr>
+                    </template>
+                  </tbody>
+                </table>
+              </section>
+            </div>
           </div>
         </template>
+
+        <!-- Miembros -->
+        <section x-show="pestana === 'miembros'" class="bc-tarjeta bc-tarjeta--relleno bc-colaboracion">
+          <div class="bc-encabezado">
+            <div>
+              <span class="bc-rotulo">Colaboración</span>
+              <h2 class="bc-h2" style="margin:8px 0 6px">Miembros del proyecto</h2>
+              <p class="bc-nota" x-text="miembros.puedeAdministrar
+                ? 'Agrega personas con su correo y define si pueden editar o solo consultar.'
+                : 'Solo el propietario agrega, cambia o quita miembros.'"></p>
+            </div>
+            <button type="button" class="bc-boton bc-boton--menor" x-ref="abrirAgregarMiembro"
+                    x-show="miembros.puedeAdministrar" @click="miembros.abrirAgregar()">+ Agregar miembro</button>
+          </div>
+
+          <div class="bc-cargando" x-show="miembros.cargando && !miembros.cargado" role="status" aria-live="polite">
+            <p class="bc-cargando__aviso"><span class="bc-cargando__obra" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Cargando los miembros…</p>
+            <div class="bc-carga-filas" aria-hidden="true">
+              <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+              <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+          <div class="bc-aviso bc-aviso--error" role="alert" x-show="miembros.error">
+            <span x-text="miembros.error"></span>
+            <button type="button" class="bc-enlace" style="margin-left:8px" x-show="!miembros.cargado"
+                    @click="miembros.cargar()">Reintentar</button>
+          </div>
+          <p class="bc-aviso" role="status" x-show="miembros.aviso" x-text="miembros.aviso"></p>
+
+          <div class="bc-desplaza" x-show="miembros.cargado">
+            <table class="bc-tabla bc-tabla--miembros">
+              <thead>
+                <tr>
+                  <th>Miembro</th>
+                  <th>Rol</th>
+                  <th x-show="miembros.puedeAdministrar"><span class="bc-oculto">Acciones</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="m in miembros.miembros" :key="m.usuario_id">
+                  <tr>
+                    <td>
+                      <div class="bc-persona">
+                        <span class="bc-monograma" :class="m.rol === 'propietario' && 'bc-monograma--lleno'" aria-hidden="true"
+                              x-text="(m.nombre || m.email || '?').trim().charAt(0).toUpperCase()"></span>
+                        <div>
+                          <span class="bc-tabla__nombre" x-text="m.nombre || m.email || 'Usuario sin correo'"></span>
+                          <p class="bc-tabla__suave" x-show="m.nombre && m.email" x-text="m.email"></p>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <template x-if="miembros.modificable(m)">
+                        <select class="bc-entrada bc-entrada--rol" :aria-label="'Rol de ' + (m.nombre || m.email)"
+                                :disabled="miembros.cambiando !== ''"
+                                @change="miembros.cambiarRol(m, $event.target.value).then((ok) => { if (!ok) $event.target.value = m.rol })">
+                          <template x-for="r in roles" :key="r.valor">
+                            <option :value="r.valor" :selected="r.valor === m.rol" x-text="r.etiqueta"></option>
+                          </template>
+                        </select>
+                      </template>
+                      <template x-if="!miembros.modificable(m)">
+                        <span class="bc-estado" :class="m.rol === 'propietario' && 'bc-estado--pendiente'"
+                              x-text="etiquetaRol(m.rol)"></span>
+                      </template>
+                    </td>
+                    <td class="bc-num" x-show="miembros.puedeAdministrar">
+                      <button type="button" class="bc-enlace" x-show="miembros.modificable(m)"
+                              :disabled="miembros.cambiando !== ''"
+                              @click="miembros.pedirQuitar(m)">Quitar</button>
+                    </td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+
+          <p class="bc-nota">Editor: modifica el presupuesto y genera estimaciones. Lector: solo consulta. El propietario es quien creó el proyecto y no se puede cambiar.</p>
+        </section>
+
+        <!-- Historial -->
+        <section x-show="pestana === 'historial'" class="bc-tarjeta bc-tarjeta--relleno bc-colaboracion">
+          <div>
+            <span class="bc-rotulo">Historial</span>
+            <h2 class="bc-h2" style="margin:8px 0 6px">Actividad del proyecto</h2>
+            <p class="bc-nota">Cambios registrados en el proyecto, el más reciente primero. Se muestran los últimos 50.</p>
+          </div>
+
+          <div class="bc-cargando" x-show="historial.cargando && !historial.cargado" role="status" aria-live="polite">
+            <p class="bc-cargando__aviso"><span class="bc-cargando__obra" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Cargando el historial…</p>
+            <div class="bc-carga-filas" aria-hidden="true">
+              <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+              <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+              <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+            </div>
+          </div>
+          <div class="bc-aviso bc-aviso--error" role="alert" x-show="historial.error">
+            <span x-text="historial.error"></span>
+            <button type="button" class="bc-enlace" style="margin-left:8px" :disabled="historial.cargando"
+                    @click="historial.cargar()">Reintentar</button>
+          </div>
+          <p class="bc-apoyo" x-show="historial.cargado && !historial.error && historial.eventos.length === 0">
+            Todavía no hay actividad registrada en este proyecto.
+          </p>
+
+          <ol class="bc-historial" x-show="historial.eventos.length > 0">
+            <template x-for="e in entradasHistorial" :key="e.id">
+              <li class="bc-historial__evento">
+                <span class="bc-historial__autor" x-text="e.autor"></span>
+                <span x-text="e.texto"></span>
+                <!-- Cada dato modificado: anterior → nuevo -->
+                <dl class="bc-historial__cambios" x-show="e.cambios.length > 0">
+                  <template x-for="c in e.cambios" :key="c.campo">
+                    <div class="bc-historial__cambio">
+                      <dt x-text="c.campo"></dt>
+                      <dd :aria-label="c.anterior === null ? c.nuevo : 'de ' + c.anterior + ' a ' + c.nuevo">
+                        <template x-if="c.anterior !== null">
+                          <span><span class="bc-historial__antes" x-text="c.anterior"></span><span class="bc-historial__flecha" aria-hidden="true">→</span></span>
+                        </template>
+                        <span class="bc-historial__nuevo" x-text="c.nuevo"></span>
+                      </dd>
+                    </div>
+                  </template>
+                </dl>
+                <span class="bc-nota" x-show="e.fecha" x-text="e.fecha"></span>
+              </li>
+            </template>
+          </ol>
+        </section>
 
         <p class="bc-nota">
           Estimación preliminar referencial, sin valor contractual. Las cantidades son las definidas para este
@@ -454,9 +823,6 @@
     </template>
 
   </main>
-  <div class="bc-esqueleto" aria-hidden="true">
-    <span></span><span></span><span></span>
-  </div>
 
 
   <!-- Agregar partida -->
@@ -474,6 +840,15 @@
 
       <p class="bc-error" x-show="errorAgregar" x-text="errorAgregar"></p>
       <p class="bc-nota" x-show="avisoAgregar" x-text="avisoAgregar"></p>
+      <!-- Misma partida de catálogo: se avisa en el lugar, sin otro modal. -->
+      <div class="bc-aviso bc-aviso--pendiente" role="status" style="margin-bottom:16px" x-show="duplicada" x-cloak>
+        <strong>Partida ya agregada</strong>
+        <p class="bc-nota" style="margin-top:4px">Esta partida ya forma parte del presupuesto.</p>
+        <div class="bc-acciones" style="margin-top:12px">
+          <button type="button" class="bc-boton bc-boton--menor" @click="verPartidaExistente()">Ver partida</button>
+          <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="duplicada = null">Cancelar</button>
+        </div>
+      </div>
 
       <!-- Catálogo -->
       <div class="bc-form" x-show="modoAgregar === 'catalogo'">
@@ -488,7 +863,15 @@
                    x-model.number="cantidadCatalogo">
           </div>
         </div>
-        <div class="bc-lista">
+        <div class="bc-cargando" x-show="cargandoCatalogo" role="status" aria-live="polite">
+          <p class="bc-cargando__aviso"><span class="bc-cargando__obra" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Cargando el catálogo…</p>
+          <div class="bc-carga-filas" aria-hidden="true">
+            <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+            <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+            <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="bc-lista" x-show="!cargandoCatalogo">
           <template x-for="f in resultadosCatalogo" :key="f.id">
             <div class="bc-lista__fila">
               <div>
@@ -499,7 +882,7 @@
               <button type="button" class="bc-boton bc-boton--linea bc-boton--menor" @click="agregarDelCatalogo(f)">Agregar</button>
             </div>
           </template>
-          <p class="bc-nota" x-show="resultadosCatalogo.length === 0">Ninguna partida coincide con la búsqueda.</p>
+          <p class="bc-nota" x-show="resultadosCatalogo.length === 0 && !errorAgregar">Ninguna partida coincide con la búsqueda.</p>
         </div>
       </div>
 
@@ -558,13 +941,17 @@
       <div class="bc-form">
         <div class="bc-campo">
           <label for="pl-elegida">Plantilla</label>
-          <select class="bc-entrada" id="pl-elegida" x-model="plantillaElegida">
+          <select class="bc-entrada" id="pl-elegida" x-model="plantillaElegida" :disabled="cargandoPlantillas"
+                  :aria-busy="cargandoPlantillas">
             <template x-for="p in plantillas" :key="p.id">
               <option :value="p.id"
                       x-text="nombrePlantilla(p) + (p.id === plantillaSugerida?.id ? ' · corresponde al proyecto' : '')"></option>
             </template>
           </select>
-          <p class="bc-ayuda" x-show="plantillaSeleccionada"
+          <p class="bc-cargando__aviso bc-cargando__aviso--menor" role="status" x-show="cargandoPlantillas">
+            <span class="bc-cargando__obra" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Cargando plantillas…
+          </p>
+          <p class="bc-ayuda" x-show="plantillaSeleccionada && !cargandoPlantillas"
              x-text="plantillaSeleccionada?.cantidad_partidas ? plantillaSeleccionada.cantidad_partidas + ' partida(s)' : 'Sin partidas configuradas'"></p>
         </div>
 
@@ -582,9 +969,96 @@
 
         <div class="bc-acciones">
           <button type="button" class="bc-boton" @click="aplicarPlantilla()"
-                  :disabled="!plantillaElegida || (partidas.length > 0 && !confirmaReemplazo)">Aplicar plantilla</button>
+                  :disabled="cargandoPlantillas || !plantillaElegida || (partidas.length > 0 && !confirmaReemplazo)">Aplicar plantilla</button>
           <button type="button" class="bc-boton bc-boton--linea" @click="modalPlantilla = false">Cancelar</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agregar miembro -->
+  <div class="bc-capa" x-show="miembros.modalAgregar" x-cloak
+       @click.self="miembros.cancelarAgregar()" @keydown.escape.window="miembros.cancelarAgregar()"
+       x-effect="if (miembros.modalAgregar) $nextTick(() => $refs.buscarMiembro.focus())">
+    <form class="bc-modal bc-form" role="dialog" aria-modal="true" aria-labelledby="agregar-miembro-titulo"
+          novalidate @submit.prevent="miembros.agregar()">
+      <div>
+        <span class="bc-rotulo">Miembros del proyecto</span>
+        <h2 class="bc-h2" id="agregar-miembro-titulo">Agregar miembro</h2>
+      </div>
+
+      <div class="bc-campo">
+        <label for="miembro-buscar">Usuario</label>
+        <input class="bc-entrada" id="miembro-buscar" type="search" autocomplete="off"
+               placeholder="Buscar por nombre o correo" aria-controls="miembro-candidatos"
+               x-ref="buscarMiembro" x-model="miembros.busqueda" :disabled="miembros.agregando"
+               @input.debounce.300ms="miembros.buscarCandidatos()" @keydown.enter.prevent>
+
+        <p class="bc-ayuda" x-show="miembros.cargandoCandidatos">Buscando usuarios…</p>
+        <div class="bc-aviso bc-aviso--error" role="alert" style="margin-top:8px" x-show="miembros.errorCandidatos">
+          <span x-text="miembros.errorCandidatos"></span>
+          <button type="button" class="bc-enlace" style="margin-left:8px"
+                  @click="miembros.buscarCandidatos()">Reintentar</button>
+        </div>
+        <p class="bc-ayuda" x-show="miembros.candidatosCargados && !miembros.errorCandidatos && !miembros.candidatos.length"
+           x-text="miembros.busqueda.trim() ? 'Ningún usuario coincide con la búsqueda.' : 'No hay otros usuarios disponibles.'"></p>
+
+        <ul class="bc-candidatos" id="miembro-candidatos" role="listbox" aria-label="Usuarios disponibles"
+            x-show="miembros.candidatos.length > 0">
+          <template x-for="c in miembros.candidatos" :key="c.usuario_id">
+            <li role="option" :aria-selected="miembros.seleccionado?.usuario_id === c.usuario_id">
+              <button type="button" class="bc-candidato" :disabled="miembros.agregando"
+                      :aria-pressed="miembros.seleccionado?.usuario_id === c.usuario_id"
+                      @click="miembros.seleccionar(c)">
+                <span class="bc-tabla__nombre" x-text="c.nombre || c.email"></span>
+                <span class="bc-tabla__suave" x-show="c.nombre" x-text="c.email"></span>
+              </button>
+            </li>
+          </template>
+        </ul>
+
+        <p class="bc-ayuda" x-show="miembros.seleccionado"
+           x-text="'Seleccionado: ' + (miembros.seleccionado?.nombre || miembros.seleccionado?.email)"></p>
+      </div>
+
+      <div class="bc-campo">
+        <label for="miembro-rol">Rol</label>
+        <select class="bc-entrada" id="miembro-rol" x-model="miembros.rolNuevo" :disabled="miembros.agregando">
+          <template x-for="r in roles" :key="r.valor">
+            <option :value="r.valor" x-text="r.etiqueta"></option>
+          </template>
+        </select>
+      </div>
+
+      <p class="bc-error" role="alert" x-show="miembros.errorAgregar" x-text="miembros.errorAgregar"></p>
+
+      <div class="bc-acciones">
+        <button type="button" class="bc-boton bc-boton--linea" :disabled="miembros.agregando"
+                @click="miembros.cancelarAgregar(); $refs.abrirAgregarMiembro.focus()">Cancelar</button>
+        <button type="submit" class="bc-boton" :disabled="!miembros.puedeAgregar"
+                x-text="miembros.agregando ? 'Agregando…' : 'Agregar'"></button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Quitar miembro -->
+  <div class="bc-capa" x-show="miembros.porQuitar" x-cloak
+       @click.self="miembros.cancelarQuitar()" @keydown.escape.window="miembros.cancelarQuitar()"
+       x-effect="if (miembros.porQuitar) $nextTick(() => $refs.cancelarQuitar.focus())">
+    <div class="bc-modal" role="dialog" aria-modal="true" aria-labelledby="quitar-titulo" aria-describedby="quitar-texto">
+      <span class="bc-rotulo">Miembros del proyecto</span>
+      <h2 class="bc-h2" id="quitar-titulo" style="margin-bottom:12px">Quitar miembro</h2>
+      <p id="quitar-texto" style="margin-bottom:4px"
+         x-text="'¿Quitar a ' + (miembros.porQuitar?.nombre || miembros.porQuitar?.email || 'este miembro') + ' del proyecto?'"></p>
+      <p class="bc-nota" style="margin-bottom:20px">Dejará de ver y modificar el proyecto. Puedes volver a agregarlo después.</p>
+
+      <p class="bc-error" role="alert" x-show="miembros.errorQuitar" x-text="miembros.errorQuitar"></p>
+
+      <div class="bc-acciones">
+        <button type="button" class="bc-boton bc-boton--linea" x-ref="cancelarQuitar" :disabled="miembros.quitando"
+                @click="miembros.cancelarQuitar()">Cancelar</button>
+        <button type="button" class="bc-boton bc-boton--peligro" :disabled="miembros.quitando"
+                @click="miembros.quitar()" x-text="miembros.quitando ? 'Quitando…' : 'Quitar miembro'"></button>
       </div>
     </div>
   </div>

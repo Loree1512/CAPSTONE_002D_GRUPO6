@@ -1,0 +1,10 @@
+# Presupuestos originales de RAM: contienen nombres y teléfonos de clientes.
+# No se versionan. El dataset anonimizado vive en data/processed/.
+data/raw/
+
+# Entorno virtual local de ML.
+.venv/
+
+# El .gitignore de la raíz ignora *.joblib; los artefactos versionados del modelo
+# de plazo se rescatan aquí (pesan pocos KB y son necesarios para reproducir, RNF-08).
+!models/*.joblib

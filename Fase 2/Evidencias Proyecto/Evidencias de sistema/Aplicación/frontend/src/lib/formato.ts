@@ -11,6 +11,14 @@ export function pesos(valor: number | null | undefined): string {
   return valor == null ? '—' : PESOS.format(valor)
 }
 
+const MILLONES = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 1 })
+
+/** Montos de tablero: desde un millón se abrevian ("$89,3 M"); bajo eso, completos. */
+export function montoCompacto(valor: number | null | undefined): string {
+  if (valor == null) return '—'
+  return Math.abs(valor) >= 1_000_000 ? `$${MILLONES.format(valor / 1_000_000)} M` : PESOS.format(valor)
+}
+
 export function numero(valor: number | null | undefined): string {
   return valor == null ? '—' : NUMERO.format(valor)
 }

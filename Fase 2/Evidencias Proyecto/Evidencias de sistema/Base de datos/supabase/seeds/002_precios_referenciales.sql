@@ -1,4 +1,7 @@
+-- Versión referencial 2026-T3-REF con los precios de preciosReferenciales.ts.
 -- No provienen de RAM. Requiere 001_catalogo_base.sql.
+--
+-- Los rendimientos 0.0 (09.05, 10.02) quedan en null, porque la base exige valores > 0.
 -- No sobrescribe una versión existente y solo la publica si no hay otra vigente.
 
 begin;

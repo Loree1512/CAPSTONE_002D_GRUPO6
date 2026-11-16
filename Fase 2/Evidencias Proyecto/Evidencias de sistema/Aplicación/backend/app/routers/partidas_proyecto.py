@@ -17,7 +17,8 @@ from app.services import servicio_partidas_proyecto
 
 router = APIRouter(prefix="/proyectos/{proyecto_id}/partidas", tags=["Partidas del proyecto"])
 
-# Solo el dueño del proyecto: uno ajeno responde 404.
+# Consultar: cualquier miembro. Modificar: propietario o editor (lector: 403).
+# Un proyecto al que no se pertenece responde 404.
 
 
 @router.get("", response_model=PartidasProyectoRespuesta)

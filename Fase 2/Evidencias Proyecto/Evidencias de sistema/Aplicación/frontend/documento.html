@@ -10,64 +10,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <style>
-    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
-       hoja completa. Evita ver la estructura sin estilos al navegar entre
-       páginas. Incluye el esqueleto de carga para no depender de base.css. */
-    :root { color-scheme: light; }
-    html { background: #F9F9F7; }
-    body {
-      margin: 0;
-      background: #F9F9F7;
-      color: #1A1A1A;
-      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: 15px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
-    img { display: block; max-width: 100%; }
-    [x-cloak] { display: none !important; }
-    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
-
-    .bc-esqueleto {
-      max-width: 1600px; margin: 0 auto;
-      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
-      display: flex; flex-direction: column; gap: 20px;
-    }
-    .bc-esqueleto span {
-      display: block;
-      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
-      background-size: 200% 100%;
-      animation: bc-latido 1.4s ease-in-out infinite;
-    }
-    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
-    .bc-esqueleto span:nth-child(2) { height: 120px; }
-    .bc-esqueleto span:nth-child(3) { height: 280px; }
-    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-    main:not([x-cloak]) ~ .bc-esqueleto,
-    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
-
-    body > * { animation: bc-entrar .22s ease-out both; }
-    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
-    @media (prefers-reduced-motion: reduce) {
-      body > * { animation: none; }
-      .bc-esqueleto span { animation: none; }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/estilos/base.css">
 </head>
 <body class="bc-fondo-hoja" x-data="documento" x-init="iniciar()">
+  <div class="bc-progreso" x-show="cargando" x-cloak aria-hidden="true"></div>
 
   <div class="bc-cinta" x-cloak>
     <a class="bc-enlace" :href="proyectoId ? '/estimacion.html?id=' + proyectoId : '/proyectos.html'">← Volver a la estimación</a>
     <button type="button" class="bc-boton bc-boton--menor" @click="imprimir()">Imprimir o guardar en PDF</button>
   </div>
 
-  <p class="bc-apoyo" style="padding:24px" x-show="cargando">Preparando el documento…</p>
+  <div class="bc-cargando" x-show="cargando" role="status" aria-live="polite" style="padding:24px;max-width:960px;margin:0 auto">
+    <p class="bc-cargando__aviso"><span class="bc-cargando__obra" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Preparando el documento…</p>
+    <span class="bc-carga-bloque bc-carga-bloque--titulo" aria-hidden="true"></span>
+    <span class="bc-carga-bloque bc-carga-bloque--alto" aria-hidden="true"></span>
+  </div>
   <p class="bc-aviso bc-aviso--error" style="margin:24px" x-cloak x-show="error" x-text="error"></p>
 
   <template x-if="proyecto && presupuesto">
-    <article class="bc-hoja">
+    <article class="bc-hoja bc-aparece">
 
       <header class="bc-hoja__cabecera">
         <div>
@@ -76,7 +37,7 @@
         </div>
         <div style="text-align:right">
           <span class="bc-placa bc-placa--grande"><img src="/ram-logo.png" alt="RAM Arquitectura y Construcción"></span>
-          <p class="bc-nota" style="margin-top:8px">RAM Arquitectura &amp; Construcción<br>Región de Valparaíso</p>
+          <p class="bc-nota" style="margin-top:8px">RAM Arquitectura &amp; Construcción · Región de Valparaíso</p>
         </div>
       </header>
 
@@ -115,9 +76,9 @@
             <span class="bc-nota" x-text="'Sobre ' + numero(proyecto.superficie_m2) + ' m² edificados'"></span>
           </div>
           <div>
-            <span class="bc-rotulo bc-rotulo--gris">Plazo de construcción</span>
-            <span class="bc-cifra"><span x-text="presupuesto.plazoDias"></span> días</span>
-            <span class="bc-nota">Intervalo de <span x-text="presupuesto.plazoMin"></span> a <span x-text="presupuesto.plazoMax"></span> días</span>
+            <!-- Solo el plazo definido por el profesional. Sin definir o por revisar: pendiente. -->
+            <span class="bc-rotulo bc-rotulo--gris">Plazo estimado de ejecución</span>
+            <span :class="plazoCliente.pendiente ? 'bc-cifra bc-cifra--leyenda' : 'bc-cifra'" x-text="plazoCliente.texto"></span>
           </div>
         </div>
       </section>
@@ -180,12 +141,20 @@
         </table>
       </section>
 
+      <!-- Solo si la estimación tiene observaciones. Texto plano: x-text, nunca HTML. -->
+      <template x-if="presupuesto.observaciones">
+        <section>
+          <h2 class="bc-h2">Observaciones</h2>
+          <p class="bc-apoyo bc-observaciones" x-text="presupuesto.observaciones"></p>
+        </section>
+      </template>
+
       <section class="bc-hoja__alcance">
         <h2 class="bc-h2">Alcance y advertencias</h2>
         <p class="bc-apoyo">Este documento entrega una <strong>estimación preliminar referencial</strong>, elaborada con las partidas del proyecto, las cantidades definidas para esta obra y los precios unitarios del banco de precios o particulares del proyecto. No reemplaza el estudio de especialidades y no tiene valor contractual.</p>
         <p class="bc-apoyo">Los gastos generales y la utilidad se calculan como porcentaje del costo directo.</p>
         <p class="bc-apoyo">Los valores son netos, en pesos chilenos, sin IVA. No incluyen terreno, permisos municipales, aportes, proyectos de especialidades ni derechos de edificación.</p>
-        <p class="bc-apoyo">El plazo se obtiene mediante una regla paramétrica provisional. Las métricas del modelo predictivo se encuentran pendientes de validación y, por lo tanto, no se declara precisión alguna sobre esa cifra.</p>
+        <p class="bc-apoyo" x-show="!plazoCliente.pendiente">El plazo indicado fue definido por el profesional a cargo y es referencial.</p>
         <p class="bc-nota" x-text="'Emitido con el banco de precios ' + versionBanco + ' · folio ' + folio + ' · ' + fecha"></p>
       </section>
 

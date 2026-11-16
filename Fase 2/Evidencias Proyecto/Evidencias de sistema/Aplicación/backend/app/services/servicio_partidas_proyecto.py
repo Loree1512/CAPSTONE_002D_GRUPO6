@@ -1,7 +1,8 @@
 """Partidas del proyecto: la lista editable con que se calcula el presupuesto.
 
-Todo pasa por el cliente del usuario, así que RLS limita cada operación a los
-proyectos propios. Un proyecto ajeno responde 404.
+Consultar exige pertenecer al proyecto; modificar, ser propietario o editor. Quien
+no pertenece recibe 404 y un lector que intenta modificar, 403. Todo pasa por el
+cliente del usuario, así que RLS sigue limitando cada operación.
 """
 
 from typing import Dict, List, Optional
@@ -13,13 +14,15 @@ from supabase import Client
 
 from app.database.supabase import get_user_scoped_client
 from app.schemas.autenticacion import UsuarioActual
+from app.schemas.proyecto import RolProyecto
 from app.schemas.partida_proyecto import (
     PartidaProyectoCrear,
     PartidaProyectoEditar,
     PartidasOrdenar,
     PlantillaAplicar,
 )
-from app.services import servicio_plantillas, servicio_proyectos
+from app.services import servicio_historial, servicio_plantillas, servicio_proyectos
+from app.services.concurrencia import en_paralelo
 from app.services.motor_costos import a_decimal, estado_linea, resolver_precio, subtotal_linea
 from app.services.servicio_banco import _error_http
 
@@ -29,6 +32,10 @@ COLUMNAS = (
     "id, proyecto_id, partida_id, categoria_id, nombre, unidad, cantidad, "
     "precio_unitario_override, origen, orden, observacion, fecha_actualizacion"
 )
+
+ENTIDAD = "proyecto_partida"
+# Lo que identifica una partida en el historial al agregarla o quitarla.
+CAMPOS_HISTORIAL = ("nombre", "unidad", "cantidad", "origen")
 
 MENSAJES = {
     "23503": "La categoría o la partida indicada no existe.",
@@ -122,11 +129,18 @@ def _a_respuesta(fila: dict, categorias: Dict[int, dict], codigos: dict, precios
     }
 
 
-def _respuestas(client: Client, filas: List[dict]) -> List[dict]:
+_NO_LEIDA = object()
+
+
+def _respuestas(client: Client, filas: List[dict], version=_NO_LEIDA, categorias=None) -> List[dict]:
+    """Respuestas con precio y categoría. Quien ya leyó la versión o las categorías las pasa."""
     ids = sorted({f["partida_id"] for f in filas if f.get("partida_id")})
-    version = _version_vigente(client)
-    categorias = _categorias(client)
-    codigos = _codigos(client, ids)
+    # Tres lecturas independientes a la vez; el precio necesita la versión, así que va después.
+    version, categorias, codigos = en_paralelo(
+        (lambda: version) if version is not _NO_LEIDA else (lambda: _version_vigente(client)),
+        (lambda: categorias) if categorias is not None else (lambda: _categorias(client)),
+        lambda: _codigos(client, ids),
+    )
     precios = _precios_banco(client, version["id"] if version else None, ids)
     return [_a_respuesta(f, categorias, codigos, precios) for f in filas]
 
@@ -138,21 +152,29 @@ def _una(client: Client, fila: dict) -> dict:
 # --- Operaciones ---------------------------------------------------------------------
 
 def listar(usuario_actual: UsuarioActual, proyecto_id: UUID) -> dict:
-    # RLS oculta proyectos ajenos: 404.
+    # Cualquier miembro consulta; quien no pertenece recibe 404.
     proyecto = servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id)
     client = get_user_scoped_client(usuario_actual.access_token)
 
-    filas = _leer_filas(client, proyecto_id)
-    version = _version_vigente(client)
-
-    aplicada = servicio_plantillas.leer(client, proyecto["plantilla_id"]) if proyecto.get("plantilla_id") else None
-    sugerida = servicio_plantillas.buscar_vigente(client, proyecto["tipo_obra"], proyecto["materialidad"])
+    # Lecturas independientes a la vez (cada una es un viaje a la base).
+    filas, version, categorias, aplicada, sugerida = en_paralelo(
+        lambda: _leer_filas(client, proyecto_id),
+        lambda: _version_vigente(client),
+        lambda: _categorias(client),
+        lambda: servicio_plantillas.leer(client, proyecto["plantilla_id"]) if proyecto.get("plantilla_id") else None,
+        lambda: servicio_plantillas.buscar_vigente(client, proyecto["tipo_obra"], proyecto["materialidad"]),
+    )
+    resumen_aplicada, resumen_sugerida, partidas = en_paralelo(
+        lambda: servicio_plantillas.resumen(client, aplicada),
+        lambda: servicio_plantillas.resumen(client, sugerida),
+        lambda: _respuestas(client, filas, version, categorias),
+    )
 
     return {
-        "plantilla_aplicada": servicio_plantillas.resumen(client, aplicada),
-        "plantilla_sugerida": servicio_plantillas.resumen(client, sugerida),
+        "plantilla_aplicada": resumen_aplicada,
+        "plantilla_sugerida": resumen_sugerida,
         "version_precios": version,
-        "partidas": _respuestas(client, filas),
+        "partidas": partidas,
     }
 
 
@@ -176,7 +198,7 @@ def _categoria_valida(client: Client, categoria_id: int) -> None:
 
 
 def crear(usuario_actual: UsuarioActual, proyecto_id: UUID, datos: PartidaProyectoCrear) -> dict:
-    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id)
+    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id, RolProyecto.editor)
     client = get_user_scoped_client(usuario_actual.access_token)
 
     fila = {
@@ -224,7 +246,14 @@ def crear(usuario_actual: UsuarioActual, proyecto_id: UUID, datos: PartidaProyec
     except APIError as error:
         raise _error_http(error, MENSAJES)
 
-    return _una(client, response.data[0])
+    creada = response.data[0]
+    # El historial (que no lanza) y la respuesta no dependen entre sí.
+    _, respuesta = en_paralelo(
+        lambda: servicio_historial.registrar(usuario_actual, proyecto_id, "partida_agregada", ENTIDAD, creada["id"],
+                                             valores_nuevos={k: creada.get(k) for k in CAMPOS_HISTORIAL}),
+        lambda: _una(client, creada),
+    )
+    return respuesta
 
 
 def _leer_fila(client: Client, proyecto_id, partida_proyecto_id) -> dict:
@@ -248,7 +277,7 @@ def editar(
     partida_proyecto_id: UUID,
     datos: PartidaProyectoEditar,
 ) -> dict:
-    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id)
+    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id, RolProyecto.editor)
     client = get_user_scoped_client(usuario_actual.access_token)
     actual = _leer_fila(client, proyecto_id, partida_proyecto_id)
 
@@ -281,11 +310,23 @@ def editar(
 
     if not response.data:
         raise _no_encontrada()
-    return _una(client, response.data[0])
+
+    editada = response.data[0]
+    anteriores, nuevos = servicio_historial.diferencias(actual, editada, cambios.keys())
+    if not nuevos:
+        return _una(client, editada)
+    # El historial (que no lanza) y la respuesta no dependen entre sí.
+    _, respuesta = en_paralelo(
+        # El nombre identifica la partida aunque no haya cambiado.
+        lambda: servicio_historial.registrar(usuario_actual, proyecto_id, "partida_editada", ENTIDAD,
+                                             partida_proyecto_id, anteriores, {**nuevos, "nombre": editada.get("nombre")}),
+        lambda: _una(client, editada),
+    )
+    return respuesta
 
 
 def eliminar(usuario_actual: UsuarioActual, proyecto_id: UUID, partida_proyecto_id: UUID) -> None:
-    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id)
+    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id, RolProyecto.editor)
     client = get_user_scoped_client(usuario_actual.access_token)
 
     response = (
@@ -299,9 +340,13 @@ def eliminar(usuario_actual: UsuarioActual, proyecto_id: UUID, partida_proyecto_
     if not response.data:
         raise _no_encontrada()
 
+    eliminada = response.data[0]
+    servicio_historial.registrar(usuario_actual, proyecto_id, "partida_eliminada", ENTIDAD, partida_proyecto_id,
+                                 valores_anteriores={k: eliminada.get(k) for k in CAMPOS_HISTORIAL})
+
 
 def ordenar(usuario_actual: UsuarioActual, proyecto_id: UUID, datos: PartidasOrdenar) -> List[dict]:
-    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id)
+    servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id, RolProyecto.editor)
     client = get_user_scoped_client(usuario_actual.access_token)
     try:
         response = client.rpc(
@@ -314,7 +359,7 @@ def ordenar(usuario_actual: UsuarioActual, proyecto_id: UUID, datos: PartidasOrd
 
 
 def aplicar_plantilla(usuario_actual: UsuarioActual, proyecto_id: UUID, datos: PlantillaAplicar) -> dict:
-    proyecto = servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id)
+    proyecto = servicio_proyectos.leer_proyecto(usuario_actual, proyecto_id, RolProyecto.editor)
     client = get_user_scoped_client(usuario_actual.access_token)
 
     if datos.plantilla_id is not None:
@@ -329,6 +374,15 @@ def aplicar_plantilla(usuario_actual: UsuarioActual, proyecto_id: UUID, datos: P
                 detail=f"No hay plantilla vigente para {proyecto['tipo_obra']} · {proyecto['materialidad']}.",
             )
 
-    # Con partidas existentes y sin confirmar, la RPC responde 409.
+    # Sin reemplazar, la RPC exige que no haya partidas (si hay, responde 409).
+    anteriores = len(_leer_filas(client, proyecto_id)) if datos.reemplazar else 0
+
     servicio_plantillas.aplicar_a_proyecto(client, proyecto_id, plantilla["id"], datos.reemplazar)
-    return listar(usuario_actual, proyecto_id)
+
+    resultado = listar(usuario_actual, proyecto_id)
+    servicio_historial.registrar(
+        usuario_actual, proyecto_id, "plantilla_aplicada", "plantilla", plantilla["id"],
+        valores_anteriores={"partidas": anteriores} if anteriores else None,
+        valores_nuevos={"nombre": plantilla.get("nombre"), "partidas": len(resultado["partidas"])},
+    )
+    return resultado

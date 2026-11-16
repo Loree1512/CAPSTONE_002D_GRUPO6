@@ -23,8 +23,9 @@ export const ESTANDARES: { valor: EstandarTerminaciones; etiqueta: string }[] = 
 ]
 
 export const ESTADOS: Record<EstadoProyecto, { etiqueta: string; clase: string }> = {
-  sin_estimar: { etiqueta: 'Sin estimar', clase: '' },
-  vigente:     { etiqueta: 'Vigente', clase: 'bc-estado--vigente' },
-  recalcular:  { etiqueta: 'Recalcular', clase: 'bc-estado--pendiente' },
-  ejecutada:   { etiqueta: 'Ejecutada', clase: 'bc-estado--hecho' },
+  // Naranja = pide acción; tinta = resuelto; gris = cerrado. Ver .bc-insignia en base.css.
+  sin_estimar: { etiqueta: 'Sin estimar', clase: 'bc-insignia--pendiente' },
+  vigente:     { etiqueta: 'Vigente', clase: 'bc-insignia--ok' },
+  recalcular:  { etiqueta: 'Por recalcular', clase: 'bc-insignia--atencion' },
+  ejecutada:   { etiqueta: 'Ejecutada', clase: 'bc-insignia--cerrado' },
 }

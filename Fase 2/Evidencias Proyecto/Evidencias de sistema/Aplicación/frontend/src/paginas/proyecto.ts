@@ -1,10 +1,12 @@
 import Alpine from 'alpinejs'
-import '../estilos/base.css'
 import { api, ErrorApi } from '../lib/api'
 import { marcarSimulacion } from '../lib/marcaSimulacion'
+import { prepararNavegacion } from '../lib/navegacion'
+import { iniciarBotonTema } from '../lib/tema'
 import { exigirSesion, salir } from '../lib/sesion'
 import { COMUNAS, ESTANDARES, MATERIALES, TIPOS_OBRA } from '../lib/catalogos'
-import type { EstandarTerminaciones, ProyectoNuevo } from '../tipos/api'
+import { crearEliminacion, type EliminacionProyecto } from '../lib/eliminacionProyecto'
+import type { EstandarTerminaciones, ProyectoNuevo, RolProyecto } from '../tipos/api'
 
 interface Formulario {
   id: string | null
@@ -15,10 +17,14 @@ interface Formulario {
   estandares: { valor: EstandarTerminaciones; etiqueta: string }[]
   cargando: boolean
   guardando: boolean
+  miRol: RolProyecto | null
+  nombreGuardado: string
+  eliminacion: EliminacionProyecto
   error: string
   errores: Partial<Record<keyof ProyectoNuevo, string>>
   get edicion(): boolean
   get titulo(): string
+  get puedeEliminar(): boolean
   iniciar(): Promise<void>
   guardar(): Promise<void>
   volver(): void
@@ -41,8 +47,10 @@ const VACIO: ProyectoNuevo = {
   estandar_terminaciones: 'medio',
 }
 
+const idProyecto = new URLSearchParams(window.location.search).get('id')
+
 Alpine.data('formularioProyecto', (): Formulario => ({
-  id: new URLSearchParams(window.location.search).get('id'),
+  id: idProyecto,
   datos: { ...VACIO },
   comunas: COMUNAS,
   tipos: TIPOS_OBRA,
@@ -50,6 +58,13 @@ Alpine.data('formularioProyecto', (): Formulario => ({
   estandares: ESTANDARES,
   cargando: false,
   guardando: false,
+  miRol: null,
+  nombreGuardado: '',
+  eliminacion: crearEliminacion({
+    eliminar: () => api.eliminarProyecto(idProyecto as string),
+    // El listado muestra la confirmación.
+    alExito: () => window.location.assign('/proyectos.html?eliminado=1'),
+  }),
   cierre: { fecha_inicio_real: '', fecha_termino_real: '', costo_real: null },
   guardandoCierre: false,
   cierreGuardado: false,
@@ -64,11 +79,17 @@ Alpine.data('formularioProyecto', (): Formulario => ({
     return this.edicion ? 'Editar proyecto' : 'Crear proyecto'
   },
 
+  get puedeEliminar() {
+    return this.edicion && this.miRol === 'propietario'
+  },
+
   async iniciar() {
     if (!this.edicion) return
     this.cargando = true
     try {
       const p = await api.obtenerProyecto(this.id as string)
+      this.miRol = p.mi_rol ?? null
+      this.nombreGuardado = p.nombre
       this.datos = {
         nombre: p.nombre,
         comuna: p.comuna,
@@ -156,4 +177,6 @@ if (exigirSesion()) {
   window.Alpine = Alpine
   Alpine.start()
   marcarSimulacion()
+  void prepararNavegacion()
+  iniciarBotonTema()
 }

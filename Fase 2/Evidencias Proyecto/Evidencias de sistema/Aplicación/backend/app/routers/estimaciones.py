@@ -5,11 +5,18 @@ from fastapi import APIRouter, Body, Depends, status
 
 from app.dependencies.autenticacion import obtener_usuario_actual
 from app.schemas.autenticacion import UsuarioActual
-from app.schemas.estimacion import EstimacionCrear, EstimacionRespuesta, EstimacionResumen
+from app.schemas.estimacion import (
+    CotizacionActualizar,
+    EstimacionCrear,
+    EstimacionRespuesta,
+    EstimacionResumen,
+    PlazoProfesionalDefinir,
+)
 from app.services import servicio_estimaciones
 
 router = APIRouter(prefix="/proyectos/{proyecto_id}/estimaciones", tags=["Estimaciones"])
 
+# Consultar: cualquier miembro. Generar, actualizar o definir el plazo: propietario o editor (lector: 403).
 # Un proyecto o estimación ajena responde 404.
 
 
@@ -21,6 +28,37 @@ def crear_estimacion(
     usuario_actual: UsuarioActual = Depends(obtener_usuario_actual),
 ):
     return servicio_estimaciones.crear_estimacion(usuario_actual, proyecto_id, datos)
+
+
+# Solo cambia la observación: nueva estimación con los mismos montos (no recalcula).
+@router.post(
+    "/{estimacion_id}/actualizar-cotizacion",
+    response_model=EstimacionRespuesta,
+    status_code=status.HTTP_201_CREATED,
+)
+def actualizar_cotizacion(
+    proyecto_id: UUID,
+    estimacion_id: UUID,
+    datos: CotizacionActualizar,
+    usuario_actual: UsuarioActual = Depends(obtener_usuario_actual),
+):
+    return servicio_estimaciones.actualizar_cotizacion(usuario_actual, proyecto_id, estimacion_id, datos)
+
+
+# Plazo para la cotización: lo define el profesional (valor escrito o la sugerencia del
+# modelo). Nueva estimación con los mismos montos y la misma sugerencia (no recalcula).
+@router.post(
+    "/{estimacion_id}/plazo-profesional",
+    response_model=EstimacionRespuesta,
+    status_code=status.HTTP_201_CREATED,
+)
+def definir_plazo_profesional(
+    proyecto_id: UUID,
+    estimacion_id: UUID,
+    datos: PlazoProfesionalDefinir,
+    usuario_actual: UsuarioActual = Depends(obtener_usuario_actual),
+):
+    return servicio_estimaciones.definir_plazo_profesional(usuario_actual, proyecto_id, estimacion_id, datos)
 
 
 @router.get("", response_model=List[EstimacionResumen])

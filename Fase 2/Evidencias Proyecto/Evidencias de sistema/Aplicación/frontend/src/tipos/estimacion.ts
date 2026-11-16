@@ -62,6 +62,54 @@ export interface CapituloEstimacion {
   lineas: LineaEstimacion[]
 }
 
+/** Solo dentro_dominio corresponde al rango histórico del modelo; el resto es referencial. */
+export type EstadoPlazo =
+  | 'dentro_dominio' | 'fuera_rango_costo' | 'tipo_obra_no_representado'
+  | 'costo_incompleto' | 'respaldo' | 'no_disponible'
+
+/** Plazo sugerido por el modelo, guardado con la estimación por el backend (migración 009).
+ *  Es una referencia interna para el profesional: nunca va al documento de entrega. */
+export interface PlazoEstimacion {
+  /** null si no se pudo calcular. */
+  dias: number | null
+  minDias: number | null
+  maxDias: number | null
+  metodo: string | null
+  estado: EstadoPlazo
+  fueraDominio: boolean
+  provisional: boolean | null
+  motivo: string | null
+  versionModelo: string | null
+  tipoObraModelo: string | null
+  ufValor: number | null
+  ufFecha: string | null
+  /** Error medio observado del modelo (MAE de la versión, desde versiones_modelo). No es un
+   *  intervalo de esta predicción. null si no corresponde (p. ej. valor de respaldo). */
+  errorMedioDias?: number | null
+  /** Estado de la versión del modelo: provisional, validado o retirado. */
+  estadoModelo?: string | null
+}
+
+/** sin_definir: el profesional aún no decide. definido: decidió sobre esta estimación.
+ *  por_revisar: decidió sobre una anterior y el costo se recalculó después. */
+export type EstadoPlazoProfesional = 'sin_definir' | 'definido' | 'por_revisar'
+export type OrigenPlazoProfesional = 'sugerencia' | 'manual'
+
+/** Plazo para la cotización, definido por el profesional (migración 010).
+ *  Es el que muestra el documento de entrega. */
+export interface PlazoProfesional {
+  dias: number | null
+  estado: EstadoPlazoProfesional
+  origen: OrigenPlazoProfesional | null
+  fecha: string | null
+  usuarioId: string | null
+  /** Nombre o correo de quien lo definió; null si la cuenta ya no existe. */
+  usuarioNombre: string | null
+}
+
+/** Cuerpo de POST /proyectos/{id}/estimaciones/{eid}/plazo-profesional: uno de los dos. */
+export type DefinirPlazoProfesional = { dias: number } | { usarSugerencia: true }
+
 /** Respuesta de GET /proyectos/{id}/estimaciones. */
 export interface EstimacionResumen {
   id: string
@@ -76,6 +124,10 @@ export interface EstimacionResumen {
   partidasCalculadas: number
   partidasSinPrecio: number
   partidasSinCantidad: number
+  /** Sugerencia del modelo (interna). */
+  plazo: PlazoEstimacion
+  /** Plazo para la cotización (documento de entrega). */
+  plazoProfesional: PlazoProfesional
 }
 
 /** Respuesta de POST y GET de una estimación. */
@@ -92,6 +144,8 @@ export interface Estimacion extends EstimacionResumen {
   factores: FactoresEstimacion
   sinPrecio: LineaEstimacion[]
   sinCantidad: LineaEstimacion[]
+  /** Texto plano guardado con esta estimación; nunca se interpreta como HTML. */
+  observaciones?: string | null
 }
 
 /** Cuerpo opcional de POST /proyectos/{id}/estimaciones. */
@@ -101,6 +155,8 @@ export interface OpcionesEstimacion {
   utilidad_pct?: number
   /** Factores de comuna y pisos; apagados si no se envía. */
   aplicar_factores?: boolean
+  /** Se guarda con la estimación nueva; null la deja sin observación. */
+  observaciones?: string | null
 }
 
 /** Mismos límites que FastAPI. */

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -77,3 +78,10 @@ class ConfiguracionEditar(ConfiguracionBase):
     # El frontend no los envía; si faltan, se conservan los guardados.
     capitulos_estandar: Optional[List[str]] = None
     capitulos_materialidad: Optional[List[str]] = None
+
+
+class UfVigenteRespuesta(ModeloCamel):
+    """UF del día desde valores_uf. Sin valor ni fecha si todavía no hay ninguna cargada."""
+    valor: Optional[float] = None
+    fecha: Optional[date] = None
+    fuente: str = "CMF"

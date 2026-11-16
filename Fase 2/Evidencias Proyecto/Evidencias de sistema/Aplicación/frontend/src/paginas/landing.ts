@@ -1,4 +1,12 @@
-import '../estilos/base.css'
+import { esFragmentoDeAuth } from '../lib/invitacion'
+import { destinoTecla, indiceEtapa, PERFILES, textoEtapa } from '../lib/recorrido'
+
+/* Si Supabase no acepta el redirect_to (FRONTEND_URL vacía o /acceso.html fuera de
+   Redirect URLs), el enlace de invitación vuelve a la Site URL, es decir, aquí. El
+   fragmento lleva la sesión: se pasa tal cual a acceso.html, que lo lee y lo borra. */
+if (esFragmentoDeAuth(window.location.hash)) {
+  window.location.replace('/acceso.html' + window.location.hash)
+}
 
 /* Efectos de scroll de la landing.
    Reimplementación de los que traía el prototipo (revelado, parallax del
@@ -51,6 +59,45 @@ function prepararRevelado(): void {
   })
 }
 
+/* --- Recorrido hacia el presupuesto -------------------------------------- */
+
+/** Índice de la etapa a la vista, o null fuera del recorrido. */
+function etapaVisible(alto: number): number | null {
+  const seccion = document.querySelector<HTMLElement>('[data-seq="journey"]')
+  if (!seccion) return null
+  const caja = seccion.getBoundingClientRect()
+  if (caja.top > alto * 0.5 || caja.bottom < alto * 0.5) return null
+
+  // Capas fijadas: la etapa sale del avance, igual que los tramos de pintar().
+  if (document.body.classList.contains('bc-animada')) {
+    const avance = limitar(-caja.top / ((seccion.offsetHeight - alto) || 1), 0, 1)
+    return indiceEtapa(avance)
+  }
+  // Apilado: la lámina que cruza el centro de la ventana.
+  const items = Array.from(seccion.querySelectorAll<HTMLElement>('[data-seq-item]'))
+  const i = items.findIndex((el) => {
+    const r = el.getBoundingClientRect()
+    return r.top <= alto * 0.5 && r.bottom >= alto * 0.5
+  })
+  return i === -1 ? null : i
+}
+
+/* En modo apilado (móvil o sin capas) no hay avance de scroll que gobierne las
+   láminas: cada una se dibuja una vez, al entrar en pantalla. En modo de capas
+   el observador no actúa: pintar() decide. */
+function observarLaminas(): void {
+  if (menosMovimiento || !('IntersectionObserver' in window)) return
+  const observador = new IntersectionObserver((entradas) => {
+    if (document.body.classList.contains('bc-animada')) return
+    entradas.forEach((entrada) => {
+      if (!entrada.isIntersecting) return
+      entrada.target.setAttribute('data-activo', '')
+      observador.unobserve(entrada.target)
+    })
+  }, { threshold: 0.3 })
+  document.querySelectorAll('[data-seq="journey"] [data-anima]').forEach((el) => observador.observe(el))
+}
+
 /* --- Efectos ligados a la posición del scroll ---------------------------- */
 
 function pintar(): void {
@@ -64,12 +111,17 @@ function pintar(): void {
     cabecera.style.backdropFilter = activa ? 'blur(12px)' : 'none'
   }
 
-  // Contador de capítulos
+  /* Indicador de etapa. Antes dividía la página completa en seis tramos y no
+     correspondía a nada visible; ahora muestra la etapa del recorrido que se
+     está viendo, y solo mientras el recorrido está en pantalla. */
   const capitulo = document.querySelector<HTMLElement>('[data-chapter]')
   if (capitulo) {
-    const recorrido = document.documentElement.scrollHeight - alto
-    const avance = recorrido > 0 ? window.scrollY / recorrido : 0
-    capitulo.textContent = `0${limitar(Math.ceil(avance * 6), 1, 6)} / 06`
+    const etapa = etapaVisible(alto)
+    capitulo.style.opacity = etapa === null ? '0' : '1'
+    if (etapa !== null) {
+      const texto = textoEtapa(etapa)
+      if (capitulo.textContent !== texto) capitulo.textContent = texto
+    }
   }
 
   if (menosMovimiento || esMovil()) return
@@ -134,7 +186,13 @@ function pintar(): void {
       const desfase = (1 - opacidad) * 44
       item.style.transform = `translateY(${avance < desde ? desfase : -desfase}px)`
 
-
+      /* La lámina se dibuja al quedar casi visible y se reinicia cuando sale del
+         todo: al volver a ella, el plano se traza de nuevo. */
+      if (item.hasAttribute('data-anima')) {
+        const activa = item.hasAttribute('data-activo')
+        if (opacidad > 0.5 && !activa) item.setAttribute('data-activo', '')
+        else if (opacidad === 0 && activa) item.removeAttribute('data-activo')
+      }
     })
   })
 
@@ -153,47 +211,78 @@ function pintar(): void {
 
 /* --- Interacción --------------------------------------------------------- */
 
-const PERFILES = [
-  'Menos tiempo buscando información. Más tiempo tomando decisiones.',
-  'Una nueva forma de trabajar con proyectos complejos.',
-  'Estandariza y acelera tu proceso de presupuestación a gran escala.',
-  'Obtén claridad sobre los costos desde etapas tempranas.',
-  'Convierte información dispersa en una visión clara y accionable.',
-]
-
 function conectarPerfiles(): void {
-  const filas = Array.from(document.querySelectorAll<HTMLElement>('[data-perfil]'))
-  const titulo = document.querySelector<HTMLElement>('[data-perfil-titulo]')
+  const pestanas = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-perfil]'))
+  const vistas = Array.from(document.querySelectorAll<HTMLElement>('[data-perfil-vista]'))
+  const panel = document.getElementById('perfil-panel')
+  const num = document.querySelector<HTMLElement>('[data-perfil-num]')
+  const foco = document.querySelector<HTMLElement>('[data-perfil-foco]')
   const cita = document.querySelector<HTMLElement>('[data-perfil-cita]')
+  if (!pestanas.length || !panel) return
+  let actual = 0
 
-  const elegir = (i: number) => {
-    filas.forEach((fila, j) => {
-      const activa = i === j
-      fila.style.color = activa ? '#FF5E00' : 'rgba(255,255,255,.5)'
-      const flecha = fila.querySelector<HTMLElement>('span:last-child')
-      if (flecha) flecha.style.opacity = activa ? '1' : '0'
-    })
-    const nombre = filas[i]?.querySelector('h3')?.textContent ?? ''
-    if (titulo) titulo.textContent = nombre   // oculto: el marco muestra un motivo
-    if (cita) cita.textContent = PERFILES[i] ?? ''
+  // Quitar y volver a poner data-activo reinicia el dibujo de la vista.
+  const animar = (vista: HTMLElement) => {
+    vista.removeAttribute('data-activo')
+    void vista.getBoundingClientRect()
+    vista.setAttribute('data-activo', '')
   }
 
-  filas.forEach((fila, i) => {
-    fila.addEventListener('mouseenter', () => elegir(i))
-    fila.addEventListener('click', () => elegir(i))
-  })
-}
+  const elegir = (i: number, enfocar = false) => {
+    if (enfocar) pestanas[i].focus()
+    if (i === actual) return
+    actual = i
+    pestanas.forEach((p, j) => {
+      p.setAttribute('aria-selected', String(i === j))
+      p.tabIndex = i === j ? 0 : -1
+    })
+    vistas.forEach((v, j) => {
+      if (j === i) {
+        v.setAttribute('data-actual', '')
+        v.removeAttribute('aria-hidden')
+        animar(v)
+      } else {
+        v.removeAttribute('data-actual')
+        v.removeAttribute('data-activo')
+        v.setAttribute('aria-hidden', 'true')
+      }
+    })
+    panel.setAttribute('aria-labelledby', pestanas[i].id)
+    if (num) num.textContent = `0${i + 1}`
+    if (foco) foco.textContent = PERFILES[i].foco
+    if (cita) {
+      cita.textContent = PERFILES[i].frase
+      cita.style.animation = 'none'
+      void cita.offsetWidth
+      cita.style.animation = ''
+    }
+  }
 
-/** Reproduce el style-hover del prototipo: estilos inline al pasar el mouse. */
-function conectarHover(): void {
-  document.querySelectorAll<HTMLElement>('[data-hover]').forEach((el) => {
-    const declaraciones = (el.dataset.hover ?? '').split(';').filter(Boolean)
-      .map((d) => d.split(':').map((p) => p.trim()) as [string, string])
-    const previos = declaraciones.map(([prop]) => [prop, el.style.getPropertyValue(prop)] as [string, string])
-
-    el.addEventListener('mouseenter', () => declaraciones.forEach(([p, v]) => el.style.setProperty(p, v)))
-    el.addEventListener('mouseleave', () => previos.forEach(([p, v]) => el.style.setProperty(p, v)))
+  const conHover = window.matchMedia('(hover: hover)').matches
+  pestanas.forEach((p, i) => {
+    p.addEventListener('click', () => elegir(i))
+    // El hover solo adelanta lo que hace el clic; nada depende de él.
+    if (conHover) p.addEventListener('mouseenter', () => elegir(i))
+    p.addEventListener('keydown', (ev) => {
+      const destino = destinoTecla(ev.key, i, pestanas.length)
+      if (destino === null) return
+      ev.preventDefault()
+      elegir(destino, true)
+    })
   })
+
+  // La primera vista se dibuja cuando el panel entra en pantalla.
+  if (menosMovimiento || !('IntersectionObserver' in window)) {
+    vistas[0]?.setAttribute('data-activo', '')
+    return
+  }
+  const observador = new IntersectionObserver((entradas) => {
+    if (!entradas.some((e) => e.isIntersecting)) return
+    const vista = vistas[actual]
+    if (vista && !vista.hasAttribute('data-activo')) animar(vista)
+    observador.disconnect()
+  }, { threshold: 0.35 })
+  observador.observe(panel)
 }
 
 /** Menú desplegable bajo 1024px: la barra no da para cinco elementos. */
@@ -250,6 +339,8 @@ function alDesplazar(): void {
    normal, de modo que una falla nunca deja secciones en blanco. */
 function arrancar(): void {
   document.body.classList.add('bc-js')
+  // Sin esta clase los dibujos se muestran completos y quietos.
+  if (!menosMovimiento) document.body.classList.add('bc-movimiento')
 
   const conCapas = !esMovil() && !menosMovimiento
   if (conCapas) document.body.classList.add('bc-animada')
@@ -260,8 +351,8 @@ function arrancar(): void {
   )
 
   prepararRevelado()
+  observarLaminas()
   conectarPerfiles()
-  conectarHover()
   conectarMenu()
   conectarNavegacion()
   pintar()
@@ -277,6 +368,6 @@ try {
   arrancar()
 } catch (error) {
   // Sin animaciones, pero con todo el contenido visible.
-  document.body.classList.remove('bc-animada')
+  document.body.classList.remove('bc-animada', 'bc-movimiento')
   console.error('No se pudieron iniciar los efectos de la landing:', error)
 }

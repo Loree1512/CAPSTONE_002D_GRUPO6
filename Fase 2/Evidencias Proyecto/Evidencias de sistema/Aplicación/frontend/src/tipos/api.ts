@@ -4,13 +4,16 @@
 export type EstandarTerminaciones = 'economico' | 'medio' | 'alto'
 export type EstadoProyecto = 'sin_estimar' | 'vigente' | 'recalcular' | 'ejecutada'
 
-/** id + correo vienen de auth.users (GET /autenticacion/yo).
- *  nombre/rol quedan undefined hasta que exista la tabla perfiles. */
+/** GET /autenticacion/yo. `rol` es el rol global (administrador o profesional). */
 export interface Usuario {
   id: string
   correo: string
   nombre?: string
   rol?: string
+  /** Integra el grupo que aprueba promociones a administrador. */
+  esAdministradorPrincipal?: boolean
+  /** false: entró con un enlace de invitación y todavía no crea su contraseña. */
+  accesoConfigurado?: boolean
 }
 
 /** Respuesta real de POST /autenticacion/iniciar-sesion (RespuestaToken). */
@@ -28,6 +31,9 @@ export interface RespuestaRegistro {
   sesion_creada: boolean
 }
 
+/** Permiso del usuario en el proyecto. */
+export type RolProyecto = 'propietario' | 'editor' | 'lector'
+
 export interface Proyecto {
   id: string
   nombre: string
@@ -43,16 +49,25 @@ export interface Proyecto {
   costo_total?: number | null
   costo_m2?: number | null
   fecha_estimacion?: string | null
-  /** null mientras el plazo no esté integrado en el backend. */
+  /** Sugerencia del modelo en la última estimación; el listado no la muestra. */
   plazo_dias?: number | null
+  plazo_estado?: string | null
+  plazo_motivo?: string | null
+  /** Plazo para la cotización de la última estimación (lo define el profesional). */
+  plazo_profesional_dias?: number | null
+  /** sin_definir, definido o por_revisar; null sin estimación. */
+  plazo_profesional_estado?: string | null
   creado_en?: string | null
   actualizado_en?: string | null
+  /** Solo el propietario puede eliminar el proyecto. */
+  mi_rol?: RolProyecto | null
 }
 
 export type ProyectoNuevo = Omit<
   Proyecto,
   | 'id' | 'estado' | 'ultima_estimacion_id' | 'costo_total' | 'costo_m2' | 'fecha_estimacion'
-  | 'plazo_dias' | 'creado_en' | 'actualizado_en'
+  | 'plazo_dias' | 'plazo_estado' | 'plazo_motivo' | 'plazo_profesional_dias' | 'plazo_profesional_estado'
+  | 'creado_en' | 'actualizado_en'
 >
 
 /* --- Banco de precios ---------------------------------------------------- */
@@ -210,4 +225,40 @@ export interface CierreObra {
   fecha_termino_real: string
   costo_real?: number | null
   plazo_real_dias?: number | null
+}
+
+/* --- Colaboración ---------------------------------------------------------- */
+
+/** El propietario es quien creó el proyecto: no se asigna. */
+export type RolAsignable = Exclude<RolProyecto, 'propietario'>
+
+/** GET /proyectos/{id}/miembros. */
+export interface MiembroProyecto {
+  usuario_id: string
+  email: string | null
+  nombre: string | null
+  rol: RolProyecto
+  fecha_creacion: string | null
+}
+
+/** GET /proyectos/{id}/miembros/candidatos: usuarios que aún no están en el proyecto. */
+export interface CandidatoMiembro {
+  usuario_id: string
+  nombre: string | null
+  email: string
+}
+
+/** GET /proyectos/{id}/historial, el más reciente primero. */
+export interface EventoHistorial {
+  id: string
+  accion: string
+  entidad: string
+  entidad_id: string | null
+  usuario_id: string | null
+  usuario_email: string | null
+  usuario_nombre: string | null
+  valores_anteriores: Record<string, unknown> | null
+  valores_nuevos: Record<string, unknown> | null
+  origen: string
+  fecha: string
 }

@@ -1,13 +1,13 @@
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import HTTPException, status
 from supabase import Client
 
 from app.database.supabase import get_user_scoped_client
+from app.dependencies import permisos_proyecto
 from app.schemas.autenticacion import UsuarioActual
-from app.schemas.proyecto import ProyectoActualizar, ProyectoCrear
-from app.services import servicio_plantillas
+from app.schemas.proyecto import ProyectoActualizar, ProyectoCrear, RolProyecto
+from app.services import servicio_historial, servicio_plantillas
 from app.services.resumen_proyecto import COLUMNAS_FIRMA, COLUMNAS_ULTIMA_ESTIMACION, con_resumen
 
 NOMBRE_TABLA = "proyectos"
@@ -17,13 +17,6 @@ NOMBRE_TABLA = "proyectos"
 SELECT_CON_RESUMEN = (
     f"*, estimaciones({COLUMNAS_ULTIMA_ESTIMACION}), proyecto_partidas({COLUMNAS_FIRMA})"
 )
-
-
-def _no_encontrado() -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Proyecto no encontrado"
-    )
 
 
 def _con_ultima_estimacion(consulta):
@@ -65,14 +58,14 @@ def crear_proyecto(usuario_actual: UsuarioActual, proyecto: ProyectoCrear) -> di
         # Proyecto y partidas en una transacción: si falla la copia, no queda nada a medias.
         creado = servicio_plantillas.crear_proyecto_con_plantilla(client, payload, plantilla["id"])
 
-    # Recién creado: todavía no tiene estimaciones.
-    return con_resumen(creado, None)
+    # Recién creado: todavía no tiene estimaciones. Quien lo crea es su propietario.
+    return {**con_resumen(creado, None), "mi_rol": RolProyecto.propietario}
 
 
 def obtener_proyectos(usuario_actual: UsuarioActual) -> List[dict]:
     client = get_user_scoped_client(usuario_actual.access_token)
 
-    # RLS filtra proyectos y estimaciones por dueño: no hace falta filtrar a mano.
+    # RLS deja ver solo los proyectos del usuario: no hace falta filtrar a mano.
     response = _con_ultima_estimacion(
         client
         .table(NOMBRE_TABLA)
@@ -80,28 +73,26 @@ def obtener_proyectos(usuario_actual: UsuarioActual) -> List[dict]:
         .order("fecha_creacion", desc=True)
     ).execute()
 
+    roles = permisos_proyecto.roles_en_proyectos(client, usuario_actual, response.data)
     vigente = _version_vigente_id(client)
-    return [con_resumen(fila, vigente) for fila in response.data]
+    return [
+        {**con_resumen(fila, vigente), "mi_rol": roles[str(fila["id"])]}
+        for fila in response.data
+        if roles[str(fila["id"])] is not None
+    ]
 
 
-def leer_proyecto(usuario_actual: UsuarioActual, proyecto_id: UUID) -> dict:
-    """Fila de proyectos sin resumen, para validar dueño y leer sus datos."""
+def leer_proyecto(
+    usuario_actual: UsuarioActual,
+    proyecto_id: UUID,
+    minimo: RolProyecto = RolProyecto.lector,
+) -> dict:
+    """Fila de proyectos sin resumen, con `mi_rol`. Valida el permiso mínimo pedido.
+
+    Quien no pertenece al proyecto recibe 404; con un rol menor al pedido, 403.
+    """
     client = get_user_scoped_client(usuario_actual.access_token)
-
-    response = (
-        client
-        .table(NOMBRE_TABLA)
-        .select("*")
-        .eq("id", str(proyecto_id))
-        .maybe_single()
-        .execute()
-    )
-
-    # RLS oculta proyectos ajenos: responden 404, no 403.
-    if response is None or not response.data:
-        raise _no_encontrado()
-
-    return response.data
+    return permisos_proyecto.exigir_acceso(client, usuario_actual, proyecto_id, minimo)
 
 
 def obtener_proyecto_por_id(usuario_actual: UsuarioActual, proyecto_id: UUID) -> dict:
@@ -114,18 +105,22 @@ def obtener_proyecto_por_id(usuario_actual: UsuarioActual, proyecto_id: UUID) ->
         .eq("id", str(proyecto_id))
     ).maybe_single().execute()
 
-    # RLS oculta proyectos ajenos: responden 404, no 403.
+    # Inexistente u oculto por RLS: 404.
     if response is None or not response.data:
-        raise _no_encontrado()
+        raise permisos_proyecto.proyecto_no_encontrado()
 
-    return con_resumen(response.data, _version_vigente_id(client))
+    rol = permisos_proyecto.rol_en_proyecto(client, usuario_actual, response.data)
+    if rol is None:
+        raise permisos_proyecto.proyecto_no_encontrado()
+
+    return {**con_resumen(response.data, _version_vigente_id(client)), "mi_rol": rol}
 
 
 def actualizar_proyecto(usuario_actual: UsuarioActual, proyecto_id: UUID, proyecto: ProyectoActualizar) -> dict:
     client = get_user_scoped_client(usuario_actual.access_token)
 
-    # Valida existencia y dueño vía RLS antes de actualizar.
-    leer_proyecto(usuario_actual, proyecto_id)
+    # Editar los datos del proyecto exige ser propietario o editor.
+    actual = leer_proyecto(usuario_actual, proyecto_id, RolProyecto.editor)
 
     payload = proyecto.model_dump(mode="json", exclude_unset=True)
 
@@ -139,7 +134,29 @@ def actualizar_proyecto(usuario_actual: UsuarioActual, proyecto_id: UUID, proyec
         )
 
         if not response.data:
-            raise _no_encontrado()
+            raise permisos_proyecto.proyecto_no_encontrado()
+
+        anteriores, nuevos = servicio_historial.diferencias(actual, payload, payload.keys())
+        if nuevos:
+            servicio_historial.registrar(usuario_actual, proyecto_id, "proyecto_editado", "proyecto",
+                                         proyecto_id, anteriores, nuevos)
 
     # Se relee con el resumen: editar puede dejar la estimación por recalcular.
     return obtener_proyecto_por_id(usuario_actual, proyecto_id)
+
+
+def eliminar_proyecto(usuario_actual: UsuarioActual, proyecto: dict) -> None:
+    """Elimina el proyecto; las relaciones dependientes se borran en cascada."""
+    client = get_user_scoped_client(usuario_actual.access_token)
+
+    response = (
+        client
+        .table(NOMBRE_TABLA)
+        .delete()
+        .eq("id", str(proyecto["id"]))
+        .execute()
+    )
+
+    # Cero filas: ya no existe o RLS lo rechazó.
+    if not response.data:
+        raise permisos_proyecto.proyecto_no_encontrado()

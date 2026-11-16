@@ -27,7 +27,10 @@ COLUMNAS_FIRMA = ", ".join(CAMPOS_FIRMA)
 
 # Columnas de la última estimación que se embeben en cada proyecto.
 COLUMNAS_ULTIMA_ESTIMACION = ", ".join(
-    ("id", "fecha_creacion", "version_precio_id", "costo_total", "costo_m2", "firma_partidas", *CAMPOS_SNAPSHOT)
+    ("id", "fecha_creacion", "version_precio_id", "costo_total", "costo_m2",
+     "plazo_dias", "plazo_estado", "plazo_motivo",
+     "plazo_profesional_dias", "plazo_profesional_estado", "firma_partidas",
+     *CAMPOS_SNAPSHOT)
 )
 
 
@@ -109,7 +112,14 @@ def con_resumen(proyecto: dict, version_vigente_id: Optional[str]) -> dict:
         costo_m2=ultima["costo_m2"] if ultima else None,
         fecha_estimacion=ultima["fecha_creacion"] if ultima else None,
         estado_estimacion=estado_estimacion(fila, ultima, version_vigente_id, partidas),
-        # El plazo todavía no está integrado.
-        plazo_dias=None,
+        # Sugerencia del modelo guardada con la última estimación (null si no se pudo calcular).
+        plazo_dias=ultima.get("plazo_dias") if ultima else None,
+        # Para marcar en el listado un valor referencial (fuera del rango histórico).
+        plazo_estado=ultima.get("plazo_estado") if ultima else None,
+        plazo_motivo=ultima.get("plazo_motivo") if ultima else None,
+        # Plazo para la cotización (lo que el listado muestra); nunca el del modelo.
+        # Una estimación anterior a la 010 queda sin definir.
+        plazo_profesional_dias=ultima.get("plazo_profesional_dias") if ultima else None,
+        plazo_profesional_estado=(ultima.get("plazo_profesional_estado") or "sin_definir") if ultima else None,
     )
     return fila

@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from supabase import Client, create_client
+from supabase import Client, ClientOptions, create_client
 
 
 # Ruta explícita: evita depender del directorio desde el que se lance uvicorn.
@@ -36,8 +36,13 @@ supabase_admin: Client = create_client(
 
 def get_anon_client() -> Client:
     # Cliente nuevo por request: reutilizar uno global mezclaría sesiones
-    # entre usuarios concurrentes.
-    return create_client(supabase_url, supabase_publishable_key)
+    # entre usuarios concurrentes. Sin auto-refresco: si el servidor renovara la
+    # sesión por su cuenta, gastaría el refresh token que guarda el navegador.
+    return create_client(
+        supabase_url,
+        supabase_publishable_key,
+        options=ClientOptions(auto_refresh_token=False, persist_session=False),
+    )
 
 
 def get_user_scoped_client(access_token: str) -> Client:

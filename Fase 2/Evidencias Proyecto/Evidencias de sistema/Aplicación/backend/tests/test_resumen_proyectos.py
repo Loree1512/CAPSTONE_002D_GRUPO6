@@ -19,7 +19,7 @@ from supabase import create_client  # noqa: E402
 
 from app.schemas.autenticacion import UsuarioActual  # noqa: E402
 from app.schemas.proyecto import ProyectoActualizar, ProyectoRespuesta  # noqa: E402
-from app.services import servicio_proyectos  # noqa: E402
+from app.services import servicio_historial, servicio_proyectos  # noqa: E402
 from app.services.resumen_proyecto import (  # noqa: E402
     CAMPOS_SNAPSHOT,
     RECALCULAR,
@@ -78,8 +78,30 @@ class EstadoEstimacion(unittest.TestCase):
     def test_sin_estimaciones(self):
         r = con_resumen(proyecto(estimaciones=[]), V1)
         self.assertEqual(r["estado_estimacion"], SIN_ESTIMAR)
-        for campo in ("ultima_estimacion_id", "costo_total", "costo_m2", "fecha_estimacion", "plazo_dias"):
+        for campo in ("ultima_estimacion_id", "costo_total", "costo_m2", "fecha_estimacion", "plazo_dias",
+                      "plazo_profesional_dias", "plazo_profesional_estado"):
             self.assertIsNone(r[campo], campo)
+
+    def test_plazo_profesional_aparte_de_la_sugerencia(self):
+        # 010: el listado muestra el plazo para la cotización; la sugerencia del modelo va aparte.
+        e = {**estimacion(), "plazo_dias": 120, "plazo_estado": "dentro_dominio",
+             "plazo_profesional_dias": 135, "plazo_profesional_estado": "por_revisar"}
+        r = con_resumen(proyecto(estimaciones=[e]), V1)
+        self.assertEqual((r["plazo_profesional_dias"], r["plazo_profesional_estado"]), (135, "por_revisar"))
+        self.assertEqual(r["plazo_dias"], 120)
+        # Sin decisión del profesional no se toma el número del modelo.
+        e = {**estimacion(), "plazo_dias": 120, "plazo_profesional_dias": None, "plazo_profesional_estado": "sin_definir"}
+        r = con_resumen(proyecto(estimaciones=[e]), V1)
+        self.assertEqual((r["plazo_profesional_dias"], r["plazo_profesional_estado"]), (None, "sin_definir"))
+        # Fila sin las columnas de la 010: sin definir.
+        r = con_resumen(proyecto(estimaciones=[estimacion()]), V1)
+        self.assertEqual((r["plazo_profesional_dias"], r["plazo_profesional_estado"]), (None, "sin_definir"))
+        ProyectoRespuesta.model_validate(r)
+
+    def test_la_consulta_embebe_el_plazo_profesional(self):
+        from app.services.resumen_proyecto import COLUMNAS_ULTIMA_ESTIMACION
+        for columna in ("plazo_profesional_dias", "plazo_profesional_estado"):
+            self.assertIn(columna, COLUMNAS_ULTIMA_ESTIMACION)
 
     def test_1_proyecto_sin_modificar_es_vigente(self):
         e = estimacion()
@@ -263,6 +285,11 @@ class SeguridadYConsultas(unittest.TestCase):
             return cliente
 
         parche = patch.object(servicio_proyectos, "get_user_scoped_client", side_effect=cliente_de)
+        parche.start()
+        self.addCleanup(parche.stop)
+
+        # El historial se prueba aparte: aquí no debe salir a la red.
+        parche = patch.object(servicio_historial, "registrar")
         parche.start()
         self.addCleanup(parche.stop)
 

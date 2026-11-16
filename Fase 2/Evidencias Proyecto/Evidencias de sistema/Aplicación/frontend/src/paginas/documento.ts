@@ -1,17 +1,17 @@
 import Alpine from 'alpinejs'
-import '../estilos/base.css'
 import { api, ErrorApi } from '../lib/api'
 import { exigirSesion } from '../lib/sesion'
 import { pesos, numero, factor } from '../lib/formato'
 import { ESTANDARES } from '../lib/catalogos'
 import { conPlazo, ultimaEstimacion } from '../lib/estimaciones'
-import type { EstimacionConPlazo } from '../lib/estimaciones'
+import { plazoDocumento } from '../lib/plazo'
 import type { Proyecto } from '../tipos/api'
+import type { Estimacion } from '../tipos/estimacion'
 
 interface Documento {
   proyectoId: string | null
   proyecto: Proyecto | null
-  presupuesto: EstimacionConPlazo | null
+  presupuesto: Estimacion | null
   folio: string
   fecha: string
   versionBanco: string
@@ -22,7 +22,11 @@ interface Documento {
   factor: typeof factor
 
   get etiquetaEstandar(): string
+  /** Solo el plazo definido por el profesional; nada del modelo de plazo. */
+  get plazoCliente(): { pendiente: boolean; texto: string }
   iniciar(): Promise<void>
+  /** Abre el diálogo del navegador. El PDF se obtiene eligiendo «Guardar como PDF» en el destino;
+   *  el título temporal es el nombre que el navegador propone para el archivo. */
   imprimir(): void
 }
 
@@ -45,6 +49,12 @@ Alpine.data('documento', (): Documento => ({
   pesos,
   numero,
   factor,
+
+  // El documento es para el cliente: muestra el plazo para la cotización y nunca la
+  // sugerencia del modelo, su rango, su versión ni sus métricas.
+  get plazoCliente() {
+    return plazoDocumento(this.presupuesto?.plazoProfesional)
+  },
 
   get etiquetaEstandar() {
     return ESTANDARES.find((e) => e.valor === this.proyecto?.estandar_terminaciones)?.etiqueta ?? '—'
@@ -93,6 +103,9 @@ Alpine.data('documento', (): Documento => ({
   },
 
   imprimir() {
+    const titulo = document.title
+    if (this.folio) document.title = `Estimación ${this.folio}${this.proyecto ? ' · ' + this.proyecto.nombre : ''}`
+    window.addEventListener('afterprint', () => { document.title = titulo }, { once: true })
     window.print()
   },
 }))

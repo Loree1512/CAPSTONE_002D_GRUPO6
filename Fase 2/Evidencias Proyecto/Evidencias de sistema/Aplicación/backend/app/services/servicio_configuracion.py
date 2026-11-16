@@ -1,3 +1,6 @@
+from datetime import date
+from typing import Optional
+
 from fastapi import HTTPException, status
 from postgrest.exceptions import APIError
 from supabase import Client
@@ -5,6 +8,7 @@ from supabase import Client
 from app.database.supabase import get_user_scoped_client, supabase_admin
 from app.schemas.autenticacion import UsuarioActual
 from app.schemas.configuracion import ConfiguracionEditar
+from app.services.estimador_plazo import fecha_chile
 from app.services.servicio_banco import _error_http
 
 TABLA_PARAMETROS = "parametros_calculo"
@@ -75,3 +79,25 @@ def guardar_configuracion(editor: UsuarioActual, datos: ConfiguracionEditar) -> 
         raise _error_http(error)
 
     return _configuracion(leer_parametros(supabase_admin))
+
+
+def buscar_uf_vigente(client: Client, hoy: date) -> dict:
+    """Última UF cuya fecha ya llegó. La CMF publica días por adelantado: una fila
+    futura ya cargada no es la UF de hoy. Solo lee valores_uf; no consulta la CMF."""
+    filas = (
+        client.table("valores_uf")
+        .select("fecha, valor")
+        .lte("fecha", hoy.isoformat())
+        .order("fecha", desc=True)
+        .limit(1)
+        .execute()
+        .data
+    )
+    if not filas or filas[0].get("valor") is None:
+        return {"valor": None, "fecha": None}
+    return {"valor": float(filas[0]["valor"]), "fecha": filas[0]["fecha"]}
+
+
+def obtener_uf_vigente(usuario_actual: UsuarioActual, hoy: Optional[date] = None) -> dict:
+    client = get_user_scoped_client(usuario_actual.access_token)
+    return buscar_uf_vigente(client, hoy or fecha_chile())

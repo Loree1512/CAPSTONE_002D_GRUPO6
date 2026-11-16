@@ -13,6 +13,13 @@ class EstandarTerminaciones(str, Enum):
     alto = "alto"
 
 
+class RolProyecto(str, Enum):
+    # Debe coincidir con el CHECK de proyecto_miembros.rol.
+    propietario = "propietario"
+    editor = "editor"
+    lector = "lector"
+
+
 class ProyectoBase(BaseModel):
     nombre: str = Field(..., min_length=1)
     comuna: str = Field(..., min_length=1)
@@ -56,6 +63,8 @@ class ProyectoRespuesta(ProyectoBase):
     fecha_actualizacion: datetime
     # Última plantilla aplicada; null si nunca se aplicó una.
     plantilla_id: Optional[UUID] = None
+    # Permiso de quien consulta en este proyecto.
+    mi_rol: Optional[RolProyecto] = None
 
     # Resumen de la última estimación; no se guarda en proyectos.
     ultima_estimacion_id: Optional[UUID] = None
@@ -63,4 +72,11 @@ class ProyectoRespuesta(ProyectoBase):
     costo_m2: Optional[float] = None
     fecha_estimacion: Optional[datetime] = None
     estado_estimacion: EstadoEstimacion = EstadoEstimacion.sin_estimar
+    # Sugerencia del modelo en la última estimación (migración 009); null si no hay.
     plazo_dias: Optional[int] = None
+    plazo_estado: Optional[str] = None
+    plazo_motivo: Optional[str] = None
+    # Plazo para la cotización, definido por el profesional (migración 010). Es el que
+    # muestra el listado. Estado null: sin estimación.
+    plazo_profesional_dias: Optional[int] = None
+    plazo_profesional_estado: Optional[str] = None

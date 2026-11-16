@@ -33,6 +33,8 @@ def a_filas(
     version: Mapping[str, object],
     parametros: Mapping[str, object],
     firma_partidas: str,
+    observaciones: Optional[str] = None,
+    plazo: Optional[Mapping[str, object]] = None,
 ) -> Tuple[dict, List[dict]]:
     estimacion = {
         "proyecto_id": str(proyecto_id),
@@ -64,6 +66,9 @@ def a_filas(
         "partidas_sin_cantidad": resultado.partidas_sin_cantidad,
         "firma_partidas": firma_partidas,
         "completa": resultado.completa,
+        "observaciones": observaciones,
+        # Columnas del plazo (estimador_plazo.ResultadoPlazo.a_columnas).
+        **(plazo or {}),
     }
 
     lineas = [
@@ -122,7 +127,73 @@ def _linea(fila: Mapping[str, object]) -> dict:
     }
 
 
-def armar_resumen(estimacion: Mapping[str, object]) -> dict:
+def _metricas_version(estimacion: Mapping[str, object]) -> Tuple[Optional[float], Optional[str]]:
+    """(error medio, estado) de la versión del modelo, embebida por la FK version_modelo.
+
+    El error medio (MAE de la validación) describe al método de la versión (P2): con la
+    mediana de respaldo no corresponde y queda en null. Nunca se escribe a mano.
+    """
+    version = estimacion.get("versiones_modelo")
+    if not isinstance(version, Mapping):
+        return None, None
+    estado = version.get("estado")
+    metricas = version.get("metricas")
+    mae = metricas.get("mae") if isinstance(metricas, Mapping) else None
+    mismo_metodo = (
+        estimacion.get("plazo_dias") is not None
+        and estimacion.get("plazo_metodo") is not None
+        and estimacion.get("plazo_metodo") == version.get("metodo")
+    )
+    if not mismo_metodo or mae is None:
+        return None, estado
+    try:
+        return float(mae), estado
+    except (TypeError, ValueError):
+        return None, estado
+
+
+def armar_plazo(estimacion: Mapping[str, object]) -> dict:
+    """Plazo sugerido por el modelo. Una fila anterior a la migración 009 no lo tiene."""
+    if "plazo_estado" not in estimacion:
+        return {"estado": "no_disponible", "fuera_dominio": True, "motivo": "anterior_al_modelo"}
+    estado = estimacion["plazo_estado"]
+    uf = estimacion.get("uf_valor")
+    error_medio, estado_modelo = _metricas_version(estimacion)
+    return {
+        "dias": estimacion.get("plazo_dias"),
+        "min_dias": estimacion.get("plazo_min_dias"),
+        "max_dias": estimacion.get("plazo_max_dias"),
+        "metodo": estimacion.get("plazo_metodo"),
+        "estado": estado,
+        "fuera_dominio": estimacion.get("plazo_fuera_dominio", estado != "dentro_dominio"),
+        "provisional": estimacion.get("plazo_provisional"),
+        "motivo": estimacion.get("plazo_motivo"),
+        "version_modelo": estimacion.get("version_modelo"),
+        "tipo_obra_modelo": estimacion.get("tipo_obra_modelo"),
+        "uf_valor": None if uf is None else a_decimal(uf),
+        "uf_fecha": estimacion.get("uf_fecha"),
+        "error_medio_dias": error_medio,
+        "estado_modelo": estado_modelo,
+    }
+
+
+def armar_profesional(estimacion: Mapping[str, object], usuario_nombre: Optional[str] = None) -> dict:
+    """Plazo para la cotización. Una fila anterior a la migración 010 queda sin definir:
+    nunca se toma el plazo del modelo como decisión del profesional."""
+    if "plazo_profesional_estado" not in estimacion:
+        return {"estado": "sin_definir"}
+    usuario_id = estimacion.get("plazo_profesional_usuario_id")
+    return {
+        "dias": estimacion.get("plazo_profesional_dias"),
+        "estado": estimacion.get("plazo_profesional_estado") or "sin_definir",
+        "origen": estimacion.get("plazo_profesional_origen"),
+        "fecha": estimacion.get("plazo_profesional_fecha"),
+        "usuario_id": usuario_id,
+        "usuario_nombre": usuario_nombre if usuario_id else None,
+    }
+
+
+def armar_resumen(estimacion: Mapping[str, object], usuario_nombre: Optional[str] = None) -> dict:
     return {
         "id": estimacion["id"],
         "proyecto_id": estimacion["proyecto_id"],
@@ -140,10 +211,17 @@ def armar_resumen(estimacion: Mapping[str, object]) -> dict:
         "partidas_calculadas": estimacion["partidas_calculadas"],
         "partidas_sin_precio": estimacion["partidas_sin_precio"],
         "partidas_sin_cantidad": estimacion["partidas_sin_cantidad"],
+        "plazo": armar_plazo(estimacion),
+        "plazo_profesional": armar_profesional(estimacion, usuario_nombre),
     }
 
 
-def armar_respuesta(estimacion: Mapping[str, object], filas: Iterable[Mapping[str, object]]) -> dict:
+def armar_respuesta(
+    estimacion: Mapping[str, object],
+    filas: Iterable[Mapping[str, object]],
+    usuario_nombre: Optional[str] = None,
+) -> dict:
+    """`usuario_nombre`: quién definió el plazo para la cotización (nombre o correo)."""
     filas = sorted(filas, key=lambda f: f["orden"])
     costo_directo = a_decimal(estimacion["costo_directo"])
 
@@ -172,7 +250,7 @@ def armar_respuesta(estimacion: Mapping[str, object], filas: Iterable[Mapping[st
         c["incidencia"] = (c["subtotal"] / costo_directo) * CIEN if costo_directo else CERO
 
     return {
-        **armar_resumen(estimacion),
+        **armar_resumen(estimacion, usuario_nombre),
         "proyecto": {
             "comuna": estimacion["comuna"],
             "tipo_obra": estimacion["tipo_obra"],
@@ -195,4 +273,5 @@ def armar_respuesta(estimacion: Mapping[str, object], filas: Iterable[Mapping[st
         },
         "sin_precio": [_linea(f) for f in filas if f["estado"] == SIN_PRECIO],
         "sin_cantidad": [_linea(f) for f in filas if f["estado"] == SIN_CANTIDAD],
+        "observaciones": estimacion.get("observaciones"),
     }

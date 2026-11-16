@@ -16,7 +16,7 @@ from app.services import servicio_plantillas
 
 router = APIRouter(prefix="/plantillas", tags=["Plantillas de presupuesto"])
 
-# Lecturas: cualquier usuario autenticado. Escrituras: mismos editores que el banco.
+# Lecturas: cualquier usuario autenticado. Escrituras: solo administradores.
 
 
 @router.get("", response_model=List[PlantillaResumen])

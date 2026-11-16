@@ -1,8 +1,10 @@
 import Alpine from 'alpinejs'
-import '../estilos/base.css'
 import { api, ErrorApi } from '../lib/api'
 import { marcarSimulacion } from '../lib/marcaSimulacion'
+import { prepararNavegacion } from '../lib/navegacion'
+import { iniciarBotonTema } from '../lib/tema'
 import { exigirSesion, salir } from '../lib/sesion'
+import { confirmar } from '../lib/confirmar'
 import { pesos } from '../lib/formato'
 import { CONFIGURACION_BASE } from '../lib/configuracion'
 import type { Configuracion } from '../lib/configuracion'
@@ -103,7 +105,11 @@ Alpine.data('configuracion', (): PantallaConfig => ({
 
   async restaurar() {
     if (this.guardando) return
-    if (!window.confirm('Se vuelve a los valores de fábrica. ¿Continuar?')) return
+    const ok = await confirmar({
+      rotulo: 'Configuración', titulo: 'Restaurar valores de fábrica',
+      mensaje: 'Se vuelve a los valores de fábrica. ¿Continuar?', confirmar: 'Restaurar',
+    })
+    if (!ok) return
 
     this.guardando = true
     this.error = ''
@@ -123,4 +129,6 @@ if (exigirSesion()) {
   window.Alpine = Alpine
   Alpine.start()
   marcarSimulacion()
+  void prepararNavegacion()
+  iniciarBotonTema()
 }

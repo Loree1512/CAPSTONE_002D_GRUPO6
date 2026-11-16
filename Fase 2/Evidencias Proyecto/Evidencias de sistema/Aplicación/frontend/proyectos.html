@@ -10,63 +10,31 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <style>
-    /* Estilo crítico: se aplica en el primer pintado, antes de que llegue la
-       hoja completa. Evita ver la estructura sin estilos al navegar entre
-       páginas. Incluye el esqueleto de carga para no depender de base.css. */
-    :root { color-scheme: light; }
-    html { background: #F9F9F7; }
-    body {
-      margin: 0;
-      background: #F9F9F7;
-      color: #1A1A1A;
-      font-family: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
-      font-size: 15px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
-    }
-    h1, h2, h3, h4 { font-family: 'Space Grotesk', 'Helvetica Neue', sans-serif; margin: 0; }
-    img { display: block; max-width: 100%; }
-    [x-cloak] { display: none !important; }
-    .bc-barra { background: #fff; border-bottom: 1px solid #E5E5E5; min-height: 66px; }
-
-    .bc-esqueleto {
-      max-width: 1600px; margin: 0 auto;
-      padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 40px);
-      display: flex; flex-direction: column; gap: 20px;
-    }
-    .bc-esqueleto span {
-      display: block;
-      background: linear-gradient(90deg, #E5E5E5 0%, #EFF0ED 50%, #E5E5E5 100%);
-      background-size: 200% 100%;
-      animation: bc-latido 1.4s ease-in-out infinite;
-    }
-    .bc-esqueleto span:nth-child(1) { height: 42px; width: min(320px, 70%); }
-    .bc-esqueleto span:nth-child(2) { height: 120px; }
-    .bc-esqueleto span:nth-child(3) { height: 280px; }
-    @keyframes bc-latido { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
-    main:not([x-cloak]) ~ .bc-esqueleto,
-    .bc-cinta:not([x-cloak]) ~ .bc-esqueleto { display: none; }
-
-    body > * { animation: bc-entrar .22s ease-out both; }
-    @keyframes bc-entrar { from { opacity: 0 } to { opacity: 1 } }
-    @media (prefers-reduced-motion: reduce) {
-      body > * { animation: none; }
-      .bc-esqueleto span { animation: none; }
-    }
-  </style>
+  <link rel="stylesheet" href="/src/estilos/base.css">
+  <script>try{var t=localStorage.getItem('buildcast.tema');if(t!=='claro'&&(t==='oscuro'||matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.dataset.tema='oscuro'}catch(e){}</script>
 </head>
 <body x-data="listado" x-init="cargar()">
+  <div class="bc-progreso" x-show="cargando" x-cloak aria-hidden="true"></div>
 
   <header class="bc-barra">
     <div>
-      <a href="/panel.html" class="bc-marca"><img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo"></a>
+      <div class="bc-marca-grupo">
+        <a href="/panel.html" class="bc-marca">
+          <img src="/buildcast-logo.svg" alt="BuildCast" class="bc-logo bc-logo--claro">
+          <img src="/buildcast-logo-dark.svg" alt="BuildCast" class="bc-logo bc-logo--oscuro">
+        </a>
+        <button type="button" class="bc-tema" data-tema-boton aria-label="Cambiar a modo oscuro" aria-pressed="false" title="Modo oscuro">
+          <svg class="bc-tema__luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="bc-tema__sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+      </div>
       <nav class="bc-nav">
         <a href="/panel.html">Panel</a>
         <a href="/proyectos.html" aria-current="page">Proyectos</a>
         <a href="/precios.html">Banco de precios</a>
         <a href="/plantillas.html">Plantillas</a>
         <a href="/configuracion.html">Configuración</a>
+        <a href="/administracion.html" data-solo-admin hidden>Administración</a>
       </nav>
       <span class="bc-cuenta">
         <span class="bc-placa"><img src="/ram-logo.png" alt=""></span>
@@ -78,71 +46,139 @@
 
   <main class="bc-pagina" x-cloak>
 
-    <div class="bc-encabezado">
+    <div class="bc-cabecera-tablero">
       <div>
-        <span class="bc-rotulo">Panel · estimaciones</span>
+        <span class="bc-rotulo">Gestión de cartera</span>
         <h1 class="bc-h1">Proyectos</h1>
+        <p class="bc-cabecera-tablero__resumen" x-show="!cargando && proyectos.length > 0">
+          <span class="bc-dato"><strong x-text="proyectos.length"></strong> proyectos</span>
+          <span class="bc-dato"><strong x-text="montoTotal"></strong> en estimaciones vigentes</span>
+          <span class="bc-dato" :class="enAtencion > 0 && 'bc-dato--atencion'"><strong x-text="enAtencion"></strong> requieren atención</span>
+        </p>
       </div>
-      <a href="/proyecto.html" class="bc-boton" x-show="proyectos.length > 0">+ Nuevo proyecto</a>
+      <div class="bc-acciones">
+        <span class="bc-chip" x-show="!cargando">Precios vigentes <strong x-text="versionBanco"></strong></span>
+        <a href="/proyecto.html" class="bc-boton" x-show="proyectos.length > 0">+ Nuevo proyecto</a>
+      </div>
     </div>
 
-    <p class="bc-apoyo" x-show="cargando">Cargando proyectos…</p>
-    <p class="bc-aviso bc-aviso--error" x-show="error" x-text="error"></p>
-
-    <div class="bc-kpis" x-show="!cargando && proyectos.length > 0">
-      <div class="bc-kpi">
-        <span class="bc-rotulo">Proyectos registrados</span>
-        <span class="bc-cifra" x-text="proyectos.length"></span>
-        <span class="bc-nota" x-text="conEstimacion + ' con estimación vigente'"></span>
+    <div class="bc-cargando" x-show="cargando" role="status" aria-live="polite">
+      <p class="bc-cargando__aviso"><span class="bc-cargando__obra" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Cargando proyectos…</p>
+      <div class="bc-carga-kpis" aria-hidden="true"><span class="bc-carga-kpi"></span><span class="bc-carga-kpi"></span><span class="bc-carga-kpi"></span></div>
+      <div class="bc-carga-filas" aria-hidden="true">
+        <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+        <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+        <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+        <div class="bc-carga-fila"><span></span><span></span><span></span></div>
+        <div class="bc-carga-fila"><span></span><span></span><span></span></div>
       </div>
-      <div class="bc-kpi">
+    </div>
+    <p class="bc-aviso bc-aviso--error" role="alert" x-show="error" x-text="error"></p>
+    <p class="bc-aviso" role="status" x-show="mensaje" x-text="mensaje"></p>
+
+    <div class="bc-kpis bc-kpis--tablero bc-kpis--cuatro bc-aparece" x-show="!cargando && proyectos.length > 0">
+      <div class="bc-kpi bc-kpi--destacado">
         <span class="bc-rotulo">Monto total estimado</span>
         <span class="bc-cifra" x-text="montoTotal"></span>
-        <span class="bc-nota">CLP · suma de estimaciones vigentes</span>
+        <span class="bc-nota">CLP neto · suma de estimaciones vigentes</span>
+      </div>
+      <div class="bc-kpi" :class="enAtencion > 0 && 'bc-kpi--alerta'">
+        <span class="bc-rotulo">Requieren atención</span>
+        <span class="bc-cifra" x-text="enAtencion"></span>
+        <span class="bc-nota" x-text="cuenta('recalcular') + ' por recalcular · ' + cuenta('sin_estimar') + ' sin estimar'"></span>
+      </div>
+      <div class="bc-kpi">
+        <span class="bc-rotulo">Con estimación vigente</span>
+        <span class="bc-cifra" x-text="conEstimacion + ' / ' + proyectos.length"></span>
+        <div class="bc-kpi__pie">
+          <div class="bc-medidor" role="img" :aria-label="conEstimacion + ' de ' + proyectos.length + ' con estimación vigente'">
+            <span :style="'width:' + (proyectos.length ? conEstimacion / proyectos.length * 100 : 0) + '%'"></span>
+          </div>
+        </div>
       </div>
       <div class="bc-kpi">
         <span class="bc-rotulo">Superficie acumulada</span>
         <span class="bc-cifra" x-text="superficieTotal"></span>
-        <span class="bc-nota">Metros cuadrados edificados de la cartera</span>
+        <span class="bc-nota">Edificada, toda la cartera</span>
       </div>
     </div>
 
-    <div x-show="!cargando && proyectos.length > 0" style="display:flex;flex-direction:column;gap:16px">
-      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
-        <h2 class="bc-h2">Cartera de proyectos</h2>
-        <span class="bc-nota" x-text="'Precios vigentes ' + versionBanco"></span>
+    <!-- Filtros: búsqueda, estado y orden en una sola barra -->
+    <div class="bc-herramientas bc-aparece" x-show="!cargando && proyectos.length > 0" role="search">
+      <div class="bc-campo" style="flex:1 1 260px">
+        <label for="buscar-proyecto">Buscar</label>
+        <input class="bc-entrada" id="buscar-proyecto" type="search" placeholder="Nombre, comuna o tipo de obra" x-model="busqueda">
       </div>
-      <div class="bc-tarjeta bc-desplaza">
-        <table class="bc-tabla">
+      <div class="bc-campo" style="flex:0 1 220px">
+        <label for="orden-proyectos">Ordenar por</label>
+        <select class="bc-entrada" id="orden-proyectos" x-model="orden">
+          <option value="prioridad">Prioridad</option>
+          <option value="recientes">Más recientes</option>
+          <option value="monto">Mayor monto</option>
+          <option value="nombre">Nombre</option>
+        </select>
+      </div>
+      <div class="bc-segmentos" role="group" aria-label="Filtrar por estado" style="flex:1 1 100%">
+        <template x-for="f in filtros" :key="f.valor">
+          <button type="button" class="bc-segmento" :class="f.valor === 'atencion' && 'bc-segmento--atencion'"
+                  :aria-pressed="filtro === f.valor" @click="filtro = f.valor">
+            <span x-text="f.etiqueta"></span><span class="bc-segmento__cuenta" x-text="cuenta(f.valor)"></span>
+          </button>
+        </template>
+      </div>
+    </div>
+
+    <div class="bc-aparece bc-pila" x-show="!cargando && proyectos.length > 0" style="--bc-pila-gap:12px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <p class="bc-nota" role="status" x-text="'Mostrando ' + visibles.length + ' de ' + proyectos.length + ' proyectos'"></p>
+        <button type="button" class="bc-enlace" x-show="busqueda || filtro !== 'todos'" @click="limpiar()">Quitar filtros</button>
+      </div>
+      <div class="bc-tarjeta bc-desplaza" x-show="visibles.length > 0">
+        <table class="bc-tabla bc-tabla--tablero bc-tabla--navegable">
           <thead>
             <tr>
               <th>Proyecto</th>
-              <th>Comuna</th>
-              <th>Tipo de obra</th>
-              <th class="bc-num">Superficie</th>
-              <th class="bc-num">Costo estimado</th>
-              <th class="bc-num">Plazo</th>
               <th>Estado</th>
+              <th>Siguiente paso</th>
+              <th class="bc-num">Superficie</th>
+              <th class="bc-num">Plazo</th>
+              <th class="bc-num">Costo estimado</th>
             </tr>
           </thead>
           <tbody>
-            <template x-for="p in proyectos" :key="p.id">
-              <tr @click="abrir(p)">
-                <td class="bc-tabla__nombre" x-text="p.nombre"></td>
-                <td class="bc-tabla__suave" x-text="p.comuna"></td>
-                <td class="bc-tabla__suave" x-text="p.tipo_obra"></td>
-                <td class="bc-num" x-text="superficie(p.superficie_m2)"></td>
-                <td class="bc-tabla__monto" x-text="pesos(p.costo_total)"></td>
-                <td class="bc-num" x-text="dias(p.plazo_dias)"></td>
-                <td><span class="bc-estado" :class="claseEstado(p)" x-text="etiquetaEstado(p)"></span></td>
+            <template x-for="p in visibles" :key="p.id">
+              <tr @click="abrir(p)" @keydown.enter="abrir(p)" tabindex="0"
+                  :class="claseEstado(p) === 'bc-insignia--atencion' ? 'bc-fila--atencion' : claseEstado(p) === 'bc-insignia--pendiente' ? 'bc-fila--pendiente' : ''">
+                <td><span class="bc-tabla__nombre" x-text="p.nombre"></span><span class="bc-tabla__sub" x-text="p.tipo_obra + ' · ' + p.comuna"></span></td>
+                <td><span class="bc-insignia" :class="claseEstado(p)" x-text="etiquetaEstado(p)"></span></td>
+                <td class="bc-tabla__accion" :class="!requiereAtencion(p) && 'bc-tabla__accion--resuelta'" x-text="accionSugerida(p)"></td>
+                <td class="bc-num" data-etiqueta="Superficie" x-text="superficie(p.superficie_m2)"></td>
+                <!-- Plazo para la cotización (nunca el del modelo). Por revisar: asterisco y texto accesible, no solo color. -->
+                <td class="bc-num" data-etiqueta="Plazo">
+                  <span x-text="plazoDelProyecto(p).texto" :title="plazoDelProyecto(p).nota || null"></span>
+                  <span class="bc-oculto" x-show="plazoDelProyecto(p).nota" x-text="plazoDelProyecto(p).nota"></span>
+                </td>
+                <td class="bc-tabla__monto" data-etiqueta="Costo estimado">
+                  <span x-text="pesos(p.costo_total)"></span>
+                  <span class="bc-tabla__sub" x-show="p.costo_m2" x-text="pesos(p.costo_m2) + ' / m²'"></span>
+                </td>
               </tr>
             </template>
           </tbody>
         </table>
       </div>
+      <p class="bc-nota" x-show="hayReferenciales" style="margin-top:8px">
+        * Por revisar tras recalcular: el presupuesto cambió después de definir el plazo para la cotización.
+      </p>
+      <div class="bc-vacio" x-show="visibles.length === 0">
+        <span class="bc-rotulo">Sin resultados</span>
+        <h2 class="bc-h2">Ningún proyecto coincide</h2>
+        <p class="bc-apoyo">Prueba otra búsqueda o quita el filtro de estado.</p>
+        <button type="button" class="bc-boton bc-boton--linea" @click="limpiar()">Quitar filtros</button>
+      </div>
     </div>
 
-    <div class="bc-vacio" x-show="!cargando && !error && proyectos.length === 0">
+    <div class="bc-vacio bc-aparece" x-show="!cargando && !error && proyectos.length === 0">
       <span class="bc-rotulo">Cartera vacía</span>
       <h2 class="bc-h2">Todavía no hay proyectos</h2>
       <p class="bc-apoyo">Un proyecto necesita seis datos: nombre, comuna, tipo de obra, materialidad, superficie y número de pisos. Con eso BuildCast calcula el costo y el plazo.</p>

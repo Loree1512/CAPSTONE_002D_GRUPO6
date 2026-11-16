@@ -1,0 +1,100 @@
+{
+  "formato": 1,
+  "objetivo": "plazo",
+  "version": "v1.0-2026-11-01",
+  "metodo": "P2",
+  "algoritmo": "parametrica",
+  "entrenado_en": "2026-11-01",
+  "estado": "provisional",
+  "validado": true,
+  "provisional": true,
+  "parametros": {
+    "alpha": -1.6149928711098143,
+    "beta": 0.8901844312875308,
+    "gamma": 0.2685900893730273
+  },
+  "tipo_a_clase": {
+    "ampliacion": "edificacion",
+    "habilitacion_comercial": "edificacion",
+    "obra_nueva": "edificacion",
+    "alteracion_interior": "edificacion",
+    "terminaciones": "puntual",
+    "remodelacion_bano_cocina": "puntual",
+    "radier": "puntual",
+    "muro_cierre": "puntual",
+    "obra_menor_varia": "puntual",
+    "reparacion_mantencion": "puntual"
+  },
+  "traduccion_tipo_obra": {
+    "Ampliación": "ampliacion",
+    "Vivienda unifamiliar": "obra_nueva",
+    "Edificación habitacional": "obra_nueva"
+  },
+  "intervalo": {
+    "q_inf_log": -0.7412831495147608,
+    "q_sup_log": 1.6385059990348552,
+    "percentiles": [
+      10,
+      90
+    ],
+    "metodo_percentil": "weibull"
+  },
+  "mediana_respaldo": {
+    "plazo_dias": 14.0,
+    "q_inf_log": -1.6710229294930663,
+    "q_sup_log": 0.8906681345001272,
+    "percentiles": [
+      10,
+      90
+    ],
+    "metodo_percentil": "weibull"
+  },
+  "dominio": {
+    "costo_uf_min": 14.56,
+    "costo_uf_max": 438.95,
+    "plazo_dias_min": 2,
+    "plazo_dias_max": 42,
+    "tipos_obra_representados": [
+      "alteracion_interior",
+      "ampliacion",
+      "habilitacion_comercial",
+      "muro_cierre",
+      "obra_menor_varia",
+      "radier",
+      "remodelacion_bano_cocina",
+      "reparacion_mantencion",
+      "terminaciones"
+    ],
+    "filas_entrenamiento": 13,
+    "ids_entrenamiento": [
+      "R02",
+      "R03",
+      "R04",
+      "R05",
+      "R06",
+      "R08",
+      "R09",
+      "R10",
+      "R11",
+      "R13",
+      "R14",
+      "R16",
+      "R17"
+    ],
+    "tipo_plazo": "ofertado"
+  },
+  "metricas_loo": {
+    "mae": 5.597655503039676,
+    "rmse": 7.697974088577048,
+    "sd_ae": 5.519393043477937,
+    "ae_min": 0.28949678106509946,
+    "ae_max": 19.75626517699255,
+    "r2": 0.44743457036520606
+  },
+  "fuente_uf": "https://api.cmfchile.cl/api-sbifv3/recursos_api/uf/posteriores/2025/01",
+  "origen": {
+    "artefacto": "ml/models/plazo_v1.0-2026-11-01.joblib",
+    "sha256": "b2e17823b6fd48816d70a3a29f73e70b94dad1894015a576e5370a5c61d4b2c8"
+  },
+  "observaciones": "Versión provisional. Regla paramétrica P2 calibrada con la totalidad del dataset histórico disponible (13 presupuestos reales de RAM, plazos ofertados). Fuera del rango de costo o de los tipos de obra representados, el resultado es una extrapolación. No se usaron datos sintéticos."
+}

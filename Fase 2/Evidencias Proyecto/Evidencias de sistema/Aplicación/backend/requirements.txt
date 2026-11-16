@@ -36,6 +36,8 @@ supabase-auth==2.31.0
 supabase-functions==2.31.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
+# Zona horaria de Chile para el día de la UF (sin base de zonas en Windows ni garantizada en el servidor).
+tzdata==2026.6
 uvicorn==0.52.4
 watchfiles==1.2.0
 websockets==15.0.1

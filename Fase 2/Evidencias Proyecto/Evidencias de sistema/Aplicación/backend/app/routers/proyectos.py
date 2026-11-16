@@ -1,9 +1,10 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Response, status
 
 from app.dependencies.autenticacion import obtener_usuario_actual
+from app.dependencies.permisos_proyecto import exigir_propietario_proyecto
 from app.schemas.autenticacion import UsuarioActual
 from app.schemas.proyecto import ProyectoActualizar, ProyectoCrear, ProyectoRespuesta
 from app.services import servicio_proyectos
@@ -39,3 +40,13 @@ def actualizar_proyecto(
     usuario_actual: UsuarioActual = Depends(obtener_usuario_actual),
 ):
     return servicio_proyectos.actualizar_proyecto(usuario_actual, proyecto_id, proyecto)
+
+
+# Solo el propietario elimina (editor o lector: 403).
+@router.delete("/{proyecto_id}", status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_proyecto(
+    proyecto: dict = Depends(exigir_propietario_proyecto),
+    usuario_actual: UsuarioActual = Depends(obtener_usuario_actual),
+):
+    servicio_proyectos.eliminar_proyecto(usuario_actual, proyecto)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

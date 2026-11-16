@@ -1,12 +1,16 @@
 import type {
-  CierreObra, CategoriaPartida, FilaBanco, Partida, PartidaEditada, PartidaNueva, PartidaProyecto,
-  PartidaProyectoEditada, PartidaProyectoNueva, PartidasProyecto, PlantillaDetalle, PlantillaNueva,
-  PlantillaResumen, PrecioEditado, Proyecto, ProyectoNuevo, RespuestaSesion, Unidad, Usuario, VersionPrecios,
+  CandidatoMiembro, CierreObra, CategoriaPartida, EventoHistorial, FilaBanco, MiembroProyecto, Partida, PartidaEditada,
+  PartidaNueva, PartidaProyecto, PartidaProyectoEditada, PartidaProyectoNueva, PartidasProyecto, PlantillaDetalle,
+  PlantillaNueva, PlantillaResumen, PrecioEditado, Proyecto, ProyectoNuevo, RespuestaSesion, RolAsignable, Unidad,
+  Usuario, VersionPrecios,
 } from '../tipos/api'
 import { estadoVersion } from '../tipos/api'
 import type {
-  Estimacion, EstimacionResumen, LineaEstimacion, OpcionesEstimacion,
+  DefinirPlazoProfesional, Estimacion, EstimacionResumen, LineaEstimacion, OpcionesEstimacion, PlazoProfesional,
 } from '../tipos/estimacion'
+import type {
+  ConfiguracionAdministracion, SolicitudAdministrador, UsuarioAdministrado, UsuarioCreado, UsuarioNuevo,
+} from '../tipos/administracion'
 import { LIMITE_GASTOS_GENERALES, LIMITE_UTILIDAD } from '../tipos/estimacion'
 import { CATEGORIAS_BASE, PARTIDAS_BASE } from './catalogoBase'
 import { PRECIOS_REFERENCIALES } from './preciosReferenciales'
@@ -14,9 +18,12 @@ import { calcularPresupuesto, estadoPartida, precioResuelto, subtotalPartida } f
 import type { LineaEntrada, LineaPresupuesto } from './motorCosto'
 import { guardarConfig, leerConfig } from './configuracion'
 import type { Configuracion } from './configuracion'
+import type { UfVigente } from './uf'
 import { MATERIALES, TIPOS_OBRA } from './catalogos'
 import { proyectoCambio } from './estimaciones'
 import { ErrorApi } from './errores'
+import { normalizarObservaciones, OBSERVACIONES_MAX } from './observaciones'
+import { leerPlazoEscrito, ERROR_PLAZO_ESCRITO, plazoNoDisponible, profesionalSinDefinir } from './plazo'
 
 /* Datos en memoria para recorrer la plataforma sin API ni usuario real.
    Se activa con VITE_SIMULACION=true. Los cambios persisten en
@@ -28,6 +35,8 @@ const CLAVE_BANCO = 'buildcast.simulacion.banco'
 const CLAVE_PLANTILLAS = 'buildcast.simulacion.plantillas'
 const CLAVE_PARTIDAS = 'buildcast.simulacion.partidas'
 const CLAVE_ESTIMACIONES = 'buildcast.simulacion.estimaciones'
+const CLAVE_COLABORACION = 'buildcast.simulacion.colaboracion'
+const CLAVE_ADMINISTRACION = 'buildcast.simulacion.administracion'
 const DEMORA = 280 // ms, para que se vean los estados de carga
 
 // Proyectos de ejemplo sin partidas: se arman desde la pantalla de estimación.
@@ -40,13 +49,16 @@ const SEMILLA: Proyecto[] = [
     material: 'Hormigón armado', superficie_m2: 196, pisos: 2, estandar_terminaciones: 'alto' },
   { id: 'p-4', nombre: 'Dúplex Los Almendros', comuna: 'Viña del Mar', tipo_obra: 'Edificación habitacional',
     material: 'Albañilería confinada', superficie_m2: 168, pisos: 2, estandar_terminaciones: 'medio',
-    estado: 'ejecutada', costo_total: 189100000, plazo_dias: 204 },
+    estado: 'ejecutada', costo_total: 189100000,
+    // Plazo para la cotización de la obra ya ejecutada (en la demostración no hay modelo).
+    plazo_profesional_dias: 204, plazo_profesional_estado: 'definido' },
   { id: 'p-5', nombre: 'Casa Ibarra', comuna: 'Limache', tipo_obra: 'Vivienda unifamiliar',
     material: 'Estructura metálica', superficie_m2: 110, pisos: 1, estandar_terminaciones: 'medio' },
 ]
 
 const USUARIO: Usuario = {
-  id: 'u-demo', correo: 'demo@ramarquitectura.cl', nombre: 'Usuaria de demostración', rol: 'estimador',
+  id: 'u-demo', correo: 'demo@ramarquitectura.cl', nombre: 'Usuaria de demostración', rol: 'administrador',
+  esAdministradorPrincipal: true, accesoConfigurado: true,
 }
 
 function leerJson<T>(clave: string, semilla: () => T): T {
@@ -328,6 +340,7 @@ function estimacionSimulada(proyecto: Proyecto, opciones: OpcionesEstimacion = {
   if (ut != null && (ut < 0 || ut > LIMITE_UTILIDAD)) {
     throw new ErrorApi(422, `La utilidad debe estar entre 0 y ${LIMITE_UTILIDAD} %.`)
   }
+  validarObservaciones(opciones.observaciones)
 
   const { filas } = partidasDe(proyecto.id)
   if (filas.length === 0) {
@@ -375,8 +388,23 @@ function estimacionSimulada(proyecto: Proyecto, opciones: OpcionesEstimacion = {
     partidasSinCantidad: p.partidasSinCantidad,
     sinPrecio: lineas.filter((l) => l.estado === 'sin_precio'),
     sinCantidad: lineas.filter((l) => l.estado === 'sin_cantidad'),
+    observaciones: normalizarObservaciones(opciones.observaciones),
+    // El plazo lo calcula el backend con el modelo; la demostración no lo imita: no hay
+    // sugerencia, solo el plazo que escriba el profesional.
+    plazo: plazoNoDisponible('simulacion'),
+    plazoProfesional: profesionalSinDefinir(),
   }
   return { estimacion, firma: firmaPartidas(filas) }
+}
+
+/** Como crear_estimacion (010): un plazo definido o por revisar pasa a «por revisar» al
+ *  recalcular, con el mismo valor; si no, queda sin definir. */
+function profesionalTrasRecalcular(anterior: Estimacion | undefined): PlazoProfesional {
+  const pp = anterior?.plazoProfesional
+  if (pp && pp.dias !== null && (pp.estado === 'definido' || pp.estado === 'por_revisar')) {
+    return { ...pp, estado: 'por_revisar' }
+  }
+  return profesionalSinDefinir()
 }
 
 function aResumen(e: Estimacion): EstimacionResumen {
@@ -386,15 +414,20 @@ function aResumen(e: Estimacion): EstimacionResumen {
   } = e
   return {
     id, proyectoId, fechaCreacion, versionMotor, versionPrecios, costoDirecto, total, costoM2, completa,
-    partidasCalculadas, partidasSinPrecio, partidasSinCantidad,
+    partidasCalculadas, partidasSinPrecio, partidasSinCantidad, plazo: e.plazo ?? plazoNoDisponible('simulacion'),
+    plazoProfesional: e.plazoProfesional ?? profesionalSinDefinir(),
   }
 }
 
 /** Estado y costo de la última estimación, con las mismas reglas del backend. */
 function conResumen(proyecto: Proyecto): Proyecto {
-  if (proyecto.estado === 'ejecutada') return proyecto
+  if (proyecto.estado === 'ejecutada') return { ...proyecto, mi_rol: 'propietario' }
   const [ultima] = leerEstimaciones()[proyecto.id] ?? []
-  if (!ultima) return { ...proyecto, estado: 'sin_estimar', costo_total: null, costo_m2: null, ultima_estimacion_id: null }
+  if (!ultima) {
+    return { ...proyecto, mi_rol: 'propietario', estado: 'sin_estimar', costo_total: null, costo_m2: null,
+      ultima_estimacion_id: null, plazo_profesional_dias: null, plazo_profesional_estado: null }
+  }
+  const profesional = ultima.estimacion.plazoProfesional ?? profesionalSinDefinir()
 
   const vigente = versionVigente(leerBanco())
   const recalcular = proyectoCambio(ultima.estimacion, proyecto)
@@ -403,11 +436,14 @@ function conResumen(proyecto: Proyecto): Proyecto {
 
   return {
     ...proyecto,
+    mi_rol: 'propietario',
     estado: recalcular ? 'recalcular' : 'vigente',
     costo_total: ultima.estimacion.total,
     costo_m2: ultima.estimacion.costoM2,
     ultima_estimacion_id: ultima.estimacion.id,
     fecha_estimacion: ultima.estimacion.fechaCreacion,
+    plazo_profesional_dias: profesional.dias,
+    plazo_profesional_estado: profesional.estado,
   }
 }
 
@@ -424,9 +460,110 @@ function filaDe(proyectoId: string, id: string): { datos: PartidasSimuladas; fil
   return { datos, fila }
 }
 
+/* --- Miembros e historial ----------------------------------------------- */
+
+// Solo se registran los cambios de miembros; la usuaria de demostración es la propietaria.
+interface Colaboracion {
+  miembros: MiembroProyecto[]
+  historial: EventoHistorial[]
+}
+
+// Cuentas ficticias que se pueden sumar a un proyecto en la demostración.
+const USUARIOS_DEMO: CandidatoMiembro[] = [
+  { usuario_id: 'u-camila', nombre: 'Camila Rojas', email: 'camila@ramarquitectura.cl' },
+  { usuario_id: 'u-diego', nombre: 'Diego Salinas', email: 'diego@ramarquitectura.cl' },
+  { usuario_id: 'u-obra', nombre: null, email: 'obra@ramarquitectura.cl' },
+]
+
+const leerColaboracion = () => leerJson<Record<string, Colaboracion>>(CLAVE_COLABORACION, () => ({}))
+
+function colaboracionDe(proyectoId: string): Colaboracion {
+  proyectoSimulado(proyectoId)
+  return leerColaboracion()[proyectoId] ?? {
+    miembros: [{ usuario_id: USUARIO.id, email: USUARIO.correo, nombre: USUARIO.nombre ?? null,
+                 rol: 'propietario', fecha_creacion: null }],
+    historial: [],
+  }
+}
+
+function guardarColaboracion(
+  proyectoId: string, datos: Colaboracion, accion: string, usuarioId: string,
+  anteriores: Record<string, unknown> | null, nuevos: Record<string, unknown> | null,
+): void {
+  datos.historial.unshift({
+    id: nuevoId('h'), accion, entidad: 'miembro', entidad_id: usuarioId,
+    usuario_id: USUARIO.id, usuario_email: USUARIO.correo, usuario_nombre: USUARIO.nombre ?? null,
+    valores_anteriores: anteriores, valores_nuevos: nuevos, origen: 'rpc', fecha: new Date().toISOString(),
+  })
+  const todas = leerColaboracion()
+  todas[proyectoId] = datos
+  escribirJson(CLAVE_COLABORACION, todas)
+}
+
+function miembroDe(datos: Colaboracion, usuarioId: string): MiembroProyecto {
+  const miembro = datos.miembros.find((m) => m.usuario_id === usuarioId)
+  if (!miembro) throw new ErrorApi(404, 'El usuario no es miembro del proyecto.')
+  if (miembro.rol === 'propietario') throw new ErrorApi(409, 'El propietario del proyecto no puede cambiar de permiso.')
+  return miembro
+}
+
+function validarObservaciones(texto: string | null | undefined): void {
+  const limpio = normalizarObservaciones(texto)
+  if (limpio && limpio.length > OBSERVACIONES_MAX) {
+    throw new ErrorApi(422, `Las observaciones admiten hasta ${OBSERVACIONES_MAX} caracteres.`)
+  }
+}
+
+/* --- Administración ------------------------------------------------------
+   Tres principales de ejemplo (la usuaria de demostración es uno) y una
+   solicitud en 2 de 3 para probar la aprobación final. */
+
+interface Administracion { usuarios: UsuarioAdministrado[]; solicitudes: SolicitudAdministrador[] }
+
+const PRINCIPALES_DEMO = [
+  { id: USUARIO.id, nombre: USUARIO.nombre ?? null, email: USUARIO.correo },
+  { id: 'u-adm-b', nombre: 'Administradora B', email: 'admin.b@ramarquitectura.cl' },
+  { id: 'u-adm-c', nombre: 'Administrador C', email: 'admin.c@ramarquitectura.cl' },
+]
+
+function semillaAdministracion(): Administracion {
+  const ahora = new Date().toISOString()
+  const usuario = (id: string, nombre: string | null, email: string, rol: 'administrador' | 'profesional',
+    principal = false): UsuarioAdministrado => ({
+    id, nombre, email, rol_global: rol, es_administrador_principal: principal, fecha_creacion: ahora,
+    estado: 'activo', solicitud_pendiente: null, puede_solicitar_administrador: rol === 'profesional',
+  })
+  const usuarios = [
+    ...PRINCIPALES_DEMO.map((p) => usuario(p.id, p.nombre, p.email, 'administrador', true)),
+    ...USUARIOS_DEMO.map((u) => usuario(u.usuario_id, u.nombre, u.email, 'profesional')),
+  ]
+  const objetivo = usuarios[usuarios.length - 1]
+  const solicitudes: SolicitudAdministrador[] = [{
+    id: 's-demo', usuario_id: objetivo.id, usuario_nombre: objetivo.nombre, usuario_email: objetivo.email,
+    solicitado_por: 'u-adm-b', estado: 'pendiente', fecha_creacion: ahora, fecha_resolucion: null,
+    aprobaciones_recibidas: 2, aprobaciones_requeridas: 3, puedo_aprobar: true,
+    aprobaciones: PRINCIPALES_DEMO.map((p) => ({
+      administrador_id: p.id, nombre: p.nombre, email: p.email, aprobada: p.id !== USUARIO.id,
+      fecha: p.id !== USUARIO.id ? ahora : null,
+    })),
+  }]
+  return { usuarios, solicitudes }
+}
+
+const leerAdministracion = () => leerJson<Administracion>(CLAVE_ADMINISTRACION, semillaAdministracion)
+
+/** Embebe la solicitud pendiente en cada usuario, como el listado del backend. */
+function usuariosConSolicitud(datos: Administracion): UsuarioAdministrado[] {
+  return datos.usuarios.map((u) => {
+    const pendiente = datos.solicitudes.find((s) => s.usuario_id === u.id && s.estado === 'pendiente') ?? null
+    return { ...u, solicitud_pendiente: pendiente, puede_solicitar_administrador: u.rol_global === 'profesional' && !pendiente }
+  })
+}
+
 /** Borra los datos de demostración y vuelve a la semilla. */
 export function reiniciarSimulacion(): void {
-  [CLAVE, CLAVE_BANCO, CLAVE_PLANTILLAS, CLAVE_PARTIDAS, CLAVE_ESTIMACIONES].forEach((c) => localStorage.removeItem(c))
+  [CLAVE, CLAVE_BANCO, CLAVE_PLANTILLAS, CLAVE_PARTIDAS, CLAVE_ESTIMACIONES, CLAVE_COLABORACION, CLAVE_ADMINISTRACION]
+    .forEach((c) => localStorage.removeItem(c))
 }
 
 export const apiSimulada = {
@@ -444,6 +581,8 @@ export const apiSimulada = {
     esperar({ mensaje: 'En modo demostración no se envían correos.' }),
 
   yo: (): Promise<Usuario> => esperar(USUARIO),
+
+  establecerContrasena: (): Promise<{ mensaje: string }> => esperar({ mensaje: 'Contraseña guardada.' }),
 
   listarProyectos: (): Promise<Proyecto[]> => esperar(leer().map(conResumen)),
 
@@ -472,6 +611,20 @@ export const apiSimulada = {
     proyectos[i] = { ...proyectos[i], ...datos, actualizado_en: new Date().toISOString() }
     escribir(proyectos)
     return esperar(conResumen(proyectos[i]))
+  },
+
+  eliminarProyecto: async (id: string): Promise<void> => {
+    const proyectos = leer()
+    if (!proyectos.some((p) => p.id === id)) throw new ErrorApi(404, 'Proyecto no encontrado')
+    escribir(proyectos.filter((p) => p.id !== id))
+    // Imita la cascada de la base.
+    for (const clave of [CLAVE_PARTIDAS, CLAVE_ESTIMACIONES, CLAVE_COLABORACION]) {
+      const todas = leerJson<Record<string, unknown>>(clave, () => ({}))
+      delete todas[id]
+      escribirJson(clave, todas)
+    }
+    localStorage.removeItem(`buildcast.simulacion.cierre.${id}`)
+    return esperar(undefined)
   },
 
   registrarCierreObra: async (proyectoId: string, datos: CierreObra): Promise<CierreObra> => {
@@ -722,6 +875,7 @@ export const apiSimulada = {
   crearEstimacion: async (proyectoId: string, opciones: OpcionesEstimacion = {}): Promise<Estimacion> => {
     const guardada = estimacionSimulada(proyectoSimulado(proyectoId), opciones)
     const todas = leerEstimaciones()
+    guardada.estimacion.plazoProfesional = profesionalTrasRecalcular((todas[proyectoId] ?? [])[0]?.estimacion)
     todas[proyectoId] = [guardada, ...(todas[proyectoId] ?? [])]
     escribirJson(CLAVE_ESTIMACIONES, todas)
     return esperar(guardada.estimacion)
@@ -736,10 +890,199 @@ export const apiSimulada = {
     return esperar(guardada.estimacion)
   },
 
+  /** Copia la última con otra observación; la anterior no cambia. */
+  actualizarCotizacion: async (proyectoId: string, estimacionId: string, observaciones: string | null): Promise<Estimacion> => {
+    validarObservaciones(observaciones)
+    const todas = leerEstimaciones()
+    const [ultima] = todas[proyectoId] ?? []
+    if (!ultima || ultima.estimacion.id !== estimacionId) {
+      throw new ErrorApi(409, 'Solo se puede actualizar la cotización de la estimación más reciente.')
+    }
+    const nueva = normalizarObservaciones(observaciones)
+    if (nueva === (ultima.estimacion.observaciones ?? null)) throw new ErrorApi(409, 'La observación no cambió.')
+    const copia: EstimacionGuardada = {
+      firma: ultima.firma,
+      estimacion: { ...structuredClone(ultima.estimacion), id: nuevoId('e'), fechaCreacion: new Date().toISOString(), observaciones: nueva },
+    }
+    todas[proyectoId] = [copia, ...(todas[proyectoId] ?? [])]
+    escribirJson(CLAVE_ESTIMACIONES, todas)
+    return esperar(copia.estimacion)
+  },
+
+  /** Copia la última con el plazo para la cotización definido. Sin modelo en la
+   *  demostración: solo se puede escribir el plazo, no usar una sugerencia. */
+  definirPlazoProfesional: async (
+    proyectoId: string, estimacionId: string, cuerpo: DefinirPlazoProfesional,
+  ): Promise<Estimacion> => {
+    const todas = leerEstimaciones()
+    const [ultima] = todas[proyectoId] ?? []
+    if (!ultima || ultima.estimacion.id !== estimacionId) {
+      throw new ErrorApi(409, 'Solo se puede definir el plazo de la estimación más reciente.')
+    }
+    const anterior = ultima.estimacion.plazoProfesional ?? profesionalSinDefinir()
+    let dias: number
+    let origen: PlazoProfesional['origen']
+    if ('usarSugerencia' in cuerpo) {
+      if (ultima.estimacion.plazo?.dias == null) {
+        throw new ErrorApi(409, 'Esta estimación no tiene un plazo sugerido por el modelo.')
+      }
+      dias = ultima.estimacion.plazo.dias
+      origen = 'sugerencia'
+    } else {
+      const leido = leerPlazoEscrito(cuerpo.dias)
+      if (typeof leido !== 'number') throw new ErrorApi(422, ERROR_PLAZO_ESCRITO)
+      dias = leido
+      origen = 'manual'
+    }
+    if (anterior.estado === 'definido' && anterior.dias === dias) {
+      throw new ErrorApi(409, 'El plazo para la cotización no cambió.')
+    }
+    const copia: EstimacionGuardada = {
+      firma: ultima.firma,
+      estimacion: {
+        ...structuredClone(ultima.estimacion), id: nuevoId('e'), fechaCreacion: new Date().toISOString(),
+        plazoProfesional: {
+          dias, estado: 'definido', origen, fecha: new Date().toISOString(),
+          usuarioId: USUARIO.id, usuarioNombre: USUARIO.nombre ?? USUARIO.correo,
+        },
+      },
+    }
+    todas[proyectoId] = [copia, ...(todas[proyectoId] ?? [])]
+    escribirJson(CLAVE_ESTIMACIONES, todas)
+    return esperar(copia.estimacion)
+  },
+
+  // --- Miembros e historial --------------------------------------------
+
+  listarMiembros: async (proyectoId: string): Promise<MiembroProyecto[]> =>
+    esperar(colaboracionDe(proyectoId).miembros),
+
+  listarCandidatosMiembro: async (proyectoId: string, buscar = ''): Promise<CandidatoMiembro[]> => {
+    const actuales = new Set(colaboracionDe(proyectoId).miembros.map((m) => m.usuario_id))
+    const texto = buscar.trim().toLowerCase()
+    return esperar(USUARIOS_DEMO
+      .filter((u) => !actuales.has(u.usuario_id))
+      .filter((u) => !texto || (u.nombre ?? '').toLowerCase().includes(texto) || u.email.includes(texto)))
+  },
+
+  agregarMiembro: async (proyectoId: string, email: string, rol: RolAsignable): Promise<MiembroProyecto> => {
+    const datos = colaboracionDe(proyectoId)
+    const correo = email.trim().toLowerCase()
+    const usuario = USUARIOS_DEMO.find((u) => u.email === correo)
+    if (!usuario) throw new ErrorApi(404, 'No hay un usuario registrado con ese correo.')
+    if (datos.miembros.some((m) => m.usuario_id === usuario.usuario_id)) {
+      throw new ErrorApi(409, 'El usuario ya es miembro del proyecto.')
+    }
+    const nuevo: MiembroProyecto = { ...usuario, rol, fecha_creacion: new Date().toISOString() }
+    datos.miembros.push(nuevo)
+    guardarColaboracion(proyectoId, datos, 'miembro_agregado', nuevo.usuario_id, null,
+      { usuario_id: nuevo.usuario_id, email: correo, rol })
+    return esperar(nuevo)
+  },
+
+  cambiarRolMiembro: async (proyectoId: string, usuarioId: string, rol: RolAsignable): Promise<MiembroProyecto> => {
+    const datos = colaboracionDe(proyectoId)
+    const miembro = miembroDe(datos, usuarioId)
+    if (miembro.rol !== rol) {
+      const anterior = miembro.rol
+      miembro.rol = rol
+      guardarColaboracion(proyectoId, datos, 'miembro_rol_cambiado', usuarioId, { rol: anterior },
+        { rol, email: miembro.email })
+    }
+    return esperar({ ...miembro })
+  },
+
+  quitarMiembro: async (proyectoId: string, usuarioId: string): Promise<void> => {
+    const datos = colaboracionDe(proyectoId)
+    const miembro = miembroDe(datos, usuarioId)
+    datos.miembros = datos.miembros.filter((m) => m.usuario_id !== usuarioId)
+    guardarColaboracion(proyectoId, datos, 'miembro_eliminado', usuarioId,
+      { usuario_id: usuarioId, email: miembro.email, rol: miembro.rol }, null)
+    return esperar(undefined)
+  },
+
+  listarHistorial: async (proyectoId: string, limite = 50): Promise<EventoHistorial[]> =>
+    esperar(colaboracionDe(proyectoId).historial.slice(0, limite)),
+
   obtenerConfiguracion: (): Promise<Configuracion> => esperar(leerConfig()),
+
+  // La demostración no tiene valores_uf: no se inventa una UF.
+  obtenerUfVigente: (): Promise<UfVigente> => esperar({ valor: null, fecha: null, fuente: 'CMF' }),
 
   guardarConfiguracion: (configuracion: Configuracion): Promise<Configuracion> => {
     guardarConfig(configuracion)
     return esperar(leerConfig())
+  },
+
+  // --- Administración ---------------------------------------------------
+
+  listarUsuarios: (): Promise<UsuarioAdministrado[]> => esperar(usuariosConSolicitud(leerAdministracion())),
+
+  crearUsuario: async (datos: UsuarioNuevo): Promise<UsuarioCreado> => {
+    const admin = leerAdministracion()
+    const email = datos.email.trim().toLowerCase()
+    if (admin.usuarios.some((u) => u.email?.toLowerCase() === email)) {
+      throw new ErrorApi(409, 'Ya existe un usuario con ese correo.')
+    }
+    const usuario: UsuarioAdministrado = {
+      id: nuevoId('u'), nombre: datos.nombre.trim(), email, rol_global: 'profesional',
+      es_administrador_principal: false, fecha_creacion: new Date().toISOString(), estado: 'pendiente',
+      solicitud_pendiente: null, puede_solicitar_administrador: true,
+    }
+    admin.usuarios.push(usuario)
+    escribirJson(CLAVE_ADMINISTRACION, admin)
+    return esperar({ usuario, modo: 'enlace', enlace: `${window.location.origin}/acceso.html#demostracion` })
+  },
+
+  renovarInvitacion: async (usuarioId: string): Promise<UsuarioCreado> => {
+    const usuario = usuariosConSolicitud(leerAdministracion()).find((u) => u.id === usuarioId)
+    if (!usuario) throw new ErrorApi(404, 'El usuario no existe.')
+    if (usuario.estado !== 'pendiente') {
+      throw new ErrorApi(409, 'La cuenta ya está activa: no tiene una invitación pendiente.')
+    }
+    return esperar({ usuario, modo: 'enlace', enlace: `${window.location.origin}/acceso.html#demostracion-${nuevoId('r')}` })
+  },
+
+  configuracionAdministracion: (): Promise<ConfiguracionAdministracion> => esperar({ modo_invitacion: 'enlace' }),
+
+  solicitarAdministrador: async (usuarioId: string): Promise<SolicitudAdministrador> => {
+    const admin = leerAdministracion()
+    const usuario = admin.usuarios.find((u) => u.id === usuarioId)
+    if (!usuario) throw new ErrorApi(404, 'El usuario no existe.')
+    if (usuario.rol_global === 'administrador') throw new ErrorApi(409, 'El usuario ya es administrador.')
+    if (admin.solicitudes.some((s) => s.usuario_id === usuarioId && s.estado === 'pendiente')) {
+      throw new ErrorApi(409, 'Ya hay una solicitud pendiente para este usuario.')
+    }
+    const solicitud: SolicitudAdministrador = {
+      id: nuevoId('s'), usuario_id: usuarioId, usuario_nombre: usuario.nombre, usuario_email: usuario.email,
+      solicitado_por: USUARIO.id, estado: 'pendiente', fecha_creacion: new Date().toISOString(), fecha_resolucion: null,
+      aprobaciones_recibidas: 0, aprobaciones_requeridas: 3, puedo_aprobar: true,
+      aprobaciones: PRINCIPALES_DEMO.map((p) => ({ administrador_id: p.id, nombre: p.nombre, email: p.email, aprobada: false, fecha: null })),
+    }
+    admin.solicitudes.push(solicitud)
+    escribirJson(CLAVE_ADMINISTRACION, admin)
+    return esperar(solicitud)
+  },
+
+  // La usuaria de demostración aprueba por sí misma; el resto de los votos ya viene en la semilla.
+  aprobarSolicitudAdministrador: async (solicitudId: string): Promise<SolicitudAdministrador> => {
+    const admin = leerAdministracion()
+    const solicitud = admin.solicitudes.find((s) => s.id === solicitudId)
+    if (!solicitud) throw new ErrorApi(404, 'La solicitud no existe.')
+    if (solicitud.estado !== 'pendiente') throw new ErrorApi(409, 'La solicitud ya fue completada.')
+    const voto = solicitud.aprobaciones.find((a) => a.administrador_id === USUARIO.id)
+    if (!voto || voto.aprobada) throw new ErrorApi(409, 'Ya aprobaste esta solicitud.')
+    voto.aprobada = true
+    voto.fecha = new Date().toISOString()
+    solicitud.aprobaciones_recibidas += 1
+    solicitud.puedo_aprobar = false
+    if (solicitud.aprobaciones_recibidas >= solicitud.aprobaciones_requeridas) {
+      solicitud.estado = 'aprobada'
+      solicitud.fecha_resolucion = voto.fecha
+      const usuario = admin.usuarios.find((u) => u.id === solicitud.usuario_id)
+      if (usuario) usuario.rol_global = 'administrador'
+    }
+    escribirJson(CLAVE_ADMINISTRACION, admin)
+    return esperar(structuredClone(solicitud))
   },
 }

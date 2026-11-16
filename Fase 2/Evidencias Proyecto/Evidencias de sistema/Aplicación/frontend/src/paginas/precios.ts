@@ -1,9 +1,12 @@
 import Alpine from 'alpinejs'
-import '../estilos/base.css'
 import { api, ErrorApi } from '../lib/api'
 import { marcarSimulacion } from '../lib/marcaSimulacion'
+import { prepararNavegacion } from '../lib/navegacion'
+import { iniciarBotonTema } from '../lib/tema'
 import { exigirSesion, salir } from '../lib/sesion'
-import { pesos } from '../lib/formato'
+import { confirmar } from '../lib/confirmar'
+import { leerPrecioEscrito, pesos, precioUnitario } from '../lib/formato'
+import { coberturaBanco, esPrecioReferencial, type Cobertura } from '../lib/banco'
 import type {
   CategoriaPartida, EstadoVersion, FilaBanco, PartidaNueva, Unidad, VersionPrecios,
 } from '../tipos/api'
@@ -16,6 +19,22 @@ interface GrupoCategoria {
   filas: FilaBanco[]
 }
 
+/** De dónde sale el precio de una partida en la versión mostrada. */
+type Origen = 'sin_precio' | 'referencial' | 'oficina'
+type FiltroOrigen = '' | Origen
+
+const FILTROS_ORIGEN: { valor: FiltroOrigen; etiqueta: string }[] = [
+  { valor: '', etiqueta: 'Todas' },
+  { valor: 'sin_precio', etiqueta: 'Sin precio' },
+  { valor: 'referencial', etiqueta: 'Referencial' },
+  { valor: 'oficina', etiqueta: 'De la oficina' },
+]
+
+function origenDe(f: FilaBanco): Origen {
+  if (f.precio_unitario == null) return 'sin_precio'
+  return esPrecioReferencial(f) ? 'referencial' : 'oficina'
+}
+
 interface Banco {
   categorias: CategoriaPartida[]
   versiones: VersionPrecios[]
@@ -23,7 +42,8 @@ interface Banco {
   filas: FilaBanco[]
   busqueda: string
   categoriaFiltro: string
-  soloSinPrecio: boolean
+  origenFiltro: FiltroOrigen
+  filtrosOrigen: typeof FILTROS_ORIGEN
   cargando: boolean
   error: string
   guardando: string        // id de la partida que se está guardando
@@ -38,6 +58,8 @@ interface Banco {
   errorEditar: string
   unidades: Unidad[]
   pesos: typeof pesos
+  precioUnitario: typeof precioUnitario
+  leerPrecioEscrito: typeof leerPrecioEscrito
 
   get version(): VersionPrecios | undefined
   get estado(): EstadoVersion
@@ -45,11 +67,16 @@ interface Banco {
   etiquetaVersion(v: VersionPrecios): string
   get visibles(): FilaBanco[]
   get grupos(): GrupoCategoria[]
-  get conPrecio(): number
-  get sinPrecio(): number
-  get deOficina(): number
+  get cobertura(): Cobertura
   get esReferencial(): boolean
   esReferencia(fila: FilaBanco): boolean
+  origen(fila: FilaBanco): Origen
+  cuentaOrigen(origen: FiltroOrigen): number
+  coberturaCategoria(id: number): Cobertura
+  get categoriasConFaltantes(): { categoria: CategoriaPartida; cobertura: Cobertura }[]
+  get categoriasCompletas(): number
+  verFaltantes(categoriaId: number): void
+  fecha(iso: string | null | undefined): string
 
   cargar(): Promise<void>
   cambiarVersion(): Promise<void>
@@ -73,7 +100,8 @@ Alpine.data('banco', (): Banco => ({
   filas: [],
   busqueda: '',
   categoriaFiltro: '',
-  soloSinPrecio: false,
+  origenFiltro: '',
+  filtrosOrigen: FILTROS_ORIGEN,
   cargando: true,
   error: '',
   guardando: '',
@@ -88,6 +116,8 @@ Alpine.data('banco', (): Banco => ({
   errorEditar: '',
   unidades: UNIDADES,
   pesos,
+  precioUnitario,
+  leerPrecioEscrito,
 
   get version() {
     return this.versiones.find((v) => v.id === this.versionId)
@@ -112,7 +142,7 @@ Alpine.data('banco', (): Banco => ({
     return this.filas.filter((f) => {
       if (!f.vigente) return false
       if (this.categoriaFiltro && String(f.categoria_id) !== this.categoriaFiltro) return false
-      if (this.soloSinPrecio && f.precio_unitario != null) return false
+      if (this.origenFiltro && origenDe(f) !== this.origenFiltro) return false
       if (!texto) return true
       return f.nombre.toLowerCase().includes(texto) || f.codigo.includes(texto)
     })
@@ -127,17 +157,50 @@ Alpine.data('banco', (): Banco => ({
       .filter((g) => g.filas.length > 0)
   },
 
-  get conPrecio() {
-    return this.filas.filter((f) => f.vigente && f.precio_unitario != null).length
+  // Con precio, sin precio y corregidos por la oficina, sobre las partidas vigentes.
+  get cobertura() {
+    return coberturaBanco(this.filas)
   },
 
-  get sinPrecio() {
-    return this.filas.filter((f) => f.vigente && f.precio_unitario == null).length
+  origen(fila) {
+    return origenDe(fila)
   },
 
-  /** Precios que la oficina ya corrigió sobre la referencia de mercado. */
-  get deOficina() {
-    return this.filas.filter((f) => f.vigente && f.precio_unitario != null && !this.esReferencia(f)).length
+  cuentaOrigen(origen) {
+    const vigentes = this.filas.filter((f) => f.vigente)
+    return origen ? vigentes.filter((f) => origenDe(f) === origen).length : vigentes.length
+  },
+
+  coberturaCategoria(id) {
+    return coberturaBanco(this.filas.filter((f) => f.categoria_id === id))
+  },
+
+  // Solo las categorías con huecos: las completas se resumen en una cifra.
+  get categoriasConFaltantes() {
+    return this.categorias
+      .map((categoria) => ({ categoria, cobertura: this.coberturaCategoria(categoria.id) }))
+      .filter((c) => c.cobertura.sinPrecio > 0)
+      .sort((a, b) => b.cobertura.sinPrecio - a.cobertura.sinPrecio)
+  },
+
+  get categoriasCompletas() {
+    return this.categorias.filter((c) => {
+      const cobertura = this.coberturaCategoria(c.id)
+      return cobertura.total > 0 && cobertura.sinPrecio === 0
+    }).length
+  },
+
+  // Lleva a la tabla con esa categoría y solo sus partidas sin precio.
+  verFaltantes(categoriaId) {
+    this.categoriaFiltro = String(categoriaId)
+    this.origenFiltro = 'sin_precio'
+    document.getElementById('tabla-banco')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  },
+
+  fecha(iso) {
+    if (!iso) return '—'
+    const d = new Date(iso)
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })
   },
 
   get esReferencial() {
@@ -145,7 +208,7 @@ Alpine.data('banco', (): Banco => ({
   },
 
   esReferencia(fila) {
-    return (fila.fuente ?? '').toLowerCase().includes('referencial')
+    return esPrecioReferencial(fila)
   },
 
   async cargar() {
@@ -256,7 +319,11 @@ Alpine.data('banco', (): Banco => ({
   },
 
   async darDeBaja(fila) {
-    if (!window.confirm(`Dar de baja «${fila.nombre}»? Las estimaciones ya emitidas la conservan.`)) return
+    const ok = await confirmar({
+      rotulo: 'Banco de precios', titulo: 'Dar de baja la partida',
+      mensaje: `¿Dar de baja «${fila.nombre}»? Las estimaciones ya emitidas la conservan.`, confirmar: 'Dar de baja',
+    })
+    if (!ok) return
     try {
       await api.darDeBajaPartida(fila.id)
       this.filas = await api.listarBanco(this.versionId)
@@ -289,10 +356,15 @@ Alpine.data('banco', (): Banco => ({
   },
 
   async publicar() {
-    const mensaje = this.estado === 'historica'
+    const reutilizar = this.estado === 'historica'
+    const mensaje = reutilizar
       ? 'Se vuelve a usar esta versión en las estimaciones nuevas, sin cambiar sus precios. ¿Continuar?'
       : 'Al publicarla, las estimaciones nuevas usarán esta versión y sus precios ya no se podrán editar. ¿Continuar?'
-    if (!window.confirm(mensaje)) return
+    const ok = await confirmar({
+      rotulo: 'Banco de precios', titulo: reutilizar ? 'Volver a usar esta versión' : 'Publicar versión',
+      mensaje, confirmar: reutilizar ? 'Usar versión' : 'Publicar',
+    })
+    if (!ok) return
     try {
       await api.publicarVersion(this.versionId)
       this.versiones = await api.listarVersiones()
@@ -308,4 +380,6 @@ if (exigirSesion()) {
   window.Alpine = Alpine
   Alpine.start()
   marcarSimulacion()
+  void prepararNavegacion()
+  iniciarBotonTema()
 }
